@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{4e61a466-002d-4394-b409-a8a03876d66e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Progressive">
+      <UniqueIdentifier>{c6ce07d9-325b-47eb-9d5c-42211f0c77ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\Tiled">
+      <UniqueIdentifier>{7a682e03-3e14-4f4f-a8f4-cbfd8c84b998}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Program.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Quad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scene.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\glew\src\glew.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GPUBVH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TiledRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ProgressiveRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Program.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Quad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tiny_obj_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GPUBVH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TiledRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ProgressiveRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\shaders\Tiled\AccumFrag.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\AccumVert.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\OutputFrag.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\OutputVert.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\PathTraceFrag.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\PathTraceVert.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\TileOutputFrag.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Tiled\TileOutputVert.glsl">
+      <Filter>Shaders\Tiled</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\AccumFrag.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\AccumVert.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\OutputFadeFrag.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\OutputFadeVert.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\OutputFrag.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\OutputVert.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\PathTraceFrag.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+    <None Include="src\shaders\Progressive\PathTraceVert.glsl">
+      <Filter>Shaders\Progressive</Filter>
+    </None>
+  </ItemGroup>
+</Project>
