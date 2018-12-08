@@ -17,7 +17,7 @@ using namespace std;
 
 glm::vec2 screenSize(1280,720);
 int maxDepth = 2;
-int maxSamples = 10;
+int maxSamples = 50;
 float moveSpeed = 5.5f;
 float mouseSensitivity = 0.05f;
 double prevMouseX = 0, prevMouseY = 0;
@@ -30,15 +30,15 @@ void init()
 {
 	scene = new Scene;
 	
-	if (!LoadScene(scene, "../assets/diningroom.scene"))
+	if (!LoadScene(scene, "../assets/boy.scene"))
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);
 	}
 	std::cout << "Scene Loaded\n\n";
 
-	//renderer = new TiledRenderer(scene, screenSize, 5, 5, maxSamples, maxDepth);
-	renderer = new ProgressiveRenderer(scene, screenSize, maxDepth);
+	renderer = new TiledRenderer(scene, screenSize, 5, 5, maxSamples, maxDepth);
+	//renderer = new ProgressiveRenderer(scene, screenSize, maxDepth);
 }
 
 void render(GLFWwindow *window)
