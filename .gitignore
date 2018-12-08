@@ -1,0 +1,6 @@
+# Don't track content of these folders
+
+.vs/
+Release/
+PathTracer/Release/
+Nvidia-SBVH/Release/
