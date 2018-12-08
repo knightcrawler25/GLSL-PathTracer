@@ -51,5 +51,5 @@ The following links/projects/books were really useful to me
 - Erich Loftis's THREE.js PathTracer (https://github.com/erichlof/THREE.js-PathTracing-Renderer) Several examples that I got to learn from
 - Optix Advanced Samples, especially OptiX Introduction Samples (https://github.com/nvpro-samples/optix_advanced_samples/tree/master/src/optixIntroduction) Source for several tutorials
 
-There's only so much that can be done in a fragment shader before you send up with convoluted code or no performance gains. Will probably have to start with the bible 'PBRT' eventually and end up learning CUDA later. 
+There's only so much that can be done in a fragment shader before you end up with convoluted code or no performance gains. Will probably have to start with the bible 'PBRT' eventually and end up learning CUDA later. 
 But for now this is a fun learning experience to see what can be done in a single shader :)
