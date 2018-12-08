@@ -30,6 +30,7 @@ TODO
 - Move renderer configuration to scene file
 - A way to write finished images from the tiled renderer to an output folder. 
 - Figure out a way to handle emissive geometry and mesh sampling
+- Sun Sky Model 
 - IBL
 - Nested dielectrics
 
