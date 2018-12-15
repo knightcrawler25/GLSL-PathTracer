@@ -31,7 +31,7 @@ int GPUBVH::traverseBVH(BVHNode *root)
 		{
 			int index = bvh->getTriIndices()[i];
 			const Vec3i& vtxInds = bvh->getScene()->getTriangle(index).vertices;
-			bvhTriangleIndices.push_back(TriangleData{ glm::vec4(vtxInds.x,vtxInds.y,vtxInds.z, index) });
+			bvhTriangleIndices.push_back(TriIndexData{ glm::vec4(vtxInds.x,vtxInds.y,vtxInds.z, index) });
 		}
 	}
 	else
@@ -44,10 +44,9 @@ int GPUBVH::traverseBVH(BVHNode *root)
 	return index;
 }
 
-GPUBVH::GPUBVH(const BVH* bvh, const Scene *scene)
+GPUBVH::GPUBVH(const BVH* bvh)
 {
 	this->bvh = bvh;
-	this->scene = scene;
 	createGPUBVH();
 }
 

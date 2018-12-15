@@ -24,7 +24,7 @@ bool keyPressed = false;
 Scene *scene = NULL;
 Renderer *renderer;
 
-void init()
+void initScene()
 {
 	scene = new Scene;
 
@@ -35,6 +35,39 @@ void init()
 	}
 	std::cout << "Scene Loaded\n\n";
 
+	scene->buildBVH();
+
+	// --------Print info on memory usage ------------- //
+
+	std::cout << "Triangles: " << scene->triangleIndices.size() << std::endl;
+	std::cout << "Triangle Indices: " << scene->gpuBVH->bvhTriangleIndices.size() << std::endl;
+	std::cout << "Vertices: " << scene->vertexData.size() << std::endl;
+
+	long long scene_data_bytes =
+		sizeof(GPUBVHNode) * scene->gpuBVH->bvh->getNumNodes() +
+		sizeof(TriangleData) * scene->gpuBVH->bvhTriangleIndices.size() +
+		sizeof(VertexData) * scene->vertexData.size() +
+		sizeof(NormalTexData) * scene->normalTexData.size() +
+		sizeof(MaterialData) * scene->materialData.size() +
+		sizeof(LightData) * scene->lightData.size();
+
+	std::cout << "GPU Memory used for BVH and scene data: " << scene_data_bytes / 1048576 << " MB" << std::endl;
+
+	long long tex_data_bytes =
+		scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y * scene->texData.albedoTexCount * 3 +
+		scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y * scene->texData.metallicRoughnessTexCount * 3 +
+		scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y * scene->texData.normalTexCount * 3 +
+		scene->hdrLoaderRes.width * scene->hdrLoaderRes.height * sizeof(GL_FLOAT) * 3;
+
+	std::cout << "GPU Memory used for Textures: " << tex_data_bytes / 1048576 << " MB" << std::endl;
+
+	std::cout << "Total GPU Memory used: " << (scene_data_bytes + tex_data_bytes) / 1048576 << " MB" << std::endl;
+
+	// ----------------------------------- //
+}
+
+void initRenderer()
+{
 	if(scene->renderOptions.rendererType.compare("Tiled") == 0)
 		renderer = new TiledRenderer(scene, screenSize);
 	else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
@@ -91,8 +124,9 @@ void update(float secondsElapsed, GLFWwindow *window)
 void main()
 {
 	srand(time(0));
-	GLFWwindow *window;
+	initScene();
 
+	GLFWwindow *window;
 	glfwInit();
 	window = glfwCreateWindow((int)screenSize.x, (int)screenSize.y, "PathTracer", 0, 0);
 	glfwSetWindowPos(window, 300, 100);
@@ -101,7 +135,8 @@ void main()
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(0);
 	glewInit();
-	init();
+
+	initRenderer();
 
 	double lastTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
