@@ -11,14 +11,14 @@ private:
 	GLuint pathTraceTexture, accumTexture, tileOutputTexture;
 	int tileX, tileY, numTilesX, numTilesY, tileWidth, tileHeight, maxSamples, maxDepth;
 	bool renderCompleted;
-	float **sampleCounter;
+	float **sampleCounter, totalTime;
 public:
-	TiledRenderer(const Scene *scene, glm::vec2 scrSize, int numTilesX, int numTilesY, int maxSamples, int maxDepth) : Renderer(scene, scrSize)
+	TiledRenderer(const Scene *scene, glm::vec2 scrSize) : Renderer(scene, scrSize)
 	{ 
-		this->numTilesX = numTilesX;
-		this->numTilesY = numTilesY;
-		this->maxSamples = maxSamples;
-		this->maxDepth = maxDepth;
+		this->numTilesX = scene->renderOptions.numTilesX;
+		this->numTilesY = scene->renderOptions.numTilesY;
+		this->maxSamples = scene->renderOptions.maxSamples;
+		this->maxDepth = scene->renderOptions.maxDepth;
 		init(); 
 	};
 	void init();

@@ -1,4 +1,4 @@
-#version 330
+#version 430
 
 out vec4 color;
 in vec2 TexCoords;

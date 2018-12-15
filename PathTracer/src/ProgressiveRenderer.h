@@ -14,9 +14,9 @@ private:
 	bool lowRes, fadeIn;
 
 public:
-	ProgressiveRenderer(const Scene *scene, glm::vec2 scrSize, int maxDepth) : Renderer(scene, scrSize)
+	ProgressiveRenderer(const Scene *scene, glm::vec2 scrSize) : Renderer(scene, scrSize)
 	{ 
-		this->maxDepth = maxDepth;
+		this->maxDepth = scene->renderOptions.maxDepth;
 		init(); 
 	};
 	void init();

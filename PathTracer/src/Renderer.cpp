@@ -63,6 +63,26 @@ void Renderer::init()
 	std::cout << "Triangle Indices: " << gpuBVH->bvhTriangleIndices.size() << std::endl;
 	std::cout << "Vertices: " << scene->vertexData.size() << std::endl;
 
+	long long scene_data_bytes =
+		sizeof(GPUBVHNode) * gpuBVH->bvh->getNumNodes() +
+		sizeof(TriangleData) * gpuBVH->bvhTriangleIndices.size() +
+		sizeof(VertexData) * scene->vertexData.size() +
+		sizeof(NormalTexData) * scene->normalTexData.size() +
+		sizeof(MaterialData) * scene->materialData.size() +
+		sizeof(LightData) * scene->lightData.size();
+
+	std::cout << "GPU Memory used for BVH and scene data: " << scene_data_bytes / 1048576 << " MB" << std::endl;
+
+	long long tex_data_bytes =
+		scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y * scene->texData.albedoTexCount * 3 +
+		scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y * scene->texData.metallicRoughnessTexCount * 3 +
+		scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y * scene->texData.normalTexCount * 3 +
+		scene->hdrLoaderRes.width * scene->hdrLoaderRes.height * sizeof(GL_FLOAT) * 3;
+
+	std::cout << "GPU Memory used for Textures: " << tex_data_bytes / 1048576 << " MB" << std::endl;
+
+	std::cout << "Total GPU Memory used: " << (scene_data_bytes + tex_data_bytes) / 1048576 << " MB" << std::endl;
+
 	//Create Texture for BVH Tree
 	glGenBuffers(1, &BVHBuffer);
 	glBindBuffer(GL_TEXTURE_BUFFER, BVHBuffer);
@@ -104,44 +124,38 @@ void Renderer::init()
 	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, materialArrayBuffer);
 
 	//Create Buffer and Texture for Lights
-	glGenBuffers(1, &lightArrayBuffer);
-	glBindBuffer(GL_TEXTURE_BUFFER, lightArrayBuffer);
-	glBufferData(GL_TEXTURE_BUFFER, sizeof(LightData) * scene->lightData.size(), &scene->lightData[0], GL_STATIC_DRAW);
-	glGenTextures(1, &lightsTexture);
-	glBindTexture(GL_TEXTURE_BUFFER, lightsTexture);
-	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, lightArrayBuffer);
+	numOfLights = scene->lightData.size();
+
+	if (numOfLights > 0)
+	{
+		glGenBuffers(1, &lightArrayBuffer);
+		glBindBuffer(GL_TEXTURE_BUFFER, lightArrayBuffer);
+		glBufferData(GL_TEXTURE_BUFFER, sizeof(LightData) * scene->lightData.size(), &scene->lightData[0], GL_STATIC_DRAW);
+		glGenTextures(1, &lightsTexture);
+		glBindTexture(GL_TEXTURE_BUFFER, lightsTexture);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, lightArrayBuffer);
+	}
 
 	// Albedo Texture
 	if (scene->texData.albedoTexCount > 0)
 	{
 		glGenTextures(1, &albedoTextures);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, albedoTextures);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.albedoTextures);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.albedoTextures);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 	}
 
-	//Metallic
-	if (scene->texData.metallicTexCount > 0)
+	//Metallic Roughness
+	if (scene->texData.metallicRoughnessTexCount > 0)
 	{
-		glGenTextures(1, &metallicTextures);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, metallicTextures);
-		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.metallicTextureSize.x, scene->texData.metallicTextureSize.y, scene->texData.metallicTexCount);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.metallicTextureSize.x, scene->texData.metallicTextureSize.y, scene->texData.metallicTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.metallicTextures);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-	}
-
-	//Roughness
-	if (scene->texData.roughnessTexCount > 0)
-	{
-		glGenTextures(1, &roughnessTextures);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, roughnessTextures);
-		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.roughnessTextureSize.x, scene->texData.roughnessTextureSize.y, scene->texData.roughnessTexCount);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.roughnessTextureSize.x, scene->texData.roughnessTextureSize.y, scene->texData.roughnessTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.roughnessTextures);
+		glGenTextures(1, &metallicRoughnessTextures);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, metallicRoughnessTextures);
+		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.metallicRoughnessTextures);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
@@ -153,11 +167,20 @@ void Renderer::init()
 		glGenTextures(1, &normalTextures);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
 		glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount);
-		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.normalTextures);
+		glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.normalTextures);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-	}
+	}	
 
-	numOfLights = scene->lightData.size();
+	// Environment Map
+	if (scene->renderOptions.useEnvMap)
+	{
+		glGenTextures(1, &hdrTexture);
+		glBindTexture(GL_TEXTURE_2D, hdrTexture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->hdrLoaderRes.width, scene->hdrLoaderRes.height, 0, GL_RGB, GL_FLOAT, scene->hdrLoaderRes.cols);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
 }

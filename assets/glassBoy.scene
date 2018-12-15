@@ -1,7 +1,17 @@
+Renderer
+{
+	rendererType Tiled
+	maxSamples 100
+	maxDepth 50
+	numTilesX 5
+	numTilesY 5
+}
+
 Camera
 {
 	position 0.3 0.11 0.0
 	lookAt 0.2 0.095 0
+	fov 35
 }
 
 material head
@@ -22,48 +32,42 @@ material base
 {
 	color 1.0 1.0 1.0 
 	roughness 0.035
-	albedoTexture ../assets/Figurine/textures/03_Base_Base_Color.png
-	metallicTexture ../assets/Figurine/textures/03_Base_Metallic.png
-	roughnessTexture ../assets/Figurine/textures/03_Base_Roughness.png
-	normalTexture ../assets/Figurine/textures/03_Base_Normal_DirectX.png
+	albedoTexture ./assets/Figurine/textures/03_Base_Base_Color.png
+	metallicRoughnessTexture ./assets/Figurine/textures/03_Base_MetallicRoughness.png
+	normalTexture ./assets/Figurine/textures/03_Base_Normal_DirectX.png
 }
 
 material grid
 {
 	color 1.0 1.0 1.0
-	albedoTexture ../assets/Figurine/textures/grid.jpg
+	roughness 0.5
+	metallic 0.0
+	albedoTexture ./assets/Figurine/textures/grid.jpg
 }
 
 mesh
 {
-	file ../assets/Figurine/background.obj
+	file ./assets/Figurine/background.obj
 	material grid
 }
 
 mesh
 {
-	file ../assets/Figurine/head.obj
+	file ./assets/Figurine/head.obj
 	material head
 }
 
 mesh
 {
-	file ../assets/Figurine/body.obj
+	file ./assets/Figurine/body.obj
 	material body
 }
 
 mesh
 {
-	file ../assets/Figurine/base.obj
+	file ./assets/Figurine/base.obj
 	material base
 }
-
-#mesh
-{
-	file ../assets/Figurine/dragon.obj
-	#material body
-}
-
 
 light
 {
