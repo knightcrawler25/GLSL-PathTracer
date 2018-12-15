@@ -33,10 +33,12 @@ TODO
 --------
 - ~~Actually use the normal maps (Right now they are just loaded and sent to the GPU but not used)~~
 - ~~Move renderer configuration to scene file~~
-- A way to write finished images from the tiled renderer to an output folder. 
-- Figure out a way to handle emissive geometry and mesh sampling
-- Sun Sky Model 
 - ~~IBL~~
+- ~~Emissive geometry~~
+- Fix issues with normal map
+- IBL importance sampling
+- Emissive mesh sampling
+- Sun Sky Model 
 - Nested dielectrics
 
 Additional Screenshots
