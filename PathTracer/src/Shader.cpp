@@ -4,8 +4,10 @@ Shader::Shader(std::string filePath, GLenum shaderType)
 {
 	std::ifstream f;
 	f.open(filePath.c_str(), std::ios::in | std::ios::binary);
-	if (!f.is_open()){
-		throw std::runtime_error(std::string("Failed to open file: ") + filePath);
+	if (!f.is_open())
+	{
+		std::cout << std::string("Failed to open file: ") + filePath << std::endl;
+		exit(0);
 	}
 
 	//read whole file into stringstream buffer

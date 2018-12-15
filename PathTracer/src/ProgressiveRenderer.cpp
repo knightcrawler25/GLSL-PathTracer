@@ -12,10 +12,10 @@ void ProgressiveRenderer::init()
 	//----------------------------------------------------------
 	// Shaders
 	//----------------------------------------------------------
-	pathTraceShader  = loadShaders("src/shaders/Progressive/PathTraceVert.glsl", "src/shaders/Progressive/PathTraceFrag.glsl");
-	accumShader      = loadShaders("src/shaders/Progressive/AccumVert.glsl", "src/shaders/Progressive/AccumFrag.glsl");
-	outputShader     = loadShaders("src/shaders/Progressive/OutputVert.glsl", "src/shaders/Progressive/OutputFrag.glsl");
-	outputFadeShader = loadShaders("src/shaders/Progressive/OutputFadeVert.glsl", "src/shaders/Progressive/OutputFadeFrag.glsl");
+	pathTraceShader  = loadShaders("./PathTracer/src/shaders/Progressive/PathTraceVert.glsl", "./PathTracer/src/shaders/Progressive/PathTraceFrag.glsl");
+	accumShader      = loadShaders("./PathTracer/src/shaders/Progressive/AccumVert.glsl",     "./PathTracer/src/shaders/Progressive/AccumFrag.glsl");
+	outputShader     = loadShaders("./PathTracer/src/shaders/Progressive/OutputVert.glsl",    "./PathTracer/src/shaders/Progressive/OutputFrag.glsl");
+	outputFadeShader = loadShaders("./PathTracer/src/shaders/Progressive/OutputFadeVert.glsl","./PathTracer/src/shaders/Progressive/OutputFadeFrag.glsl");
 
 	//----------------------------------------------------------
 	// FBO Setup
@@ -67,6 +67,7 @@ void ProgressiveRenderer::init()
 	glUniform1i(glGetUniformLocation(shaderObject,  "maxDepth"), maxDepth);
 	glUniform2fv(glGetUniformLocation(shaderObject, "screenResolution"), 1, glm::value_ptr(screenSize));
 	glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
+	glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->renderOptions.useEnvMap);
 
 	glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
 	glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
@@ -76,9 +77,9 @@ void ProgressiveRenderer::init()
 	glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 5);
 	glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 6);
 	glUniform1i(glGetUniformLocation(shaderObject, "albedoTextures"), 7);
-	glUniform1i(glGetUniformLocation(shaderObject, "metallicTextures"), 8);
-	glUniform1i(glGetUniformLocation(shaderObject, "roughnessTextures"), 9);
-	glUniform1i(glGetUniformLocation(shaderObject, "normalTextures"), 10);
+	glUniform1i(glGetUniformLocation(shaderObject, "metallicRoughnessTextures"), 8);
+	glUniform1i(glGetUniformLocation(shaderObject, "normalTextures"), 9);
+	glUniform1i(glGetUniformLocation(shaderObject, "hdrTexture"), 10);
 
 	pathTraceShader->stopUsing();
 
@@ -103,11 +104,11 @@ void ProgressiveRenderer::render()
 	glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, albedoTextures);
 	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, metallicTextures);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metallicRoughnessTextures);
 	glActiveTexture(GL_TEXTURE9);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, roughnessTextures);
-	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
+	glActiveTexture(GL_TEXTURE10);
+	glBindTexture(GL_TEXTURE_2D, hdrTexture);
 
 	if (lowRes)
 	{
@@ -217,7 +218,7 @@ void ProgressiveRenderer::update(float secondsElapsed)
 	glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
 	glUniform3fv(glGetUniformLocation(shaderObject, "randomVector"), 1, glm::value_ptr(glm::vec3(r1, r2, r3)));
 	glUniform1i(glGetUniformLocation(shaderObject, "sampleCounter"), sampleCounter);
-	glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), lowRes ? 1 : maxDepth);
+	glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), lowRes ? 2 : maxDepth);
 	glUniform1i(glGetUniformLocation(shaderObject, "isCameraMoving"), scene->camera->isMoving);
 	glUniform2fv(glGetUniformLocation(shaderObject, "screenResolution"), 1, glm::value_ptr(screenSize));
 	pathTraceShader->stopUsing();

@@ -27,6 +27,7 @@
 
 #pragma once
 #include "BVH.h"
+#include "Timer.h"
 
 class SplitBVHBuilder
 {
@@ -116,7 +117,7 @@ private:
 	S32                     m_sortDim;
 	SpatialBin              m_bins[3][NumSpatialBins];
 
-	//Timer                   m_progressTimer;
+	FW::Timer               m_progressTimer;
 	S32                     m_numDuplicates;
 	int						m_numNodes;
 };

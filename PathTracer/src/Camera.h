@@ -5,7 +5,7 @@
 class Camera
 {
 	public:
-		Camera(glm::vec3 pos, glm::vec3 lookAt);
+		Camera(glm::vec3 pos, glm::vec3 lookAt, float fov);
 
 		void offsetOrientation(float x, float y);
 		void offsetPosition(glm::vec3 val);

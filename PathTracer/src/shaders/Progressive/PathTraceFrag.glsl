@@ -3,7 +3,7 @@
 out vec3 color;
 in vec2 TexCoords;
 uniform bool isCameraMoving;
-uniform bool hideEmitters;
+uniform bool useEnvMap;
 uniform vec3 randomVector;
 uniform vec2 screenResolution;
 
@@ -16,12 +16,14 @@ uniform samplerBuffer normalsTexCoordsTex;
 uniform samplerBuffer materialsTex;
 uniform samplerBuffer lightsTex;
 uniform sampler2DArray albedoTextures;
-uniform sampler2DArray metallicTextures;
-uniform sampler2DArray roughnessTextures;
+uniform sampler2DArray metallicRoughnessTextures;
 uniform sampler2DArray normalTextures;
+
+uniform sampler2D hdrTexture;
 
 uniform int numOfLights;
 uniform int maxDepth;
+uniform float rot;
 
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
@@ -30,10 +32,8 @@ uniform int maxDepth;
 
 vec2 seed;
 
-vec3 tempNormal;
-
 struct Ray { vec3 origin; vec3 direction; };
-struct Material { vec4 albedo; vec4 param; vec4 texIDs; };
+struct Material { vec4 albedo; vec4 emission; vec4 param; vec4 texIDs; };
 struct Camera { vec3 up; vec3 right; vec3 forward; vec3 position; float fov; float focalDist; float aperture; };
 struct Light { vec3 position; vec3 emission; vec3 u; vec3 v; vec3 radiusAreaType; };
 struct LightSample { vec3 surfacePos; vec3 normal; vec3 emission; vec2 areaType; };
@@ -426,23 +426,33 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 	int index = state.matID;
 	Material mat;
 
-	mat.albedo = texelFetch(materialsTex, index * 3 + 0);
-	mat.param   = texelFetch(materialsTex, index * 3 + 1);
-	mat.texIDs = texelFetch(materialsTex, index * 3 + 2);
+	mat.albedo = texelFetch(materialsTex, index * 4 + 0);
+	mat.emission = texelFetch(materialsTex, index * 4 + 1);
+	mat.param = texelFetch(materialsTex, index * 4 + 2);
+	mat.texIDs = texelFetch(materialsTex, index * 4 + 3);
 
 	vec2 texUV = state.texCoord;
 
 	if (int(mat.texIDs.x) >= 0)
-		mat.albedo.xyz *= pow(texture(albedoTextures, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2)).xyz;
+		mat.albedo.xyz = pow(texture(albedoTextures, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
 
 	if (int(mat.texIDs.y) >= 0)
-		mat.param.x = pow(texture(metallicTextures, vec3(texUV, int(mat.texIDs.y))).x, 2.2);
+		mat.param.xy = pow(texture(metallicRoughnessTextures, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
 
 	if (int(mat.texIDs.z) >= 0)
-		mat.param.y = pow(texture(roughnessTextures, vec3(texUV, int(mat.texIDs.z))).x, 2.2);
+	{
+		vec3 nrm = texture(normalTextures, vec3(texUV, int(mat.texIDs.z))).xyz;
+		nrm = normalize(nrm * 2.0 - 1.0);
 
-	if (int(mat.texIDs.w) >= 0)
-		tempNormal = pow(texture(normalTextures, vec3(texUV, int(mat.texIDs.w))).xyz, vec3(2.2));
+		// Orthonormal Basis
+		vec3 UpVector = abs(state.ffnormal.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
+		vec3 TangentX = normalize(cross(UpVector, state.ffnormal));
+		vec3 TangentY = cross(state.ffnormal, TangentX);
+
+		nrm = TangentX * nrm.x + TangentY * nrm.y + state.ffnormal * nrm.z;
+		state.normal = normalize(nrm);
+		state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
+	}
 
 	state.mat = mat;
 }
@@ -542,7 +552,7 @@ void UE4Pdf(in Ray ray, inout State state)
 	vec3 V = -ray.direction;
 	vec3 L = state.brdfDir;
 
-	float specularAlpha = max(0.001, state.mat.param.y);
+	float specularAlpha = max(0.01, state.mat.param.y);
 
 	float diffuseRatio = 0.5 * (1.0 - state.mat.param.x);
 	float specularRatio = 1.0 - diffuseRatio;
@@ -586,7 +596,7 @@ void UE4Sample(in Ray ray, inout State state)
 	}
 	else
 	{
-		float a = max(0.001, state.mat.param.y);
+		float a = max(0.01, state.mat.param.y);
 
 		float phi = r1 * 2.0 * PI;
 
@@ -624,7 +634,7 @@ vec3 UE4Eval(in Ray ray, inout State state)
 	// specular	
 	float specular = 0.5;
 	vec3 specularCol = mix(vec3(1.0) * 0.08 * specular, state.mat.albedo.xyz, state.mat.param.x);
-	float a = max(0.001, state.mat.param.y);
+	float a = max(0.01, state.mat.param.y);
 	float Ds = GTR2(NDotH, a);
 	float FH = SchlickFresnel(LDotH);
 	vec3 Fs = mix(specularCol, vec3(1.0), FH);
@@ -662,7 +672,7 @@ void GlassSample(in Ray ray, inout State state)
 	//vec3 transmittance = vec3(1.0);
 	//vec3 extinction = -log(vec3(0.1, 0.1, 0.908));
 	//vec3 extinction = -log(vec3(0.905, 0.63, 0.3));
-	
+
 	float eta = dot(state.normal, state.ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
 	vec3 transDir = normalize(refract(ray.direction, state.ffnormal, eta));
 	float cos2t = 1.0 - eta * eta * (1.0 - theta * theta);
@@ -824,18 +834,23 @@ vec3 PathTrace(Ray r)
 
 		if (t == INFINITY)
 		{
-			/*vec3 bg_up = normalize(vec3(0.0f, -1.0, -1.0));
-			bg_up.y += 1.0;
-			bg_up = normalize(bg_up);
-			float t = max(dot(r.direction, bg_up),0.0);
-			radiance += throughput * mix(vec3(1.0), vec3(0.3), t);*/
-			//float a = 0.5 * r.direction.y + 1.0;
-			//radiance += throughput * (1.0 - a * vec3(1.0) + a * vec3(0.5, 0.7, 1.0));
+			if (depth > 0 && useEnvMap)
+			{
+				float theta = atan(-r.direction.x, -r.direction.z);
+				theta = theta < 0.0 ? theta + TWO_PI : theta;
+				float phi = acos(r.direction.y);
+				float u = theta / TWO_PI;
+				float v = phi / PI;
+
+				radiance += texture(hdrTexture, vec2(u, v)).xyz * throughput * 1.2;
+			}
 			break;
 		}
 
 		GetNormalAndTexCoord(state, r);
 		GetMaterialsAndTextures(state, r);
+
+		radiance += state.mat.emission.xyz * throughput;
 
 		if (state.isEmitter)
 		{
@@ -854,9 +869,7 @@ vec3 PathTrace(Ray r)
 			UE4Sample(r, state);
 			UE4Pdf(r, state);
 
-			if (state.pdf <= 0.0)
-				break;
-			throughput *= UE4Eval(r, state) / max(state.pdf, 0.001);
+			throughput *= UE4Eval(r, state) / state.pdf;
 		}
 		else
 		{

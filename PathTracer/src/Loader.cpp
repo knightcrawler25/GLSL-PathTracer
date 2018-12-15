@@ -117,8 +117,7 @@ bool LoadScene(Scene *scene, const char* filename)
 
 	std::map<std::string, Material> materialMap;
 	std::vector<std::string> albedoTex;
-	std::vector<std::string> metallicTex;
-	std::vector<std::string> roughnessTex;
+	std::vector<std::string> metallicRoughnessTex;
 	std::vector<std::string> normalTex;
 
 	int materialCount = 0;
@@ -128,7 +127,7 @@ bool LoadScene(Scene *scene, const char* filename)
 	MaterialData defaultMat;
 	scene->materialData.push_back(defaultMat);
 	materialCount++;
-	Camera *defaultCamera = new Camera(glm::vec3(0,0,0), glm::vec3(0,0,-1));
+	Camera *defaultCamera = new Camera(glm::vec3(0,0,0), glm::vec3(0,0,-1), 35.0f);
 	bool cameraAdded = false;
 
 	while (fgets(line, kMaxLineLength, file))
@@ -145,12 +144,11 @@ bool LoadScene(Scene *scene, const char* filename)
 
 		if (sscanf(line, " material %s", name) == 1)
 		{
-			printf("%s", line);
-
 			MaterialData material;
+			int noMetallic = 0;
+			int noRoughness = 0;
 			char albedoTexName[100]    = "None";
-			char metallicTexName[100]  = "None";
-			char roughnessTexName[100] = "None";
+			char metallicRoughnessTexName[100]  = "None";
 			char normalTexName[100]    = "None";
 
 			while (fgets(line, kMaxLineLength, file))
@@ -161,6 +159,7 @@ bool LoadScene(Scene *scene, const char* filename)
 
 				sscanf(line, " name %s", name);
 				sscanf(line, " color %f %f %f", &material.albedo.x, &material.albedo.y, &material.albedo.z);
+				sscanf(line, " emission %f %f %f", &material.emission.x, &material.emission.y, &material.emission.z);
 				sscanf(line, " materialType %f", &material.albedo.w);
 				sscanf(line, " metallic %f", &material.params.x);
 				sscanf(line, " roughness %f", &material.params.y);
@@ -168,8 +167,8 @@ bool LoadScene(Scene *scene, const char* filename)
 				sscanf(line, " transmittance %f", &material.params.w);
 
 				sscanf(line, " albedoTexture %s", &albedoTexName);
-				sscanf(line, " metallicTexture %s", &metallicTexName);
-				sscanf(line, " roughnessTexture %s", &roughnessTexName);
+				sscanf(line, " metallicRoughnessTexture %s", &metallicRoughnessTexName);
+				sscanf(line, " noRoughness %i", &noRoughness);
 				sscanf(line, " normalTexture %s", normalTexName);
 			}
 
@@ -188,50 +187,39 @@ bool LoadScene(Scene *scene, const char* filename)
 			else
 				material.texIDs.x = -1;
 
-			// Metallic Texture
-			if (strcmp(metallicTexName, "None") != 0)
+			// MetallicRoughness Texture
+			if (strcmp(metallicRoughnessTexName, "None") != 0)
 			{
-				ptrdiff_t pos = std::distance(metallicTex.begin(), find(metallicTex.begin(), metallicTex.end(), metallicTexName));
-				if (pos == metallicTex.size())
+				ptrdiff_t pos = std::distance(metallicRoughnessTex.begin(), find(metallicRoughnessTex.begin(), metallicRoughnessTex.end(), metallicRoughnessTexName));
+				if (pos == metallicRoughnessTex.size())
 				{
-					metallicTex.push_back(metallicTexName);
-					material.texIDs.y = metallicTex.size() - 1;
+					metallicRoughnessTex.push_back(metallicRoughnessTexName);
+					material.texIDs.y = metallicRoughnessTex.size() - 1;
 				}
 				else
+				{
 					material.texIDs.y = pos;
-			}
-			else
-				material.texIDs.y = -1;
-
-			// Roughness Texture
-			if (strcmp(roughnessTexName, "None") != 0)
-			{
-				ptrdiff_t pos = std::distance(roughnessTex.begin(), find(roughnessTex.begin(), roughnessTex.end(), roughnessTexName));
-				if (pos == roughnessTex.size())
-				{
-					roughnessTex.push_back(roughnessTexName);
-					material.texIDs.z = roughnessTex.size() - 1;
 				}
-				else
-					material.texIDs.z = pos;
 			}
 			else
-				material.texIDs.z = -1;
+			{
+				material.texIDs.y = -1;
+			}
 
-			// Normals Texture
+			// Normal Map Texture
 			if (strcmp(normalTexName, "None") != 0)
 			{
 				ptrdiff_t pos = std::distance(normalTex.begin(), find(normalTex.begin(), normalTex.end(), normalTexName));
 				if (pos == normalTex.size())
 				{
 					normalTex.push_back(normalTexName);
-					material.texIDs.w = normalTex.size() - 1;
+					material.texIDs.z = normalTex.size() - 1;
 				}
 				else
-					material.texIDs.w = pos;
+					material.texIDs.z = pos;
 			}
 			else
-				material.texIDs.w = -1;
+				material.texIDs.z = -1;
 
 			// add material to map
 			if (materialMap.find(name) == materialMap.end()) // New material
@@ -288,6 +276,7 @@ bool LoadScene(Scene *scene, const char* filename)
 		{
 			glm::vec3 position;
 			glm::vec3 lookAt;
+			float fov;
 			
 			while (fgets(line, kMaxLineLength, file))
 			{
@@ -297,10 +286,42 @@ bool LoadScene(Scene *scene, const char* filename)
 
 				sscanf(line, " position %f %f %f", &position.x, &position.y, &position.z);
 				sscanf(line, " lookAt %f %f %f", &lookAt.x, &lookAt.y, &lookAt.z);
+				sscanf(line, " fov %f", &fov);
 			}
 
-			scene->camera = new Camera(position, lookAt);
+			scene->camera = new Camera(position, lookAt, fov);
 			cameraAdded = true;
+		}
+
+		//--------------------------------------------
+		// Renderer
+
+		if (strstr(line, "Renderer"))
+		{
+			char rendererType[20] = "None";
+			char envMap[200] = "None";
+
+			while (fgets(line, kMaxLineLength, file))
+			{
+				// end group
+				if (strchr(line, '}'))
+					break;
+
+				sscanf(line, " rendererType %s", &rendererType);
+				sscanf(line, " envMap %s", &envMap);
+				sscanf(line, " maxDepth %i", &scene->renderOptions.maxDepth);
+				sscanf(line, " maxSamples %i", &scene->renderOptions.maxSamples);
+				sscanf(line, " numTilesX %i", &scene->renderOptions.numTilesX);
+				sscanf(line, " numTilesY %i", &scene->renderOptions.numTilesY);
+
+				if (strcmp(envMap, "None") != 0)
+				{
+					HDRLoader hdrLoader;
+					hdrLoader.load(envMap, scene->hdrLoaderRes);
+					scene->renderOptions.useEnvMap = true;
+				}
+				scene->renderOptions.rendererType = std::string(rendererType);
+			}
 		}
 
 
@@ -339,7 +360,10 @@ bool LoadScene(Scene *scene, const char* filename)
 				}
 			}
 			if (!meshPath.empty())
+			{
+				printf("Loading Model: %s\n", meshPath.c_str());
 				LoadModel(scene, meshPath, materialId);
+			}
 		}
 	}
 
@@ -351,13 +375,13 @@ bool LoadScene(Scene *scene, const char* filename)
 	int width, height;
 
 	scene->texData.albedoTexCount = albedoTex.size();
-	scene->texData.metallicTexCount = metallicTex.size();
-	scene->texData.roughnessTexCount = roughnessTex.size();
+	scene->texData.metallicRoughnessTexCount = metallicRoughnessTex.size();
 	scene->texData.normalTexCount = normalTex.size();
 
 	//Load albedo Textures
 	for (size_t i = 0; i < albedoTex.size(); i++)
 	{
+		printf("Loading Texture: %s\n", albedoTex[i].c_str());
 		unsigned char * texture = SOIL_load_image(albedoTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 		if(i == 0) // Alloc memory based on first texture size
 			scene->texData.albedoTextures = new unsigned char[width * height * 3 * albedoTex.size()];
@@ -366,32 +390,22 @@ bool LoadScene(Scene *scene, const char* filename)
 	}
 	scene->texData.albedoTextureSize = glm::vec2(width, height);
 
-	// TODO: Combine metallic and roughness into two channels of same texture
-	//Load Metallic textures
-	for (size_t i = 0; i < metallicTex.size(); i++)
+	//Load MetallicRoughness textures
+	for (size_t i = 0; i < metallicRoughnessTex.size(); i++)
 	{
-		unsigned char * texture = SOIL_load_image(metallicTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
+		printf("Loading Texture: %s\n", metallicRoughnessTex[i].c_str());
+		unsigned char * texture = SOIL_load_image(metallicRoughnessTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 		if (i == 0) // Alloc memory based on first texture size
-			scene->texData.metallicTextures = new unsigned char[width * height * 3 * metallicTex.size()];
-		memcpy(&(scene->texData.metallicTextures[width * height * 3 * i]), &texture[0], width * height * 3);
+			scene->texData.metallicRoughnessTextures = new unsigned char[width * height * 3 * metallicRoughnessTex.size()];
+		memcpy(&(scene->texData.metallicRoughnessTextures[width * height * 3 * i]), &texture[0], width * height * 3);
 		delete texture;
 	}
-	scene->texData.metallicTextureSize = glm::vec2(width, height);
-
-	//Load roughness textures
-	for (size_t i = 0; i < roughnessTex.size(); i++)
-	{
-		unsigned char * texture = SOIL_load_image(roughnessTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
-		if (i == 0) // Alloc memory based on first texture size
-			scene->texData.roughnessTextures = new unsigned char[width * height * 3 * roughnessTex.size()];
-		memcpy(&(scene->texData.roughnessTextures[width * height * 3 * i]), &texture[0], width * height * 3);
-		delete texture;
-	}
-	scene->texData.roughnessTextureSize = glm::vec2(width, height);
+	scene->texData.metallicRoughnessTextureSize = glm::vec2(width, height);
 
 	//Load normal textures
 	for (size_t i = 0; i < normalTex.size(); i++)
 	{
+		printf("Loading Texture: %s\n", normalTex[i].c_str());
 		unsigned char * texture = SOIL_load_image(normalTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
 		if (i == 0) // Alloc memory based on first texture size
 			scene->texData.normalTextures = new unsigned char[width * height * 3 * normalTex.size()];

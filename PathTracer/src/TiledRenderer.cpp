@@ -20,10 +20,10 @@ void TiledRenderer::init()
 	//----------------------------------------------------------
 	// Shaders
 	//----------------------------------------------------------
-	pathTraceShader  = loadShaders("src/shaders/Tiled/PathTraceVert.glsl", "src/shaders/Tiled/PathTraceFrag.glsl");
-	accumShader      = loadShaders("src/shaders/Tiled/AccumVert.glsl", "src/shaders/Tiled/AccumFrag.glsl");
-	tileOutputShader = loadShaders("src/shaders/Tiled/TileOutputVert.glsl", "src/shaders/Tiled/TileOutputFrag.glsl");
-	outputShader     = loadShaders("src/shaders/Tiled/OutputVert.glsl", "src/shaders/Tiled/OutputFrag.glsl");
+	pathTraceShader  = loadShaders("./PathTracer/src/shaders/Tiled/PathTraceVert.glsl",  "./PathTracer/src/shaders/Tiled/PathTraceFrag.glsl");
+	accumShader      = loadShaders("./PathTracer/src/shaders/Tiled/AccumVert.glsl",      "./PathTracer/src/shaders/Tiled/AccumFrag.glsl");
+	tileOutputShader = loadShaders("./PathTracer/src/shaders/Tiled/TileOutputVert.glsl", "./PathTracer/src/shaders/Tiled/TileOutputFrag.glsl");
+	outputShader     = loadShaders("./PathTracer/src/shaders/Tiled/OutputVert.glsl",     "./PathTracer/src/shaders/Tiled/OutputFrag.glsl");
 
 	//----------------------------------------------------------
 	// FBO Setup
@@ -79,6 +79,7 @@ void TiledRenderer::init()
 	glUniform1f(glGetUniformLocation(shaderObject, "camera.fov"), scene->camera->fov);
 	glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
 	glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
+	glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->renderOptions.useEnvMap);
 	
 	glUniform1i(glGetUniformLocation(shaderObject,  "maxDepth"), maxDepth);
 	glUniform2fv(glGetUniformLocation(shaderObject, "screenResolution"), 1, glm::value_ptr(screenSize));
@@ -94,9 +95,9 @@ void TiledRenderer::init()
 	glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 5);
 	glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 6);
 	glUniform1i(glGetUniformLocation(shaderObject, "albedoTextures"), 7);
-	glUniform1i(glGetUniformLocation(shaderObject, "metallicTextures"), 8);
-	glUniform1i(glGetUniformLocation(shaderObject, "roughnessTextures"), 9);
-	glUniform1i(glGetUniformLocation(shaderObject, "normalTextures"), 10);
+	glUniform1i(glGetUniformLocation(shaderObject, "metallicRoughnessTextures"), 8);
+	glUniform1i(glGetUniformLocation(shaderObject, "normalTextures"), 9);
+	glUniform1i(glGetUniformLocation(shaderObject, "hdrTexture"), 10);
 
 	pathTraceShader->stopUsing();
 
@@ -133,11 +134,11 @@ void TiledRenderer::render()
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, albedoTextures);
 		glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, metallicTextures);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, metallicRoughnessTextures);
 		glActiveTexture(GL_TEXTURE9);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, roughnessTextures);
-		glActiveTexture(GL_TEXTURE10);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
+		glActiveTexture(GL_TEXTURE10);
+		glBindTexture(GL_TEXTURE_2D, hdrTexture);
 
 		quad->Draw(pathTraceShader);
 
@@ -170,7 +171,10 @@ void TiledRenderer::render()
 			tileX = 0;
 			tileY--;
 			if (tileY < 0)
+			{
 				renderCompleted = true;
+				printf("Completed: %f secs\n", totalTime);
+			}
 		}
 	}
 }
@@ -179,6 +183,7 @@ void TiledRenderer::update(float secondsElapsed)
 {
 	if (!renderCompleted)
 	{
+		totalTime += secondsElapsed;
 		sampleCounter[tileX][tileY] += 1;
 
 		float r1 = ((float)rand() / (RAND_MAX));

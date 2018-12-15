@@ -1,14 +1,14 @@
 #include <Camera.h>
-
-Camera::Camera(glm::vec3 pos, glm::vec3 lookAt)
+#include <iostream>
+Camera::Camera(glm::vec3 pos, glm::vec3 lookAt, float fov)
 {
 	position = pos;
 	worldUp = glm::vec3(0, 1, 0);
 	glm::vec3 dir = glm::normalize(lookAt - position);
 	pitch = glm::degrees(asin(dir.y));
-	yaw = -90.0f + glm::degrees(atan2(dir.x, dir.z));
+	yaw =  glm::degrees(atan2(dir.z, dir.x));
 	
-	fov = glm::radians(35.0f);
+	this->fov = glm::radians(fov);
 	focalDist = 0.1f;
 	aperture = 0.0;
 	updateCamera();

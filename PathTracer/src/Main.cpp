@@ -16,9 +16,7 @@ using namespace glm;
 using namespace std;
 
 glm::vec2 screenSize(1280,720);
-int maxDepth = 2;
-int maxSamples = 50;
-float moveSpeed = 5.5f;
+float moveSpeed = 0.5f;
 float mouseSensitivity = 0.05f;
 double prevMouseX = 0, prevMouseY = 0;
 bool isCameraMoving = true;
@@ -29,16 +27,23 @@ Renderer *renderer;
 void init()
 {
 	scene = new Scene;
-	
-	if (!LoadScene(scene, "../assets/boy.scene"))
+
+	if (!LoadScene(scene, "./assets/glassBoy.scene"))
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);
 	}
 	std::cout << "Scene Loaded\n\n";
 
-	renderer = new TiledRenderer(scene, screenSize, 5, 5, maxSamples, maxDepth);
-	//renderer = new ProgressiveRenderer(scene, screenSize, maxDepth);
+	if(scene->renderOptions.rendererType.compare("Tiled") == 0)
+		renderer = new TiledRenderer(scene, screenSize);
+	else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
+		renderer = new ProgressiveRenderer(scene, screenSize);
+	else
+	{
+		std::cout << "Invalid Renderer Type" << std::endl;
+		exit(0);
+	}
 }
 
 void render(GLFWwindow *window)

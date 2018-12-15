@@ -82,7 +82,7 @@ BVHNode* SplitBVHBuilder::run(int &numNodes)  /// returns the rootnode
 	m_minOverlap = rootSpec.bounds.area() * m_params.splitAlpha;  /// split alpha (maximum allowable overlap) relative to size of rootnode
 	m_rightBounds.reset(max1i(rootSpec.numRef, (int)NumSpatialBins) - 1);
 	m_numDuplicates = 0;
-	//m_progressTimer.start();
+	m_progressTimer.start();
 
 	// Build recursively.
 	BVHNode* root = buildNode(rootSpec, 0, 0.0f, 1.0f);  /// actual building of splitBVH
@@ -127,12 +127,12 @@ BVHNode* SplitBVHBuilder::buildNode(const NodeSpec& spec, int level, F32 progres
 {
 	// Display progress.
 
-//	if (m_params.enablePrints && m_progressTimer.getElapsed() >= 1.0f)
-//	{
-//		printf("SplitBVHBuilder: progress %.0f%%, duplicates %.0f%%\r",
-//			progressStart * 100.0f, (F32)m_numDuplicates / (F32)m_bvh.getScene()->getNumTriangles() * 100.0f);
-//		m_progressTimer.start();
-//	}
+	if (m_params.enablePrints && m_progressTimer.getElapsed() >= 1.0f)
+	{
+		printf("SplitBVHBuilder: progress %.0f%%, duplicates %.0f%%\r",
+			progressStart * 100.0f, (F32)m_numDuplicates / (F32)m_bvh.getScene()->getNumTriangles() * 100.0f);
+		m_progressTimer.start();
+	}
 	 m_numNodes++;
 
 	// Small enough or too deep => create leaf.
