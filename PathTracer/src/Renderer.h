@@ -15,7 +15,6 @@ class Renderer
 {
 protected:
 	const Scene *scene;
-	GPUBVH *gpuBVH;
 	GLuint BVHTexture, triangleIndicesTexture, verticesTexture, materialsTexture, lightsTexture, normalsTexCoordsTexture;
 	GLuint albedoTextures, metallicRoughnessTextures, normalTextures, hdrTexture;
 	GLuint materialArrayBuffer, triangleBuffer, verticesBuffer, lightArrayBuffer, BVHBuffer, normalTexCoordBuffer;
@@ -32,5 +31,4 @@ public:
 	void init();
 	virtual void render() = 0;
 	virtual void update(float secondsElapsed) = 0;
-	GPUBVH* buildBVH();
 };

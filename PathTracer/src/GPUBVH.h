@@ -2,7 +2,7 @@
 
 #include "BVH.h"
 #include <glm/glm.hpp>
-#include "Scene.h"
+#include <vector>
 
 struct GPUBVHNode
 {
@@ -11,14 +11,18 @@ struct GPUBVHNode
 	glm::vec3 LRLeaf;
 };
 
+struct TriIndexData
+{
+	glm::vec4 indices;
+};
+
 class GPUBVH
 {
 public:
-	GPUBVH(const BVH *bvh,const Scene *scene);
+	GPUBVH(const BVH *bvh);
 	void createGPUBVH();
 	int traverseBVH(BVHNode *root);
 	GPUBVHNode *gpuNodes;
 	const BVH *bvh;
-	const Scene *scene;
-	std::vector<TriangleData> bvhTriangleIndices;
+	std::vector<TriIndexData> bvhTriangleIndices;
 };

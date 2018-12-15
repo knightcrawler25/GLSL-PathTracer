@@ -8,46 +8,6 @@ Program *loadShaders(std::string vertex_shader_fileName, std::string frag_shader
 	return new Program(shaders);
 }
 
-
-GPUBVH* Renderer::buildBVH()
-{
-	Array<GPUScene::Triangle> tris;
-	Array<Vec3f> verts;
-	tris.clear();
-	verts.clear();
-
-	GPUScene::Triangle newtri;
-
-	// convert Triangle to GPUScene::Triangle
-	int triCount = scene->triangleIndices.size();
-	for (unsigned int i = 0; i < triCount; i++) {
-		GPUScene::Triangle newtri;
-		newtri.vertices = Vec3i(scene->triangleIndices[i].indices.x, scene->triangleIndices[i].indices.y, scene->triangleIndices[i].indices.z);
-		tris.add(newtri);
-	}
-
-	// fill up Array of vertices
-	int verCount = scene->vertexData.size();
-	for (unsigned int i = 0; i < verCount; i++) {
-		verts.add(Vec3f(scene->vertexData[i].vertex.x, scene->vertexData[i].vertex.y, scene->vertexData[i].vertex.z));
-	}
-
-	std::cout << "Building a new GPU Scene\n";
-	GPUScene* gpuScene = new GPUScene(triCount, verCount, tris, verts);
-
-	std::cout << "Building BVH with spatial splits\n";
-	// create a default platform
-	Platform defaultplatform;
-	BVH::BuildParams defaultparams;
-	BVH::Stats stats;
-	BVH *myBVH = new BVH(gpuScene, defaultplatform, defaultparams);
-
-	std::cout << "Building GPU-BVH\n";
-	gpuBVH = new GPUBVH(myBVH, scene);
-	std::cout << "GPU-BVH successfully created\n";
-	return gpuBVH;
-}
-
 void Renderer::init()
 {
 	quad = new Quad();
@@ -57,36 +17,11 @@ void Renderer::init()
 		std::cout << "Error: No Scene Found";
 		exit(0);
 	}
-	gpuBVH = buildBVH();
-
-	std::cout << "Triangles: " << scene->triangleIndices.size() << std::endl;
-	std::cout << "Triangle Indices: " << gpuBVH->bvhTriangleIndices.size() << std::endl;
-	std::cout << "Vertices: " << scene->vertexData.size() << std::endl;
-
-	long long scene_data_bytes =
-		sizeof(GPUBVHNode) * gpuBVH->bvh->getNumNodes() +
-		sizeof(TriangleData) * gpuBVH->bvhTriangleIndices.size() +
-		sizeof(VertexData) * scene->vertexData.size() +
-		sizeof(NormalTexData) * scene->normalTexData.size() +
-		sizeof(MaterialData) * scene->materialData.size() +
-		sizeof(LightData) * scene->lightData.size();
-
-	std::cout << "GPU Memory used for BVH and scene data: " << scene_data_bytes / 1048576 << " MB" << std::endl;
-
-	long long tex_data_bytes =
-		scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y * scene->texData.albedoTexCount * 3 +
-		scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y * scene->texData.metallicRoughnessTexCount * 3 +
-		scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y * scene->texData.normalTexCount * 3 +
-		scene->hdrLoaderRes.width * scene->hdrLoaderRes.height * sizeof(GL_FLOAT) * 3;
-
-	std::cout << "GPU Memory used for Textures: " << tex_data_bytes / 1048576 << " MB" << std::endl;
-
-	std::cout << "Total GPU Memory used: " << (scene_data_bytes + tex_data_bytes) / 1048576 << " MB" << std::endl;
 
 	//Create Texture for BVH Tree
 	glGenBuffers(1, &BVHBuffer);
 	glBindBuffer(GL_TEXTURE_BUFFER, BVHBuffer);
-	glBufferData(GL_TEXTURE_BUFFER, sizeof(GPUBVHNode) * gpuBVH->bvh->getNumNodes(), &gpuBVH->gpuNodes[0], GL_STATIC_DRAW);
+	glBufferData(GL_TEXTURE_BUFFER, sizeof(GPUBVHNode) * scene->gpuBVH->bvh->getNumNodes(), &scene->gpuBVH->gpuNodes[0], GL_STATIC_DRAW);
 	glGenTextures(1, &BVHTexture);
 	glBindTexture(GL_TEXTURE_BUFFER, BVHTexture);
 	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, BVHBuffer);
@@ -94,7 +29,7 @@ void Renderer::init()
 	//Create Buffer and Texture for TriangleIndices
 	glGenBuffers(1, &triangleBuffer);
 	glBindBuffer(GL_TEXTURE_BUFFER, triangleBuffer);
-	glBufferData(GL_TEXTURE_BUFFER, sizeof(TriangleData) * gpuBVH->bvhTriangleIndices.size(), &gpuBVH->bvhTriangleIndices[0], GL_STATIC_DRAW);
+	glBufferData(GL_TEXTURE_BUFFER, sizeof(TriIndexData) * scene->gpuBVH->bvhTriangleIndices.size(), &scene->gpuBVH->bvhTriangleIndices[0], GL_STATIC_DRAW);
 	glGenTextures(1, &triangleIndicesTexture);
 	glBindTexture(GL_TEXTURE_BUFFER, triangleIndicesTexture);
 	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, triangleBuffer);

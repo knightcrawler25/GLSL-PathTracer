@@ -6,6 +6,7 @@
 #include <vector>
 #include <Camera.h>
 #include <hdrloader.h>
+#include <GPUBVH.h>
 
 struct TriangleData
 {
@@ -87,6 +88,7 @@ public:
 	Scene() {};
 	void addCamera(glm::vec3 pos, glm::vec3 lookAt, float fov);
 	Camera *camera;
+	GPUBVH *gpuBVH;
 	std::vector<TriangleData> triangleIndices;
 	std::vector<NormalTexData> normalTexData;
 	std::vector<VertexData> vertexData;
@@ -95,4 +97,5 @@ public:
 	TexData texData;
 	RenderOptions renderOptions;
 	HDRLoaderResult hdrLoaderRes;
+	void buildBVH();
 };
