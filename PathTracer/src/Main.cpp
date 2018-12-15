@@ -28,7 +28,7 @@ void init()
 {
 	scene = new Scene;
 
-	if (!LoadScene(scene, "./assets/glassBoy.scene"))
+	if (!LoadScene(scene, "./assets/boy.scene"))
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);

@@ -26,17 +26,17 @@ Features
 
 Build Instructions
 --------
-Open the visual studio project (I'm using VS Community 2017) and set the configuration to 'Release' and rebuild the solution. The configuration of the renderer/sample counts/depth is in the main.cpp file for now.
+Open the visual studio project (I'm using VS Community 2017) and set the configuration to 'Release' and x64 and rebuild the solution. The configuration of the renderer/sample counts/depth is moved to the scene file.
 The scene files are in the assets folder
 
 TODO
 --------
-- Actually use the normal maps (Right now they are just loaded and sent to the GPU but not used)
-- Move renderer configuration to scene file
+- ~~Actually use the normal maps (Right now they are just loaded and sent to the GPU but not used)~~
+- ~~Move renderer configuration to scene file~~
 - A way to write finished images from the tiled renderer to an output folder. 
 - Figure out a way to handle emissive geometry and mesh sampling
 - Sun Sky Model 
-- IBL
+- ~~IBL~~
 - Nested dielectrics
 
 Additional Screenshots
