@@ -43,6 +43,8 @@ TODO
 
 Additional Screenshots
 --------
+![Staircase](./screenshots/staircase.png)
+--------
 ![Substance Boy](./screenshots/MeetMat_Maps.png)
 --------
 ![City](./screenshots/city.png)

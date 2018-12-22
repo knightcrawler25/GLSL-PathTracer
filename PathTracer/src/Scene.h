@@ -73,8 +73,10 @@ struct RenderOptions
 		numTilesX = 5;
 		numTilesY = 5;
 		useEnvMap = false;
+		resolution = glm::vec2(500, 500);
 	}
 	std::string rendererType;
+	glm::vec2 resolution;
 	int maxSamples;
 	int maxDepth;
 	int numTilesX;

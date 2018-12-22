@@ -1,7 +1,8 @@
 Renderer
 {
 	rendererType Tiled
-	maxSamples 100
+	resolution 1280 720
+	maxSamples 750
 	maxDepth 2
 	numTilesX 5
 	numTilesY 5
@@ -68,6 +69,8 @@ mesh
 material object14001
 {
 	albedoTexture ./assets/police/textures/glass_baseColor.png
+	#materialType 1.0
+	#ior 1.45
 	metallic 0.5
 	roughness 0.001
 }
