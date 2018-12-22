@@ -437,7 +437,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 	vec2 texUV = state.texCoord;
 
 	if (int(mat.texIDs.x) >= 0)
-		mat.albedo.xyz = pow(texture(albedoTextures, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
+		mat.albedo.xyz *= pow(texture(albedoTextures, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
 
 	if (int(mat.texIDs.y) >= 0)
 		mat.param.xy = pow(texture(metallicRoughnessTextures, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
@@ -555,7 +555,7 @@ void UE4Pdf(in Ray ray, inout State state)
 	vec3 V = -ray.direction;
 	vec3 L = state.brdfDir;
 
-	float specularAlpha = max(0.01, state.mat.param.y);
+	float specularAlpha = max(0.001, state.mat.param.y);
 
 	float diffuseRatio = 0.5 * (1.0 - state.mat.param.x);
 	float specularRatio = 1.0 - diffuseRatio;
@@ -599,12 +599,12 @@ void UE4Sample(in Ray ray, inout State state)
 	}
 	else
 	{
-		float a = max(0.01, state.mat.param.y);
+		float a = max(0.001, state.mat.param.y);
 
 		float phi = r1 * 2.0 * PI;
 
 		float cosTheta = sqrt((1.0 - r2) / (1.0 + (a*a - 1.0) *r2));
-		float sinTheta = sqrt(1.0 - (cosTheta * cosTheta));
+		float sinTheta = clamp(sqrt(1.0 - (cosTheta * cosTheta)), 0.0, 1.0);
 		float sinPhi = sin(phi);
 		float cosPhi = cos(phi);
 
@@ -637,7 +637,7 @@ vec3 UE4Eval(in Ray ray, inout State state)
 	// specular	
 	float specular = 0.5;
 	vec3 specularCol = mix(vec3(1.0) * 0.08 * specular, state.mat.albedo.xyz, state.mat.param.x);
-	float a = max(0.01, state.mat.param.y);
+	float a = max(0.001, state.mat.param.y);
 	float Ds = GTR2(NDotH, a);
 	float FH = SchlickFresnel(LDotH);
 	vec3 Fs = mix(specularCol, vec3(1.0), FH);
@@ -872,7 +872,10 @@ vec3 PathTrace(Ray r)
 			UE4Sample(r, state);
 			UE4Pdf(r, state);
 
-			throughput *= UE4Eval(r, state) / state.pdf;
+			if (state.pdf > 0.0)
+				throughput *= UE4Eval(r, state) / state.pdf;
+			else
+				break;
 		}
 		else
 		{

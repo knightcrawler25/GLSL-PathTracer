@@ -22,9 +22,9 @@ protected:
 	int numOfLights;
 	glm::vec2 screenSize;
 public:
-	Renderer(const Scene *scene, glm::vec2 screenSize)
+	Renderer(const Scene *scene)
 	{ 
-		this->screenSize = screenSize;
+		this->screenSize = scene->renderOptions.resolution;
 		this->scene = scene;
 		init(); 
 	};

@@ -1,7 +1,19 @@
+Renderer
+{
+	rendererType Tiled
+	resolution 1280 720
+	maxSamples 100
+	maxDepth 2
+	numTilesX 5
+	numTilesY 5
+}
+
+
 Camera
 {
 	position 3.0 1.0 0.0
 	lookAt -1.0 0.8 0.0
+	fov 35
 }
 
 material white
@@ -12,22 +24,22 @@ material white
 material floor
 {
 	color 1.0 1.0 1.0
-	albedoTexture ../assets/bathroom/textures/floor_albedo.jpg
-	roughnessTexture ../assets/bathroom/textures/floor_roughness.jpg
+	albedoTexture ./assets/bathroom/textures/floor_albedo.jpg
+	roughnessTexture ./assets/bathroom/textures/floor_roughness.jpg
 }
 
 material shelf
 {
 	color 0.318547 0.043598 0.019605
-	albedoTexture ../assets/bathroom/textures/panel_albedo.jpg
-	roughnessTexture ../assets/bathroom/textures/panel_roughness.jpg
+	albedoTexture ./assets/bathroom/textures/panel_albedo.jpg
+	roughnessTexture ./assets/bathroom/textures/panel_roughness.jpg
 }
 
 material shelfSink
 {
 	color 0.7 0.7 0.7
-	albedoTexture ../assets/bathroom/textures/panel_albedo.jpg
-	roughnessTexture ../assets/bathroom/textures/panel_roughness.jpg
+	albedoTexture ./assets/bathroom/textures/panel_albedo.jpg
+	roughnessTexture ./assets/bathroom/textures/panel_roughness.jpg
 }
 
 material leftWall
@@ -101,110 +113,110 @@ material silver
 
 mesh
 {
-	file ../assets/bathroom/floor.obj
+	file ./assets/bathroom/floor.obj
 	material floor
 }
 
 mesh
 {
-	file ../assets/bathroom/holders.obj
+	file ./assets/bathroom/holders.obj
 	material silver
 }
 
 mesh
 {
-	file ../assets/bathroom/light_holder.obj
+	file ./assets/bathroom/light_holder.obj
 	material white
 }
 
 mesh
 {
-	file ../assets/bathroom/light_inner_ring.obj
+	file ./assets/bathroom/light_inner_ring.obj
 	material white
 }
 
 mesh
 {
-	file ../assets/bathroom/light_rod.obj
+	file ./assets/bathroom/light_rod.obj
 	material white
 }
 
 mesh
 {
-	file ../assets/bathroom/light_steel_rings.obj
+	file ./assets/bathroom/light_steel_rings.obj
 	material white
 }
 
 mesh
 {
-	file ../assets/bathroom/mirror.obj
+	file ./assets/bathroom/mirror.obj
 	material mirror
 }
 
 mesh
 {
-	file ../assets/bathroom/mirror_frame.obj
+	file ./assets/bathroom/mirror_frame.obj
 	material mirrorFrame
 }
 
 mesh
 {
-	file ../assets/bathroom/radiator.obj
+	file ./assets/bathroom/radiator.obj
 	material radiator
 }
 
 mesh
 {
-	file ../assets/bathroom/room.obj
+	file ./assets/bathroom/room.obj
 	material room
 }
 
 mesh
 {
-	file ../assets/bathroom/shelf.obj
+	file ./assets/bathroom/shelf.obj
 	material shelf
 }
 
 mesh
 {
-	file ../assets/bathroom/shelf_sink.obj
+	file ./assets/bathroom/shelf_sink.obj
 	material shelfSink
 }
 
 mesh
 {
-	file ../assets/bathroom/sink.obj
+	file ./assets/bathroom/sink.obj
 	material sink
 }
 
 mesh
 {
-	file ../assets/bathroom/stool.obj
+	file ./assets/bathroom/stool.obj
 	material stool
 }
 
 mesh
 {
-	file ../assets/bathroom/switches.obj
+	file ./assets/bathroom/switches.obj
 	material switches
 }
 
 mesh
 {
-	file ../assets/bathroom/taps.obj
+	file ./assets/bathroom/taps.obj
 	material taps
 }
 
 
 mesh
 {
-	file ../assets/bathroom/wall.obj
+	file ./assets/bathroom/wall.obj
 	material leftWall
 }
 
 mesh
 {
-	file ../assets/bathroom/wall_blue.obj
+	file ./assets/bathroom/wall_blue.obj
 	material blueWall
 }
 

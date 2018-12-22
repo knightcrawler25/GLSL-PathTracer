@@ -308,6 +308,7 @@ bool LoadScene(Scene *scene, const char* filename)
 					break;
 
 				sscanf(line, " rendererType %s", &rendererType);
+				sscanf(line, " resolution %f %f", &scene->renderOptions.resolution.x, &scene->renderOptions.resolution.y);
 				sscanf(line, " envMap %s", &envMap);
 				sscanf(line, " maxDepth %i", &scene->renderOptions.maxDepth);
 				sscanf(line, " maxSamples %i", &scene->renderOptions.maxSamples);

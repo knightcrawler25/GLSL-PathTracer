@@ -1,6 +1,7 @@
 Renderer
 {
 	rendererType Tiled
+	resolution 1280 720
 	maxSamples 100
 	maxDepth 2
 	numTilesX 5
@@ -40,7 +41,7 @@ material base
 	roughness 0.035
 	albedoTexture ./assets/Figurine/textures/03_Base_Base_Color.png
 	metallicRoughnessTexture ./assets/Figurine/textures/03_Base_MetallicRoughness.png
-	normalTexture ./assets/Figurine/textures/03_Base_Normal_DirectX.png
+	#normalTexture ./assets/Figurine/textures/03_Base_Normal_DirectX.png
 }
 
 material grid

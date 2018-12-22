@@ -13,7 +13,7 @@ private:
 	bool renderCompleted;
 	float **sampleCounter, totalTime;
 public:
-	TiledRenderer(const Scene *scene, glm::vec2 scrSize) : Renderer(scene, scrSize)
+	TiledRenderer(const Scene *scene) : Renderer(scene)
 	{ 
 		this->numTilesX = scene->renderOptions.numTilesX;
 		this->numTilesY = scene->renderOptions.numTilesY;

@@ -15,7 +15,6 @@
 using namespace glm;
 using namespace std;
 
-glm::vec2 screenSize(1280,720);
 float moveSpeed = 0.5f;
 float mouseSensitivity = 0.05f;
 double prevMouseX = 0, prevMouseY = 0;
@@ -69,9 +68,9 @@ void initScene()
 void initRenderer()
 {
 	if(scene->renderOptions.rendererType.compare("Tiled") == 0)
-		renderer = new TiledRenderer(scene, screenSize);
+		renderer = new TiledRenderer(scene);
 	else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
-		renderer = new ProgressiveRenderer(scene, screenSize);
+		renderer = new ProgressiveRenderer(scene);
 	else
 	{
 		std::cout << "Invalid Renderer Type" << std::endl;
@@ -128,7 +127,7 @@ void main()
 
 	GLFWwindow *window;
 	glfwInit();
-	window = glfwCreateWindow((int)screenSize.x, (int)screenSize.y, "PathTracer", 0, 0);
+	window = glfwCreateWindow((int)scene->renderOptions.resolution.x, (int)scene->renderOptions.resolution.y, "PathTracer", 0, 0);
 	glfwSetWindowPos(window, 300, 100);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPos(window, 0, 0);
