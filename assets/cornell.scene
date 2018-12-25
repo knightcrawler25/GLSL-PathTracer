@@ -1,0 +1,82 @@
+Renderer
+{
+	rendererType Progressive
+	resolution 700 700
+	maxSamples 500
+	maxDepth 5
+	numTilesX 5
+	numTilesY 5
+}
+
+Camera
+{
+	position 27.6 27.5 -75
+	lookAt 27.6 27.5 75
+	fov 39.3077
+}
+
+material white
+{
+	color 0.725 0.71 0.68
+}
+
+material red
+{
+	color 0.63 0.065 0.05
+}
+
+material green
+{
+	color 0.14 0.45 0.091
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_ceiling.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_floor.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_back.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_smallbox.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_largebox.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_greenwall.obj
+	material green
+}
+
+mesh
+{
+	file ./assets/cornell_box/cbox_redwall.obj
+	material red
+}
+
+light
+{
+	type Quad
+	position  34.299999 54.779997 22.700010
+	v1 34.299999 54.779997 33.200008
+	v2 21.300001 54.779997 22.700010
+	emission 17 12 4
+}
