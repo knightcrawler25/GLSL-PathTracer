@@ -3,7 +3,7 @@ Renderer
 	rendererType Tiled
 	resolution 640 800
 	maxSamples 200
-	maxDepth 2
+	maxDepth 3
 	numTilesX 5
 	numTilesY 5
 }

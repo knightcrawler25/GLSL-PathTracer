@@ -1,0 +1,148 @@
+Renderer
+{
+	rendererType Tiled
+	resolution 1280 720
+	maxSamples 1000
+	maxDepth 10
+	numTilesX 5
+	numTilesY 5
+}
+
+Camera
+{
+	position -15.0 15.0 0.0
+	lookAt 0 0 0
+	fov 35
+}
+
+material orangish
+{
+	color 1.0 0.186 0.0
+	roughness 0.035
+}
+
+material glass
+{
+	color 1.0 1.0 1.0
+	materialType 1.0
+	ior 1.45
+}
+
+material silver
+{
+	color 0.9 0.9 0.9
+	roughness 0.001
+	metallic 1.0 
+}
+
+material ring_silver
+{
+	color 1.0 1.0 1.0
+	roughness 0.01 
+	metallic 1.0 
+}
+
+material cream
+{
+	color 1.0 0.94 0.8
+}
+
+material ping
+{	
+	color 0.93 0.89 0.85
+	roughness 0.2
+}
+
+material marb1
+{
+	color 0.026 0.147 0.075
+	roughness 0.077
+}
+
+material marb2
+{
+	color 0.099 0.24 0.134
+	roughness 0.077
+}
+
+mesh
+{
+	file ./assets/hyperion/glass.obj
+	material glass
+}
+
+#mesh
+{
+	file ./assets/hyperion/dragon.obj
+#	material glass
+}
+
+mesh
+{
+	file ./assets/hyperion/chrome.obj
+	material silver
+}
+
+mesh
+{
+	file ./assets/hyperion/plate.obj
+	material cream
+}
+
+mesh
+{
+	file ./assets/hyperion/floor.obj
+	material cream
+}
+
+mesh
+{
+	file ./assets/hyperion/orange.obj
+	material orangish
+}
+
+mesh
+{
+	file ./assets/hyperion/ring1.obj
+	material ring_silver
+}
+
+mesh
+{
+	file ./assets/hyperion/ring2.obj
+	material ring_silver
+}
+
+mesh
+{
+	file ./assets/hyperion/ring3.obj
+	material ring_silver
+}
+
+mesh
+{
+	file ./assets/hyperion/marb1.obj
+	material marb1
+}
+
+mesh
+{
+	file ./assets/hyperion/marb2.obj
+	material marb2
+}
+
+mesh
+{
+	file ./assets/hyperion/pingpong.obj
+	material ping
+}
+
+light
+{
+	type Quad
+	position -5 10 -10
+	v1 -5 0 -10
+	v2 5 10 -10
+	emission 5 5 5 
+}
+

@@ -1,0 +1,116 @@
+Renderer
+{
+	rendererType Tiled
+	resolution 1280 720
+	maxSamples 500
+	maxDepth 10
+	numTilesX 5
+	numTilesY 5
+}
+
+Camera
+{
+	position 0.0 2.0 3.0
+	lookAt 0 1.2 0
+	fov 35
+}
+
+
+material gloss1
+{
+	color 0.6 0.6 0.6
+	roughness 0.09
+	metallic 1.0
+}
+
+material gloss2
+{
+	color 0.6 0.6 0.6
+	roughness 0.0413444
+	metallic 1.0
+}
+
+material gloss3
+{
+	color 0.6 0.6 0.6
+	roughness 0.0113778
+	metallic 1.0
+}
+
+material gloss4
+{
+	color 0.6 0.6 0.6
+	roughness 0.0001
+	metallic 1.0
+}
+
+material background
+{
+	color 0.7 0.7 0.7
+	roughness 0.75
+	metallic 0
+}
+
+mesh
+{
+	file ./assets/checks/veach/plane1.obj
+	material gloss1
+}
+
+mesh
+{
+	file ./assets/checks/veach/plane2.obj
+	material gloss2
+}
+
+mesh
+{
+	file ./assets/checks/veach/plane3.obj
+	material gloss3
+}
+
+mesh
+{
+	file ./assets/checks/veach/plane4.obj
+	material gloss4
+}
+
+mesh
+{
+	file ./assets/checks/veach/plane5.obj
+	material background
+}
+
+
+light
+{
+	emission 761.851 369.829 575.084
+	position -1 1.75 -2
+	radius 0.01
+	type Sphere
+}
+
+light
+{
+	emission 84.6501 77.3792 36.2366
+	position -0.333333 1.75 -2
+	radius 0.03
+	type Sphere
+}
+
+light
+{
+	emission 7.54754 15.548 6.65569
+	position 0.333333 1.75 -2
+	radius 0.07
+	type Sphere
+}
+
+light
+{
+	emission 0.924573 1.51058 3.5081
+	position 1 1.75 -2
+	radius 0.2
+	type Sphere
+}
+
