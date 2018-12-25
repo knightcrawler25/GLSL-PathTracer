@@ -7,7 +7,7 @@
 #include <vector>
 #include <Scene.h>
 
-bool LoadModel(Scene *scene, std::string filename, float materialId);
+void LoadModel(Scene *scene, std::string filename, float materialId);
 bool LoadScene(Scene *scene, const char* filename);
 
 #endif

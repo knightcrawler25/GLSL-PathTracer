@@ -1,0 +1,629 @@
+Renderer
+{
+	rendererType Tiled
+	resolution 1280 720
+	maxSamples 500
+	maxDepth 10
+	numTilesX 5
+	numTilesY 5
+}
+
+
+Camera
+{
+	position 0.0 1.0 5.0
+	lookAt 0.0 1.0 -1.0
+	fov 35
+}
+
+material Backdrop
+{
+	color 0.1 0.1 0.1
+}
+
+material RoughAluminium
+{
+	color 0.778 0.778 0.778
+	roughness 0.2
+	metallic 1.0
+}
+
+material RoughSteel
+{
+	color 0.2 0.2 0.2
+	roughness 0.1
+	metallic 1.0
+}
+
+material DarkPlastic
+{
+	color 0.01 0.01 0.01
+	roughness 0.2
+}
+
+material PinkLeather
+{
+	color 0.25 0.013 0.08
+	roughness 0.4
+}
+
+material Leather
+{
+	color 0.034 0.014 0.008
+	roughness 0.4
+}
+
+material RedLeather
+{
+	color 0.163 0.03 0.037
+	roughness 0.4
+}
+
+material BrightPinkLeather
+{
+	color 0.77 0.174 0.261
+	roughness 0.4
+}
+
+material Glass
+{
+	color 1.0 1.0 1.0
+	materialType 1.0
+	ior 1.45
+}
+
+material DarkRubber
+{
+	color 0.025 0.025 0.025
+	roughness 0.4
+}
+
+material Light1
+{
+	color 0.0 0.0 0.0
+	emission 20.000000 3.000000 3.000000
+}
+
+material Light2
+{
+	color 0.0 0.0 0.0
+	emission 3.886280 3.772550 3.431370
+}
+
+
+light
+{
+	type Quad
+	position -2.04973 5.14472 0.974365
+	v1 2.040 5.14472 0.974365  
+	v2 -2.04973 5.14472 2.251        
+	emission 9 9 10
+	
+}
+
+light
+{
+	type Quad
+	position -2.04973 5.14472 -2.24722 
+	v1 2.040 5.14472 -2.24722 
+	v2 -2.04973 5.14472 -0.97
+	emission 9 9 10
+}
+
+mesh
+{
+	file ./assets/ship/Mesh050.obj
+	material Backdrop
+}
+
+mesh
+{
+	file ./assets/ship/Mesh042.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh038.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh040.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh072.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh027.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh067.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh060.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh065.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh048.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh066.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh046.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh076.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh059.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh057.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh062.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh074.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh075.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh078.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh081.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh034.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh084.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh085.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh073.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh077.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh087.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh052.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh025.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh024.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh086.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh023.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh021.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh039.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh020.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh032.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh018.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh070.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh016.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh015.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh054.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh013.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh079.obj
+	material RoughAluminium
+}
+
+
+mesh
+{
+	file ./assets/ship/Mesh041.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh012.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh011.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh010.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh083.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh069.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh009.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh007.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh017.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh037.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh005.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh004.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh002.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh056.obj
+	material RoughAluminium
+}
+
+mesh
+{
+	file ./assets/ship/Mesh033.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh064.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh058.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh026.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh047.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh071.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh019.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh006.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh008.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh045.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh049.obj
+	material RoughSteel
+}
+
+
+mesh
+{
+	file ./assets/ship/Mesh014.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh003.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh051.obj
+	material RoughSteel
+}
+
+mesh
+{
+	file ./assets/ship/Mesh001.obj
+	material Glass
+}
+
+mesh
+{
+	file ./assets/ship/Mesh055.obj
+	material RedLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh036.obj
+	material RedLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh031.obj
+	material RedLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh022.obj
+	material RedLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh053.obj
+	material DarkPlastic
+}
+
+mesh
+{
+	file ./assets/ship/Mesh061.obj
+	material DarkPlastic
+}
+
+mesh
+{
+	file ./assets/ship/Mesh035.obj
+	material PinkLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh030.obj
+	material PinkLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh000.obj
+	material BrightPinkLeather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh044.obj
+	material Leather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh028.obj
+	material Leather
+}
+
+mesh
+{
+	file ./assets/ship/Mesh063.obj
+	material DarkRubber
+}
+
+mesh
+{
+	file ./assets/ship/Mesh068.obj
+	material DarkRubber
+}
+
+mesh
+{
+	file ./assets/ship/Mesh029.obj
+	material Light2
+}
+
+mesh
+{
+	file ./assets/ship/Mesh043.obj
+	material Light1
+}

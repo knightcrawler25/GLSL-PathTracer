@@ -3,7 +3,7 @@ Renderer
 	rendererType Tiled
 	resolution 1280 720
 	maxSamples 100
-	maxDepth 2
+	maxDepth 3
 	numTilesX 5
 	numTilesY 5
 }
@@ -81,7 +81,7 @@ light
 	position -0.103555 0.284840 0.606827
 	v1 -0.103555 0.465656 0.521355
 	v2 0.096445 0.284840 0.606827
-	emission 27 28.5 28.5
+	emission 40 41 41
 	type Quad
 }
 
@@ -90,6 +90,6 @@ light
 	position 0.303145 0.461806 -0.450967
 	v2 0.447143 0.461806 -0.306465
 	v1 0.362568 0.280251 -0.510182
-	emission 27 28.5 28.5
+	emission 40 41 41
 	type Quad
 }

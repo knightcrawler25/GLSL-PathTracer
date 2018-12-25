@@ -180,9 +180,8 @@ float SceneIntersect(Ray r, inout State state, inout LightSample lightSample)
 			if (d < t)
 			{
 				t = d;
-				lightSample = LightSample(position, vec3(0), emission, radiusAreaType.yz);
+				lightSample = LightSample(position, -r.direction, emission, radiusAreaType.yz);
 				state.isEmitter = true;
-				lightSample.normal = -r.direction;
 			}
 		}
 	}
@@ -236,7 +235,6 @@ float SceneIntersect(Ray r, inout State state, inout LightSample lightSample)
 					state.isEmitter = false;
 					state.triID = int(triIndex.w);
 					state.fhp = r.origin + r.direction * t;
-					state.hitDist = t;
 					state.bary = BarycentricCoord(state.fhp, v0, v1, v2);
 				}
 			}
@@ -277,6 +275,7 @@ float SceneIntersect(Ray r, inout State state, inout LightSample lightSample)
 		idx = stack[--ptr];
 	}
 
+	state.hitDist = t;
 	return t;
 }
 
@@ -863,7 +862,7 @@ vec3 PathTrace(Ray r)
 			state.specularBounce = false;
 			vec3 direct = DirectLight(r, state) * throughput;
 
-			if (depth < maxDepth && numOfLights > 0)
+			if (depth < maxDepth-1 && numOfLights > 0)
 				radiance += direct;
 
 			UE4Sample(r, state);

@@ -10,7 +10,7 @@
 
 static const int kMaxLineLength = 2048;
 
-bool LoadModel(Scene *scene, std::string filename, float materialId)
+void LoadModel(Scene *scene, std::string filename, float materialId)
 {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -21,7 +21,7 @@ bool LoadModel(Scene *scene, std::string filename, float materialId)
 	if (!ret)
 	{
 		printf_s("Unable to load model\n");
-		return false;
+		exit(0);
 	}
 
 	// Load vertices
@@ -93,7 +93,6 @@ bool LoadModel(Scene *scene, std::string filename, float materialId)
 			index_offset += fv;
 		}
 	}
-	return true;
 }
 
 bool LoadScene(Scene *scene, const char* filename)

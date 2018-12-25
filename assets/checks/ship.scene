@@ -1,0 +1,56 @@
+Renderer
+{
+	rendererType Tiled
+	resolution 1280 720
+	maxSamples 2000
+	maxDepth 2
+	numTilesX 5
+	numTilesY 5
+}
+
+
+Camera
+{
+	position 0.0 1.0 5.0
+	lookAt 0.0 1.0 -1.0
+	fov 35
+}
+
+material white
+{
+	color 1.0 1.0 1.0
+	brdf 2
+}
+
+mesh
+{
+	file ./assets/checks/ship.obj
+	material white
+}
+
+
+light
+{
+	type Sphere
+	position 0 2.0 0
+	emission 10 10 10
+	radius 0.2
+}
+
+
+light
+{
+	type Sphere
+	position -2.0 2.0 0
+	emission 10 10 10
+	radius 0.2
+}
+
+light
+{
+	type Sphere
+	position -2.0 0.5 0
+	emission 2 2 2
+	radius 0.2
+}
+
