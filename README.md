@@ -35,11 +35,14 @@ TODO
 - ~~Move renderer configuration to scene file~~
 - ~~IBL~~
 - ~~Emissive geometry~~
-- Fix issues with normal map
+- Two-level BVH for instances and transforms
+- Support to render out animation sequences
+- Displacement mapping
 - IBL importance sampling
 - Emissive mesh sampling
 - Sun Sky Model 
 - Nested dielectrics
+- Fix issues with normal map (Microfacet-based normal mapping?)
 
 Additional Screenshots
 --------
