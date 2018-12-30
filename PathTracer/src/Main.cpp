@@ -27,7 +27,7 @@ void initScene()
 {
 	scene = new Scene;
 
-	if (!LoadScene(scene, "./assets/boy.scene"))
+	if (!LoadScene(scene, "./assets/ajax.scene"))
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);

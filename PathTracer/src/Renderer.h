@@ -16,7 +16,7 @@ class Renderer
 protected:
 	const Scene *scene;
 	GLuint BVHTexture, triangleIndicesTexture, verticesTexture, materialsTexture, lightsTexture, normalsTexCoordsTexture;
-	GLuint albedoTextures, metallicRoughnessTextures, normalTextures, hdrTexture;
+	GLuint albedoTextures, metallicRoughnessTextures, normalTextures, hdrTexture, hdrMarginalDistTexture, hdrConditionalDistTexture;
 	GLuint materialArrayBuffer, triangleBuffer, verticesBuffer, lightArrayBuffer, BVHBuffer, normalTexCoordBuffer;
 	Quad *quad;
 	int numOfLights;

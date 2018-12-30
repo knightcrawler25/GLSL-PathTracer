@@ -74,6 +74,7 @@ struct RenderOptions
 		numTilesY = 5;
 		useEnvMap = false;
 		resolution = glm::vec2(500, 500);
+		hdrMultiplier = 1.0f;
 	}
 	std::string rendererType;
 	glm::vec2 resolution;
@@ -82,6 +83,7 @@ struct RenderOptions
 	int numTilesX;
 	int numTilesY;
 	bool useEnvMap;
+	float hdrMultiplier;
 };
 
 class Scene
