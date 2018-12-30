@@ -7,6 +7,10 @@
 	Info:		Load HDR image and convert to a set of float32 RGB triplet.
 ************************************************************************************/
 
+/* 
+	This is modified version of the original code. Addeed code to build marginal & conditional densities for IBL importance sampling
+*/
+
 #include "hdrloader.h"
 
 #include <math.h>
@@ -25,6 +29,106 @@ typedef unsigned char RGBE[4];
 static void workOnRGBE(RGBE *scan, int len, float *cols);
 static bool decrunch(RGBE *scanline, int len, FILE *file);
 static bool oldDecrunch(RGBE *scanline, int len, FILE *file);
+
+float Luminance(const glm::vec3 &c)
+{
+	return c.x*0.3f + c.y*0.6f + c.z*0.1f;
+}
+
+int LowerBound(const float* array, int lower, int upper, const float value)
+{
+	while (lower < upper)
+	{
+		int mid = lower + (upper - lower) / 2;
+
+		if (array[mid] < value)
+		{
+			lower = mid + 1;
+		}
+		else
+		{
+			upper = mid;
+		}
+	}
+
+	return lower;
+}
+
+void HDRLoader::buildDistributions(HDRLoaderResult &res)
+{
+	int width  = res.width;
+	int height = res.height;
+
+	float *pdf2D = new float[width*height];
+	float *cdf2D = new float[width*height];
+
+	float *pdf1D = new float[height];
+	float *cdf1D = new float[height];
+
+	res.marginalDistData    = new glm::vec2[height];
+	res.conditionalDistData = new glm::vec2[width*height];
+
+	float colWeightSum = 0.0f;
+
+	for (int j = 0; j < height; j++)
+	{
+		float rowWeightSum = 0.0f;
+
+		for (int i = 0; i < width; ++i)
+		{
+			float weight = Luminance(glm::vec3(res.cols[j*width * 3 + i * 3 + 0], res.cols[j*width * 3 + i * 3 + 1], res.cols[j*width * 3 + i * 3 + 2]));
+
+			rowWeightSum += weight;
+
+			pdf2D[j*width + i] = weight;
+			cdf2D[j*width + i] = rowWeightSum;
+		}
+
+		/* Convert to range 0,1 */
+		for (int i = 0; i < width; i++)
+		{
+			pdf2D[j*width + i] /= rowWeightSum;
+			cdf2D[j*width + i] /= rowWeightSum;
+		}
+
+		colWeightSum += rowWeightSum;
+
+		pdf1D[j] = rowWeightSum;
+		cdf1D[j] = colWeightSum;
+	}
+	
+	/* Convert to range 0,1 */
+	for (int j = 0; j < height; j++)
+	{
+		cdf1D[j] /= colWeightSum;
+		pdf1D[j] /= colWeightSum;
+	}
+
+	/* Precalculate row and col to avoid binary search during lookup in the shader */
+	for (int i = 0; i < height; i++)
+	{
+		float invHeight = (float)i / height;
+		int row = LowerBound(cdf1D, 0, height, invHeight);
+		res.marginalDistData[i].x = row / (float)height;
+		res.marginalDistData[i].y = pdf1D[i];
+	}
+
+	for (int j = 0; j < height; j++)
+	{
+		for (int i = 0; i < width; i++)
+		{
+			float invWidth = (float)i / width;
+			int col = LowerBound(cdf2D, j*width, (j + 1)*width, invWidth) - j * width;
+			res.conditionalDistData[j*width + i].x = col / (float)width;
+			res.conditionalDistData[j*width + i].y = pdf2D[j*width + i];
+		}
+	}
+
+	delete[] pdf2D;
+	delete[] pdf1D;
+	delete[] cdf2D;
+	delete[] cdf1D;
+}
 
 bool HDRLoader::load(const char *fileName, HDRLoaderResult &res)
 {
@@ -93,6 +197,7 @@ bool HDRLoader::load(const char *fileName, HDRLoaderResult &res)
 	delete [] scanline;
 	fclose(file);
 
+	buildDistributions(res);
 	return true;
 }
 

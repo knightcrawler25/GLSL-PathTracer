@@ -68,6 +68,8 @@ void ProgressiveRenderer::init()
 	glUniform2fv(glGetUniformLocation(shaderObject, "screenResolution"), 1, glm::value_ptr(screenSize));
 	glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
 	glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->renderOptions.useEnvMap);
+	glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrLoaderRes.width * scene->hdrLoaderRes.height);
+	glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
 
 	glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
 	glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
@@ -80,6 +82,8 @@ void ProgressiveRenderer::init()
 	glUniform1i(glGetUniformLocation(shaderObject, "metallicRoughnessTextures"), 8);
 	glUniform1i(glGetUniformLocation(shaderObject, "normalTextures"), 9);
 	glUniform1i(glGetUniformLocation(shaderObject, "hdrTexture"), 10);
+	glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTexture"), 11);
+	glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTexture"), 12);
 
 	pathTraceShader->stopUsing();
 
@@ -109,6 +113,10 @@ void ProgressiveRenderer::render()
 	glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
 	glActiveTexture(GL_TEXTURE10);
 	glBindTexture(GL_TEXTURE_2D, hdrTexture);
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_1D, hdrMarginalDistTexture);
+	glActiveTexture(GL_TEXTURE12);
+	glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTexture);
 
 	if (lowRes)
 	{

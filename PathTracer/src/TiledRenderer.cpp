@@ -80,7 +80,9 @@ void TiledRenderer::init()
 	glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
 	glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
 	glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->renderOptions.useEnvMap);
-	
+	glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), (float)(scene->hdrLoaderRes.width * scene->hdrLoaderRes.height));
+	glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
+
 	glUniform1i(glGetUniformLocation(shaderObject,  "maxDepth"), maxDepth);
 	glUniform2fv(glGetUniformLocation(shaderObject, "screenResolution"), 1, glm::value_ptr(screenSize));
 	glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
@@ -98,6 +100,8 @@ void TiledRenderer::init()
 	glUniform1i(glGetUniformLocation(shaderObject, "metallicRoughnessTextures"), 8);
 	glUniform1i(glGetUniformLocation(shaderObject, "normalTextures"), 9);
 	glUniform1i(glGetUniformLocation(shaderObject, "hdrTexture"), 10);
+	glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTexture"), 11);
+	glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTexture"), 12);
 
 	pathTraceShader->stopUsing();
 
@@ -139,6 +143,10 @@ void TiledRenderer::render()
 		glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
 		glActiveTexture(GL_TEXTURE10);
 		glBindTexture(GL_TEXTURE_2D, hdrTexture);
+		glActiveTexture(GL_TEXTURE11);
+		glBindTexture(GL_TEXTURE_1D, hdrMarginalDistTexture);
+		glActiveTexture(GL_TEXTURE12);
+		glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTexture);
 
 		quad->Draw(pathTraceShader);
 
