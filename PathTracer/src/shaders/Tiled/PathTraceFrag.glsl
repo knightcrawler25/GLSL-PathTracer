@@ -518,9 +518,7 @@ vec3 LambertEval(in Ray ray, inout State state, in vec3 bsdfDir)
 	if (NDotL <= 0.0 || NDotV <= 0.0)
 		return vec3(0.0);
 
-	vec3 brdf_col = state.mat.albedo.xyz / PI;
-
-	return brdf_col * clamp(dot(N, L), 0.0, 1.0);
+	return state.mat.albedo.xyz / PI;
 }
 
 //-------------------------End of Lambert BRDF-------------------------------
@@ -651,9 +649,7 @@ vec3 UE4Eval(in Ray ray, inout State state, in vec3 bsdfDir)
 	roughg = roughg * roughg;
 	float Gs = SmithG_GGX(NDotL, roughg) * SmithG_GGX(NDotV, roughg);
 
-	vec3 brdf_col = (state.mat.albedo.xyz / PI) * (1.0 - state.mat.param.x) + Gs * Fs*Ds;
-
-	return brdf_col * clamp(dot(N, L), 0.0, 1.0);
+	return (state.mat.albedo.xyz / PI) * (1.0 - state.mat.param.x) + Gs * Fs*Ds;
 }
 
 //-------------------------END OF UE4 BRDF-------------------------------
@@ -813,7 +809,7 @@ vec3 DirectLight(in Ray r, in State state)
 
 			float misWeight = powerHeuristic(lightPdf, bsdfPdf);
 			if (misWeight > 0.0)
-				L += misWeight * f * dot(lightDir, state.ffnormal) * color / lightPdf;
+				L += misWeight * f * abs(dot(lightDir, state.normal)) * color / lightPdf;
 		}
 	}
 
@@ -851,9 +847,9 @@ vec3 DirectLight(in Ray r, in State state)
 		{
 			float bsdfPdf = UE4Pdf(r, state, lightDir);
 			vec3 f = UE4Eval(r, state, lightDir);
-			float lightPdf = lightDistSq / (light.radiusAreaType.y * dot(lightSampleRec.normal, -lightDir));
+			float lightPdf = lightDistSq / (light.radiusAreaType.y * abs(dot(lightSampleRec.normal, lightDir)));
 
-			L += powerHeuristic(lightPdf, bsdfPdf) * f * lightSampleRec.emission / lightPdf;
+			L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.normal, lightDir)) * lightSampleRec.emission / lightPdf;
 		}
 	}
 
@@ -929,7 +925,7 @@ vec3 PathTrace(Ray r)
 			bsdfSampleRec.pdf = UE4Pdf(r, state, bsdfSampleRec.bsdfDir);
 
 			if (bsdfSampleRec.pdf > 0.0)
-				throughput *= UE4Eval(r, state, bsdfSampleRec.bsdfDir) / bsdfSampleRec.pdf;
+				throughput *= UE4Eval(r, state, bsdfSampleRec.bsdfDir) * abs(dot(state.normal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
 			else
 				break;
 		}
