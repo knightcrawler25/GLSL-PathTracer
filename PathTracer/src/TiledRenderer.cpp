@@ -3,7 +3,7 @@
 void TiledRenderer::init()
 {
 	renderCompleted = false;
-
+	totalTime = 0.0f;
 	sampleCounter = new float*[numTilesX];
 	for (int i = 0; i < numTilesX; i++)
 		sampleCounter[i] = new float[numTilesY];
