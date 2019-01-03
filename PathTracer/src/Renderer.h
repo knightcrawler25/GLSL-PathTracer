@@ -24,7 +24,12 @@ namespace GLSLPathTracer
         int numOfLights;
         glm::ivec2 screenSize;
     public:
-        Renderer(const Scene *scene)
+        Renderer(const Scene *scene) : albedoTextures(0)
+            , metallicRoughnessTextures(0)
+            , normalTextures(0)
+            , hdrTexture(0)
+            , hdrMarginalDistTexture(0)
+            , hdrConditionalDistTexture(0)
         {
             this->screenSize = scene->renderOptions.resolution;
             this->scene = scene;
