@@ -42,6 +42,7 @@ namespace GLSLPathTracer
     static const float M_PI = 3.14159265358979323846f;
 
     static const int kMaxLineLength = 2048;
+    int(*Log)(const char* szFormat, ...) = printf;
 
     void LoadModel(Scene *scene, const std::string &filename, float materialId)
     {
@@ -135,11 +136,11 @@ namespace GLSLPathTracer
 
         if (!file)
         {
-            printf("Couldn't open %s for reading\n", filename.c_str());
+            Log("Couldn't open %s for reading\n", filename.c_str());
             return false;
         }
 
-        printf("Loading Scene..\n");
+        Log("Loading Scene..\n");
 
         struct Material
         {
@@ -395,7 +396,7 @@ namespace GLSLPathTracer
                 }
                 if (!meshPath.empty())
                 {
-                    printf("Loading Model: %s\n", meshPath.c_str());
+                    Log("Loading Model: %s\n", meshPath.c_str());
                     LoadModel(scene, meshPath, materialId);
                 }
             }
@@ -415,7 +416,7 @@ namespace GLSLPathTracer
         //Load albedo Textures
         for (size_t i = 0; i < albedoTex.size(); i++)
         {
-            printf("Loading Texture: %s\n", albedoTex[i].c_str());
+            Log("Loading Texture: %s\n", albedoTex[i].c_str());
             unsigned char * texture = SOIL_load_image(albedoTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
             if (i == 0) // Alloc memory based on first texture size
                 scene->texData.albedoTextures = new unsigned char[width * height * 3 * albedoTex.size()];
@@ -427,7 +428,7 @@ namespace GLSLPathTracer
         //Load MetallicRoughness textures
         for (size_t i = 0; i < metallicRoughnessTex.size(); i++)
         {
-            printf("Loading Texture: %s\n", metallicRoughnessTex[i].c_str());
+            Log("Loading Texture: %s\n", metallicRoughnessTex[i].c_str());
             unsigned char * texture = SOIL_load_image(metallicRoughnessTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
             if (i == 0) // Alloc memory based on first texture size
                 scene->texData.metallicRoughnessTextures = new unsigned char[width * height * 3 * metallicRoughnessTex.size()];
@@ -439,7 +440,7 @@ namespace GLSLPathTracer
         //Load normal textures
         for (size_t i = 0; i < normalTex.size(); i++)
         {
-            printf("Loading Texture: %s\n", normalTex[i].c_str());
+            Log("Loading Texture: %s\n", normalTex[i].c_str());
             unsigned char * texture = SOIL_load_image(normalTex[i].c_str(), &width, &height, 0, SOIL_LOAD_RGB);
             if (i == 0) // Alloc memory based on first texture size
                 scene->texData.normalTextures = new unsigned char[width * height * 3 * normalTex.size()];

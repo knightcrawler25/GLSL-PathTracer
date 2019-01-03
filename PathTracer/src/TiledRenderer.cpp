@@ -184,7 +184,7 @@ namespace GLSLPathTracer
                 if (tileY < 0)
                 {
                     renderCompleted = true;
-                    printf("Completed: %f secs\n", totalTime);
+                    Log("Completed: %f secs\n", totalTime);
                 }
             }
         }
