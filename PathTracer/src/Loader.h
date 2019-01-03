@@ -1,13 +1,11 @@
-#ifndef __LOADER_H_
-#define __LOADER_H_
+#pragma once
 
-
-#include <glm/glm.hpp>
 #include <string>
-#include <vector>
-#include <Scene.h>
 
-void LoadModel(Scene *scene, std::string filename, float materialId);
-bool LoadScene(Scene *scene, const char* filename);
+namespace GLSLPathTracer
+{
+    class Scene;
 
-#endif
+    void LoadModel(Scene *scene, const std::string &filename, float materialId);
+    bool LoadScene(Scene *scene, const std::string &filename);
+}

@@ -4,6 +4,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.28010.2019
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PathTracer", "PathTracer\PathTracer.vcxproj", "{59EF80B0-FFD2-42B9-8792-E5E8A1C74FD0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2253D157-033A-47C7-B7C5-997C9BC5F29F} = {2253D157-033A-47C7-B7C5-997C9BC5F29F}
+		{C32FB2B4-500C-43CD-A099-EECCE079D3F1} = {C32FB2B4-500C-43CD-A099-EECCE079D3F1}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Nvidia-SBVH", "Nvidia-SBVH\Nvidia-SBVH.vcxproj", "{2253D157-033A-47C7-B7C5-997C9BC5F29F}"
 EndProject

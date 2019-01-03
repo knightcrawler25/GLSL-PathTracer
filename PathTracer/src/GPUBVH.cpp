@@ -1,57 +1,60 @@
 #include "GPUBVH.h"
 #include <iostream>
 
-static int current;
-
-int GPUBVH::traverseBVH(BVHNode *root)
+namespace GLSLPathTracer
 {
-	AABB *cbox = &root->m_bounds;
-	gpuNodes[current].BBoxMin[0] = cbox->min().x;
-	gpuNodes[current].BBoxMin[1] = cbox->min().y;
-	gpuNodes[current].BBoxMin[2] = cbox->min().z;
+    static int current;
 
-	gpuNodes[current].BBoxMax[0] = cbox->max().x;
-	gpuNodes[current].BBoxMax[1] = cbox->max().y;
-	gpuNodes[current].BBoxMax[2] = cbox->max().z;
+    int GPUBVH::traverseBVH(BVHNode *root)
+    {
+        AABB *cbox = &root->m_bounds;
+        gpuNodes[current].BBoxMin[0] = cbox->min().x;
+        gpuNodes[current].BBoxMin[1] = cbox->min().y;
+        gpuNodes[current].BBoxMin[2] = cbox->min().z;
 
-	gpuNodes[current].LRLeaf[2] = 0.0f;
+        gpuNodes[current].BBoxMax[0] = cbox->max().x;
+        gpuNodes[current].BBoxMax[1] = cbox->max().y;
+        gpuNodes[current].BBoxMax[2] = cbox->max().z;
 
-	int index = current;
+        gpuNodes[current].LRLeaf[2] = 0.0f;
 
-	if (root->isLeaf())
-	{
-		const LeafNode* leaf = reinterpret_cast<const LeafNode*>(root);
-		int start = bvhTriangleIndices.size();
+        int index = current;
 
-		gpuNodes[current].LRLeaf[0] = start;
-		gpuNodes[current].LRLeaf[1] = leaf->m_hi - leaf->m_lo;
-		gpuNodes[current].LRLeaf[2] = 1.0f;
-		
-		for (int i = leaf->m_lo; i < leaf->m_hi; i++)
-		{
-			int index = bvh->getTriIndices()[i];
-			const Vec3i& vtxInds = bvh->getScene()->getTriangle(index).vertices;
-			bvhTriangleIndices.push_back(TriIndexData{ glm::vec4(vtxInds.x,vtxInds.y,vtxInds.z, index) });
-		}
-	}
-	else
-	{
-		current++;
-		gpuNodes[index].LRLeaf[0] = traverseBVH(root->getChildNode(0));
-		current++;
-		gpuNodes[index].LRLeaf[1] = traverseBVH(root->getChildNode(1));
-	}
-	return index;
-}
+        if (root->isLeaf())
+        {
+            const LeafNode* leaf = reinterpret_cast<const LeafNode*>(root);
+            int start = int(bvhTriangleIndices.size());
 
-GPUBVH::GPUBVH(const BVH* bvh)
-{
-	this->bvh = bvh;
-	createGPUBVH();
-}
+            gpuNodes[current].LRLeaf[0] = float(start); // strange cast here. loss of data for big numbers
+            gpuNodes[current].LRLeaf[1] = float(leaf->m_hi - leaf->m_lo);
+            gpuNodes[current].LRLeaf[2] = 1.0f;
 
-void GPUBVH::createGPUBVH()
-{
-	gpuNodes = new GPUBVHNode[bvh->getNumNodes()];
-	traverseBVH(bvh->getRoot());
+            for (int i = leaf->m_lo; i < leaf->m_hi; i++)
+            {
+                int index = bvh->getTriIndices()[i];
+                const Vec3i& vtxInds = bvh->getScene()->getTriangle(index).vertices;
+                bvhTriangleIndices.push_back(TriIndexData{ glm::vec4(vtxInds.x,vtxInds.y,vtxInds.z, index) });
+            }
+        }
+        else
+        {
+            current++;
+            gpuNodes[index].LRLeaf[0] = float(traverseBVH(root->getChildNode(0)));
+            current++;
+            gpuNodes[index].LRLeaf[1] = float(traverseBVH(root->getChildNode(1)));
+        }
+        return index;
+    }
+
+    GPUBVH::GPUBVH(const BVH* bvh)
+    {
+        this->bvh = bvh;
+        createGPUBVH();
+    }
+
+    void GPUBVH::createGPUBVH()
+    {
+        gpuNodes = new GPUBVHNode[bvh->getNumNodes()];
+        traverseBVH(bvh->getRoot());
+    }
 }
