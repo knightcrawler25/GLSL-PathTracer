@@ -30,7 +30,7 @@ void initScene()
 {
 	scene = new Scene;
 
-	if (!LoadScene(scene, "./assets/ajax.scene"))
+	if (!LoadScene(scene, "./assets/cornell.scene"))
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);
