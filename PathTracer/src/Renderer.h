@@ -35,7 +35,7 @@ namespace GLSLPathTracer
             this->scene = scene;
             init();
         };
-        void init();
+        bool init();
         virtual void render() = 0;
         virtual void update(float secondsElapsed) = 0;
     };

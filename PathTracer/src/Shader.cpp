@@ -1,4 +1,6 @@
-﻿#include <Shader.h>
+﻿#include "Shader.h"
+#include "Loader.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -11,8 +13,8 @@ namespace GLSLPathTracer
         f.open(filePath.c_str(), std::ios::in | std::ios::binary);
         if (!f.is_open())
         {
-            std::cout << std::string("Failed to open file: ") + filePath << std::endl;
-            exit(0);
+            Log("Failed to open file: %s\n", filePath.c_str());
+            return;
         }
 
         //read whole file into stringstream buffer
@@ -37,7 +39,7 @@ namespace GLSLPathTracer
             delete[] info;
             glDeleteShader(_object);
             _object = 0;
-            std::cout << msg << std::endl;
+            Log("Shader compilation error %s\n", msg);
             throw std::runtime_error(msg);
         }
     }

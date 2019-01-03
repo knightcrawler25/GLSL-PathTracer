@@ -44,7 +44,7 @@ namespace GLSLPathTracer
     static const int kMaxLineLength = 2048;
     int(*Log)(const char* szFormat, ...) = printf;
 
-    void LoadModel(Scene *scene, const std::string &filename, float materialId)
+    bool LoadModel(Scene *scene, const std::string &filename, float materialId)
     {
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -54,8 +54,8 @@ namespace GLSLPathTracer
 
         if (!ret)
         {
-            printf_s("Unable to load model\n");
-            exit(0);
+            Log("Unable to load model\n");
+            return false;
         }
 
         // Load vertices
@@ -127,6 +127,7 @@ namespace GLSLPathTracer
                 index_offset += fv;
             }
         }
+        return true;
     }
 
     bool LoadScene(Scene *scene, const std::string &filename)
@@ -390,14 +391,17 @@ namespace GLSLPathTracer
                         }
                         else
                         {
-                            printf_s("Could not find material %s\n", path);
+                            Log("Could not find material %s\n", path);
                         }
                     }
                 }
                 if (!meshPath.empty())
                 {
                     Log("Loading Model: %s\n", meshPath.c_str());
-                    LoadModel(scene, meshPath, materialId);
+                    if (!LoadModel(scene, meshPath, materialId))
+                    {
+                        return false;
+                    }
                 }
             }
         }

@@ -68,7 +68,7 @@ void initScene()
 	// ----------------------------------- //
 }
 
-void initRenderer()
+bool initRenderer()
 {
 	if(scene->renderOptions.rendererType.compare("Tiled") == 0)
 		renderer = new TiledRenderer(scene);
@@ -76,9 +76,10 @@ void initRenderer()
 		renderer = new ProgressiveRenderer(scene);
 	else
 	{
-		std::cout << "Invalid Renderer Type" << std::endl;
-		exit(0);
+		Log("Invalid Renderer Type\n");
+        return false;
 	}
+    return true;
 }
 
 void render(GLFWwindow *window)
@@ -138,7 +139,8 @@ void main()
 	glfwSwapInterval(0);
 	glewInit();
 
-	initRenderer();
+    if (!initRenderer())
+        return;
 
 	double lastTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
