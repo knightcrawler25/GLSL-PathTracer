@@ -16,12 +16,12 @@ namespace GLSLPathTracer
         bool lowRes, fadeIn;
 
     public:
-        ProgressiveRenderer(const Scene *scene) : Renderer(scene)
+        ProgressiveRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene)
         {
             this->maxDepth = scene->renderOptions.maxDepth;
-            init();
+            init(shadersDirectory);
         };
-        void init();
+        void init(const std::string& shadersDirectory);
         void render();
         void update(float secondsElapsed);
     };

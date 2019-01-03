@@ -3,7 +3,7 @@
 
 namespace GLSLPathTracer
 {
-    void TiledRenderer::init()
+    void TiledRenderer::init(const std::string& shadersDirectory)
     {
         renderCompleted = false;
         totalTime = 0.0f;
@@ -23,10 +23,10 @@ namespace GLSLPathTracer
         //----------------------------------------------------------
         // Shaders
         //----------------------------------------------------------
-        pathTraceShader = loadShaders("./PathTracer/src/shaders/Tiled/PathTraceVert.glsl", "./PathTracer/src/shaders/Tiled/PathTraceFrag.glsl");
-        accumShader = loadShaders("./PathTracer/src/shaders/Tiled/AccumVert.glsl", "./PathTracer/src/shaders/Tiled/AccumFrag.glsl");
-        tileOutputShader = loadShaders("./PathTracer/src/shaders/Tiled/TileOutputVert.glsl", "./PathTracer/src/shaders/Tiled/TileOutputFrag.glsl");
-        outputShader = loadShaders("./PathTracer/src/shaders/Tiled/OutputVert.glsl", "./PathTracer/src/shaders/Tiled/OutputFrag.glsl");
+        pathTraceShader = loadShaders(shadersDirectory + "PathTraceVert.glsl", shadersDirectory + "PathTraceFrag.glsl");
+        accumShader = loadShaders(shadersDirectory + "AccumVert.glsl", shadersDirectory + "AccumFrag.glsl");
+        tileOutputShader = loadShaders(shadersDirectory + "TileOutputVert.glsl", shadersDirectory + "TileOutputFrag.glsl");
+        outputShader = loadShaders(shadersDirectory + "OutputVert.glsl", shadersDirectory + "OutputFrag.glsl");
 
         //----------------------------------------------------------
         // FBO Setup

@@ -3,7 +3,7 @@
 
 namespace GLSLPathTracer
 {
-    void ProgressiveRenderer::init()
+    void ProgressiveRenderer::init(const std::string& shadersDirectory)
     {
         sampleCounter = 1;
         timeToFade = 2.0f;
@@ -15,10 +15,10 @@ namespace GLSLPathTracer
         //----------------------------------------------------------
         // Shaders
         //----------------------------------------------------------
-        pathTraceShader = loadShaders("./PathTracer/src/shaders/Progressive/PathTraceVert.glsl", "./PathTracer/src/shaders/Progressive/PathTraceFrag.glsl");
-        accumShader = loadShaders("./PathTracer/src/shaders/Progressive/AccumVert.glsl", "./PathTracer/src/shaders/Progressive/AccumFrag.glsl");
-        outputShader = loadShaders("./PathTracer/src/shaders/Progressive/OutputVert.glsl", "./PathTracer/src/shaders/Progressive/OutputFrag.glsl");
-        outputFadeShader = loadShaders("./PathTracer/src/shaders/Progressive/OutputFadeVert.glsl", "./PathTracer/src/shaders/Progressive/OutputFadeFrag.glsl");
+        pathTraceShader = loadShaders(shadersDirectory + "PathTraceVert.glsl", shadersDirectory + "PathTraceFrag.glsl");
+        accumShader = loadShaders(shadersDirectory + "AccumVert.glsl", shadersDirectory + "AccumFrag.glsl");
+        outputShader = loadShaders(shadersDirectory + "OutputVert.glsl", shadersDirectory + "OutputFrag.glsl");
+        outputFadeShader = loadShaders(shadersDirectory + "OutputFadeVert.glsl", shadersDirectory + "OutputFadeFrag.glsl");
 
         //----------------------------------------------------------
         // FBO Setup

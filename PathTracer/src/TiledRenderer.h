@@ -15,15 +15,15 @@ namespace GLSLPathTracer
         bool renderCompleted;
         float **sampleCounter, totalTime;
     public:
-        TiledRenderer(const Scene *scene) : Renderer(scene)
+        TiledRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene)
         {
             this->numTilesX = scene->renderOptions.numTilesX;
             this->numTilesY = scene->renderOptions.numTilesY;
             this->maxSamples = scene->renderOptions.maxSamples;
             this->maxDepth = scene->renderOptions.maxDepth;
-            init();
+            init(shadersDirectory);
         };
-        void init();
+        void init(const std::string& shadersDirectory);
         void render();
         void update(float secondsElapsed);
     };
