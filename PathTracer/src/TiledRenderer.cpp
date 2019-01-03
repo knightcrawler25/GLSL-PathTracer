@@ -168,12 +168,6 @@ namespace GLSLPathTracer
             quad->Draw(outputShader);
         }
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, GLsizei(screenSize.x), GLsizei(screenSize.y));
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tileOutputTexture);
-        quad->Draw(tileOutputShader);
-
         if (sampleCounter[tileX][tileY] > maxSamples)
         {
             tileX++;
@@ -188,6 +182,13 @@ namespace GLSLPathTracer
                 }
             }
         }
+    }
+
+    void TiledRenderer::present()
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tileOutputTexture);
+        quad->Draw(tileOutputShader);
     }
 
     void TiledRenderer::update(float secondsElapsed)

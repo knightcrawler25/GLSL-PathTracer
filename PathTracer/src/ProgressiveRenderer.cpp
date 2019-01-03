@@ -148,21 +148,21 @@ namespace GLSLPathTracer
             glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
             quad->Draw(accumShader);
         }
+    }
 
+    void ProgressiveRenderer::present()
+    {
         //----------------------------------------------------------
         // final output
         //----------------------------------------------------------
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         if (lowRes)
         {
-            glViewport(0, 0, screenSize.x, screenSize.y);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, pathTraceTextureHalf);
             quad->Draw(outputShader);
         }
         else if (fadeIn)
         {
-            glViewport(0, 0, screenSize.x, screenSize.y);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, pathTraceTextureHalf);
             glActiveTexture(GL_TEXTURE1);
