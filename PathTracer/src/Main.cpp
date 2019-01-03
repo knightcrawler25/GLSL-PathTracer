@@ -30,7 +30,7 @@ void initScene()
 {
 	scene = new Scene;
 
-	if (!LoadScene(scene, "./assets/cornell.scene"))
+	if (!LoadScene(scene, "./assets/ajax.scene"))
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);
@@ -85,6 +85,10 @@ bool initRenderer()
 void render(GLFWwindow *window)
 {
 	renderer->render();
+    const glm::ivec2 screenSize = renderer->getScreenSize();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, screenSize.x, screenSize.y);
+    renderer->present();
 	glfwSwapBuffers(window);
 }
 

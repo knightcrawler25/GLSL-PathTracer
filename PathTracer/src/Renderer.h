@@ -35,8 +35,10 @@ namespace GLSLPathTracer
             this->scene = scene;
             init();
         };
+        const glm::ivec2 getScreenSize() const { return screenSize; }
         bool init();
         virtual void render() = 0;
+        virtual void present() = 0;
         virtual void update(float secondsElapsed) = 0;
     };
 }
