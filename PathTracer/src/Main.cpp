@@ -8,12 +8,15 @@
 
 #include <time.h>
 #include <math.h>
-#include <Scene.h>
-#include <TiledRenderer.h>
-#include <ProgressiveRenderer.h>
+
+#include "Scene.h"
+#include "TiledRenderer.h"
+#include "ProgressiveRenderer.h"
+#include "Camera.h"
 
 using namespace glm;
 using namespace std;
+using namespace GLSLPathTracer;
 
 float moveSpeed = 0.5f;
 float mouseSensitivity = 0.05f;
@@ -53,9 +56,9 @@ void initScene()
 	std::cout << "GPU Memory used for BVH and scene data: " << scene_data_bytes / 1048576 << " MB" << std::endl;
 
 	long long tex_data_bytes =
-		scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y * scene->texData.albedoTexCount * 3 +
-		scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y * scene->texData.metallicRoughnessTexCount * 3 +
-		scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y * scene->texData.normalTexCount * 3 +
+		int(scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y) * scene->texData.albedoTexCount * 3 +
+		int(scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y) * scene->texData.metallicRoughnessTexCount * 3 +
+		int(scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y) * scene->texData.normalTexCount * 3 +
 		scene->hdrLoaderRes.width * scene->hdrLoaderRes.height * sizeof(GL_FLOAT) * 3;
 
 	std::cout << "GPU Memory used for Textures: " << tex_data_bytes / 1048576 << " MB" << std::endl;
@@ -122,7 +125,7 @@ void update(float secondsElapsed, GLFWwindow *window)
 
 void main()
 {
-	srand(time(0));
+	srand(unsigned int(time(0)));
 	initScene();
 
 	GLFWwindow *window;
