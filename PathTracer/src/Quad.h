@@ -1,13 +1,17 @@
 #pragma once
-#include <Program.h>
-#include <Camera.h>
-#include <glm/gtc/type_ptr.hpp>
 
-class Quad
+#include <GL/glew.h>
+
+namespace GLSLPathTracer
 {
-	public:
-		Quad();
-		void Draw(Program *);
-	private:
-		GLuint vao, vbo;
-};
+    class Program;
+
+    class Quad
+    {
+    public:
+        Quad();
+        void Draw(Program *);
+    private:
+        GLuint vao, vbo;
+    };
+}

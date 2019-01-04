@@ -4,25 +4,28 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-struct GPUBVHNode
+namespace GLSLPathTracer
 {
-	glm::vec3 BBoxMin;
-	glm::vec3 BBoxMax;
-	glm::vec3 LRLeaf;
-};
+    struct GPUBVHNode
+    {
+        glm::vec3 BBoxMin;
+        glm::vec3 BBoxMax;
+        glm::vec3 LRLeaf;
+    };
 
-struct TriIndexData
-{
-	glm::vec4 indices;
-};
+    struct TriIndexData
+    {
+        glm::vec4 indices;
+    };
 
-class GPUBVH
-{
-public:
-	GPUBVH(const BVH *bvh);
-	void createGPUBVH();
-	int traverseBVH(BVHNode *root);
-	GPUBVHNode *gpuNodes;
-	const BVH *bvh;
-	std::vector<TriIndexData> bvhTriangleIndices;
-};
+    class GPUBVH
+    {
+    public:
+        GPUBVH(const BVH *bvh);
+        void createGPUBVH();
+        int traverseBVH(BVHNode *root);
+        GPUBVHNode *gpuNodes;
+        const BVH *bvh;
+        std::vector<TriIndexData> bvhTriangleIndices;
+    };
+}
