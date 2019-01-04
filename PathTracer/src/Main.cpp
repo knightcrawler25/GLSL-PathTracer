@@ -8,12 +8,15 @@
 
 #include <time.h>
 #include <math.h>
-#include <Scene.h>
-#include <TiledRenderer.h>
-#include <ProgressiveRenderer.h>
+
+#include "Scene.h"
+#include "TiledRenderer.h"
+#include "ProgressiveRenderer.h"
+#include "Camera.h"
 
 using namespace glm;
 using namespace std;
+using namespace GLSLPathTracer;
 
 float moveSpeed = 0.5f;
 float mouseSensitivity = 0.05f;
@@ -53,9 +56,9 @@ void initScene()
 	std::cout << "GPU Memory used for BVH and scene data: " << scene_data_bytes / 1048576 << " MB" << std::endl;
 
 	long long tex_data_bytes =
-		scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y * scene->texData.albedoTexCount * 3 +
-		scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y * scene->texData.metallicRoughnessTexCount * 3 +
-		scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y * scene->texData.normalTexCount * 3 +
+		int(scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y) * scene->texData.albedoTexCount * 3 +
+		int(scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y) * scene->texData.metallicRoughnessTexCount * 3 +
+		int(scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y) * scene->texData.normalTexCount * 3 +
 		scene->hdrLoaderRes.width * scene->hdrLoaderRes.height * sizeof(GL_FLOAT) * 3;
 
 	std::cout << "GPU Memory used for Textures: " << tex_data_bytes / 1048576 << " MB" << std::endl;
@@ -65,22 +68,27 @@ void initScene()
 	// ----------------------------------- //
 }
 
-void initRenderer()
+bool initRenderer()
 {
 	if(scene->renderOptions.rendererType.compare("Tiled") == 0)
-		renderer = new TiledRenderer(scene);
+		renderer = new TiledRenderer(scene, "./PathTracer/src/shaders/Tiled/");
 	else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
-		renderer = new ProgressiveRenderer(scene);
+		renderer = new ProgressiveRenderer(scene, "./PathTracer/src/shaders/Progressive/");
 	else
 	{
-		std::cout << "Invalid Renderer Type" << std::endl;
-		exit(0);
+		Log("Invalid Renderer Type\n");
+        return false;
 	}
+    return true;
 }
 
 void render(GLFWwindow *window)
 {
 	renderer->render();
+    const glm::ivec2 screenSize = renderer->getScreenSize();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, screenSize.x, screenSize.y);
+    renderer->present();
 	glfwSwapBuffers(window);
 }
 
@@ -122,7 +130,7 @@ void update(float secondsElapsed, GLFWwindow *window)
 
 void main()
 {
-	srand(time(0));
+	srand(unsigned int(time(0)));
 	initScene();
 
 	GLFWwindow *window;
@@ -135,7 +143,8 @@ void main()
 	glfwSwapInterval(0);
 	glewInit();
 
-	initRenderer();
+    if (!initRenderer())
+        return;
 
 	double lastTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window))

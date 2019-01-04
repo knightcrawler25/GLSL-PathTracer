@@ -87,7 +87,7 @@ struct Vec3i
 
 	Vec3i(int _x = 0, int _y = 0, int _z = 0) : x(_x), y(_y), z(_z) {}
 	Vec3i(const Vec3i& v) : x(v.x), y(v.y), z(v.z) {}
-	Vec3i(const Vec3f& vf) : x(vf.x), y(vf.y), z(vf.z) {}
+	Vec3i(const Vec3f& vf) : x(int(vf.x)), y(int(vf.y)), z(int(vf.z)) {}
 
 	inline bool operator==(const Vec3i& v){ return x == v.x && y == v.y && z == v.z; }
 };
@@ -127,8 +127,8 @@ inline float distance(const Vec3f& v1, const Vec3f& v2){ return sqrtf((v1.x - v2
 inline Vec3f powf(const Vec3f& v1, const Vec3f& v2){ return Vec3f(powf(v1.x, v2.x), powf(v1.y, v2.y), powf(v1.z, v2.z)); }
 inline Vec3f expf(const Vec3f& v){ return Vec3f(expf(v.x), expf(v.y), expf(v.z)); }
 inline float clampf(float a, float lo, float hi){ return a < lo ? lo : a > hi ? hi : a; }
-inline Vec3f mixf(const Vec3f& v1, const Vec3f& v2, float a){ return v1 * (1.0 - a) + v2 * a; }
-inline float smoothstep(float edge0, float edge1, float x){ float t; t = clampf((x - edge0) / (edge1 - edge0), 0.0, 1.0); return t * t * (3.0 - 2.0 * t); }
+inline Vec3f mixf(const Vec3f& v1, const Vec3f& v2, float a){ return v1 * (1.0f - a) + v2 * a; }
+inline float smoothstep(float edge0, float edge1, float x){ float t; t = clampf((x - edge0) / (edge1 - edge0), 0.0f, 1.0f); return t * t * (3.0f - 2.0f * t); }
 
 //-------------------------------------------------------------------------------------------------
 
