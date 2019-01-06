@@ -5,6 +5,7 @@
 #include <vector>
 #include "hdrloader.h"
 #include "GPUBVH.h"
+#include "Renderer.h"
 
 namespace GLSLPathTracer
 {
@@ -63,29 +64,6 @@ namespace GLSLPathTracer
         glm::vec3 u;
         glm::vec3 v;
         glm::vec3 radiusAreaType;
-    };
-
-    struct RenderOptions
-    {
-        RenderOptions()
-        {
-            rendererType = "Tiled";
-            maxSamples = 10;
-            maxDepth = 2;
-            numTilesX = 5;
-            numTilesY = 5;
-            useEnvMap = false;
-            resolution = glm::vec2(500, 500);
-            hdrMultiplier = 1.0f;
-        }
-        std::string rendererType;
-        glm::ivec2 resolution;
-        int maxSamples;
-        int maxDepth;
-        int numTilesX;
-        int numTilesY;
-        bool useEnvMap;
-        float hdrMultiplier;
     };
 
     class Scene

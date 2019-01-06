@@ -357,7 +357,10 @@ namespace GLSLPathTracer
                         hdrLoader.load(envMap, scene->hdrLoaderRes);
                         scene->renderOptions.useEnvMap = true;
                     }
-                    scene->renderOptions.rendererType = std::string(rendererType);
+                    if (std::string(rendererType) == "Tiled")
+                        scene->renderOptions.rendererType = Renderer_Tiled;
+                    else
+                        scene->renderOptions.rendererType = Renderer_Progressive;
                 }
             }
 

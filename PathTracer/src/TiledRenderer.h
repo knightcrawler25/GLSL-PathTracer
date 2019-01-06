@@ -4,6 +4,7 @@
 
 namespace GLSLPathTracer
 {
+    class Scene;
     class TiledRenderer : public Renderer
     {
     private:
@@ -14,14 +15,8 @@ namespace GLSLPathTracer
         bool renderCompleted;
         float **sampleCounter, totalTime;
     public:
-        TiledRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
-            , numTilesX(scene->renderOptions.numTilesX)
-            , numTilesY(scene->renderOptions.numTilesY)
-            , maxSamples(scene->renderOptions.maxSamples)
-            , maxDepth(scene->renderOptions.maxDepth)
-        {
-        }
-        ~TiledRenderer() {}
+        TiledRenderer(const Scene *scene, const std::string& shadersDirectory);
+        ~TiledRenderer();
         
         void init();
         void finish();

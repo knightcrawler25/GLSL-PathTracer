@@ -1,9 +1,14 @@
 #include "Config.h"
 #include "ProgressiveRenderer.h"
 #include "Camera.h"
-
+#include "Scene.h"
 namespace GLSLPathTracer
 {
+    ProgressiveRenderer::ProgressiveRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
+        , maxDepth(scene->renderOptions.maxDepth)
+    {
+    }
+
     void ProgressiveRenderer::init()
     {
         if (initialized)
