@@ -158,6 +158,10 @@ void main()
 
 		render(window);
 	}
+
+    renderer->finish();
+    delete renderer;
+
 	glfwTerminate();
 }
 
