@@ -1,3 +1,4 @@
+#include "Config.h"
 #include "ProgressiveRenderer.h"
 #include "Camera.h"
 

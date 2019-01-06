@@ -1,4 +1,5 @@
-#include <Renderer.h>
+#include "Config.h"
+#include "Renderer.h"
 
 namespace GLSLPathTracer
 {
