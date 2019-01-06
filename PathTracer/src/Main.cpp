@@ -13,6 +13,15 @@
 #include "TiledRenderer.h"
 #include "ProgressiveRenderer.h"
 #include "Camera.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
 
 using namespace glm;
 using namespace std;
@@ -28,7 +37,7 @@ Renderer *renderer;
 
 void initScene()
 {
-	scene = LoadScene("./assets/ajax.scene");
+	scene = LoadScene("./assets/cornell.scene");
 
 	if (!scene)
 	{
@@ -94,6 +103,11 @@ void render(GLFWwindow *window)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, screenSize.x, screenSize.y);
     renderer->present();
+
+    // Rendering
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 	glfwSwapBuffers(window);
 }
 
@@ -148,6 +162,38 @@ void main()
 	glfwSwapInterval(0);
 	glewInit();
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+#if __APPLE__
+// GL 3.2 + GLSL 150
+    const char* glsl_version = "#version 150";
+    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
+    */
+#else
+    // GL 3.0 + GLSL 130
+    const char* glsl_version = "#version 130";
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+#endif
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
     if (!initRenderer())
         return;
 
@@ -155,17 +201,41 @@ void main()
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("GLSL PathTracer");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            ImGui::End();
+        }
+
+
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE))
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		double presentTime = glfwGetTime();
 		update((float)(presentTime - lastTime), window);
 		lastTime = presentTime;
-
+        
 		render(window);
 	}
 
     delete renderer;
     delete scene;
+
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
 	glfwTerminate();
 }
 
