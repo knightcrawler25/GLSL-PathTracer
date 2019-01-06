@@ -11,6 +11,29 @@ namespace GLSLPathTracer
         return new Program(shaders);
     }
 
+    void Renderer::finish()
+    {
+        glDeleteTextures(1, &BVHTexture);
+        glDeleteTextures(1, &triangleIndicesTexture);
+        glDeleteTextures(1, &verticesTexture);
+        glDeleteTextures(1, &materialsTexture);
+        glDeleteTextures(1, &lightsTexture);
+        glDeleteTextures(1, &normalsTexCoordsTexture);
+        glDeleteTextures(1, &albedoTextures);
+        glDeleteTextures(1, &metallicRoughnessTextures);
+        glDeleteTextures(1, &normalTextures);
+        glDeleteTextures(1, &hdrTexture);
+        glDeleteTextures(1, &hdrMarginalDistTexture);
+        glDeleteTextures(1, &hdrConditionalDistTexture);
+
+        glDeleteBuffers(1, &materialArrayBuffer);
+        glDeleteBuffers(1, &triangleBuffer);
+        glDeleteBuffers(1, &verticesBuffer);
+        glDeleteBuffers(1, &lightArrayBuffer);
+        glDeleteBuffers(1, &BVHBuffer);
+        glDeleteBuffers(1, &normalTexCoordBuffer);
+    }
+
     bool Renderer::init()
     {
         quad = new Quad();
