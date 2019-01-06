@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Renderer.h"
+#include "Scene.h"
 
 namespace GLSLPathTracer
 {
@@ -9,6 +10,24 @@ namespace GLSLPathTracer
         shaders.push_back(Shader(vertex_shader_fileName, GL_VERTEX_SHADER));
         shaders.push_back(Shader(frag_shader_fileName, GL_FRAGMENT_SHADER));
         return new Program(shaders);
+    }
+
+    Renderer::Renderer(const Scene *scene, const std::string& shadersDirectory) : albedoTextures(0)
+        , metallicRoughnessTextures(0)
+        , normalTextures(0)
+        , hdrTexture(0)
+        , hdrMarginalDistTexture(0)
+        , hdrConditionalDistTexture(0)
+        , initialized(false)
+        , scene(scene)
+        , screenSize(scene->renderOptions.resolution)
+        , shadersDirectory(shadersDirectory)
+    {
+    }
+    Renderer::~Renderer()
+    {
+        if (initialized)
+            this->finish();
     }
 
     void Renderer::finish()

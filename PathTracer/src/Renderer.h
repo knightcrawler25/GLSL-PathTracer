@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Scene.h"
 #include "Quad.h"
 #include "Program.h"
 #include "GPUBVH.h"
@@ -16,6 +15,31 @@ namespace GLSLPathTracer
         Renderer_Progressive,
         Renderer_Tiled,
     };
+
+    struct RenderOptions
+    {
+        RenderOptions()
+        {
+            rendererType = Renderer_Tiled;
+            maxSamples = 10;
+            maxDepth = 2;
+            numTilesX = 5;
+            numTilesY = 5;
+            useEnvMap = false;
+            resolution = glm::vec2(500, 500);
+            hdrMultiplier = 1.0f;
+        }
+        //std::string rendererType;
+        int rendererType; // see RendererType
+        glm::ivec2 resolution;
+        int maxSamples;
+        int maxDepth;
+        int numTilesX;
+        int numTilesY;
+        bool useEnvMap;
+        float hdrMultiplier;
+    };
+    class Scene;
     class Renderer
     {
     protected:
@@ -29,23 +53,8 @@ namespace GLSLPathTracer
         bool initialized;
         std::string shadersDirectory;
     public:
-        Renderer(const Scene *scene, const std::string& shadersDirectory) : albedoTextures(0)
-            , metallicRoughnessTextures(0)
-            , normalTextures(0)
-            , hdrTexture(0)
-            , hdrMarginalDistTexture(0)
-            , hdrConditionalDistTexture(0)
-            , initialized(false)
-            , scene(scene)
-            , screenSize(scene->renderOptions.resolution)
-            , shadersDirectory(shadersDirectory)
-        {
-        }
-        virtual ~Renderer() 
-        {
-            if (initialized)
-                this->finish();
-        }
+        Renderer(const Scene *scene, const std::string& shadersDirectory);
+        virtual ~Renderer();
         const glm::ivec2 getScreenSize() const { return screenSize; }
 
         virtual void init();

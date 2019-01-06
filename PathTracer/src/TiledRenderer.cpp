@@ -1,9 +1,22 @@
 #include "Config.h"
 #include "TiledRenderer.h"
 #include "Camera.h"
+#include "Scene.h"
 
 namespace GLSLPathTracer
 {
+    TiledRenderer::TiledRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
+        , numTilesX(scene->renderOptions.numTilesX)
+        , numTilesY(scene->renderOptions.numTilesY)
+        , maxSamples(scene->renderOptions.maxSamples)
+        , maxDepth(scene->renderOptions.maxDepth)
+    {
+    }
+
+    TiledRenderer::~TiledRenderer() 
+    {
+    }
+
     void TiledRenderer::init()
     {
         if (initialized)

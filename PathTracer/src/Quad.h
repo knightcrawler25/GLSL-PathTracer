@@ -1,4 +1,5 @@
 #pragma once
+#include "Config.h"
 
 namespace GLSLPathTracer
 {

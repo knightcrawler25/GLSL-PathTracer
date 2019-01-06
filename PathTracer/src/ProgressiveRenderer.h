@@ -4,6 +4,7 @@
 
 namespace GLSLPathTracer
 {
+    class Scene;
     class ProgressiveRenderer : public Renderer
     {
     private:
@@ -15,10 +16,7 @@ namespace GLSLPathTracer
         bool lowRes, fadeIn;
 
     public:
-        ProgressiveRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
-            , maxDepth(scene->renderOptions.maxDepth)
-        {
-        };
+        ProgressiveRenderer(const Scene *scene, const std::string& shadersDirectory);
         
         void init();
         void finish();

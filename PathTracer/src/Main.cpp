@@ -29,16 +29,29 @@ using namespace GLSLPathTracer;
 
 float moveSpeed = 0.5f;
 float mouseSensitivity = 0.05f;
-double prevMouseX = 0, prevMouseY = 0;
-bool isCameraMoving = true;
 bool keyPressed = false;
-Scene *scene = NULL;
-Renderer *renderer;
+Scene *scene = nullptr;
+Renderer *renderer = nullptr;
 
-void initScene()
+RenderOptions renderOptions;
+
+void loadScene(int index)
 {
-	scene = LoadScene("./assets/cornell.scene");
+    static const char *sceneFilenames[] = { "cornell.scene",
+        "ajax.scene",
+        "bathroom.scene",
+        "boy.scene",
+        "coffee.scene",
+        "diningroom.scene",
+        "glassBoy.scene",
+        "hyperion.scene",
+        "rank3police.scene",
+        "spaceship.scene",
+        "staircase.scene" };
 
+    delete scene;
+	scene = LoadScene(std::string("./assets/")+sceneFilenames[index]);
+    scene->renderOptions = renderOptions;
 	if (!scene)
 	{
 		std::cout << "Unable to load scene\n";
@@ -79,11 +92,12 @@ void initScene()
 
 bool initRenderer()
 {
-    if (scene->renderOptions.rendererType.compare("Tiled") == 0)
+    delete renderer;
+    if (scene->renderOptions.rendererType == Renderer_Tiled)
     {
         renderer = new TiledRenderer(scene, "./PathTracer/src/shaders/Tiled/");
     }
-    else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
+    else if (scene->renderOptions.rendererType == Renderer_Progressive)
     {
         renderer = new ProgressiveRenderer(scene, "./PathTracer/src/shaders/Progressive/");
     }
@@ -132,32 +146,31 @@ void update(float secondsElapsed, GLFWwindow *window)
 		scene->camera->offsetPosition(secondsElapsed * moveSpeed * scene->camera->right);
 		keyPressed = true;
 	}
-
+    
 	//Mouse Handling
 	scene->camera->isMoving = false;
-	double mouseX, mouseY;
-	glfwGetCursorPos(window, &mouseX, &mouseY);
-	if ( mouseX != prevMouseX || mouseY != prevMouseY || keyPressed)
-		scene->camera->isMoving = true;
-	
-	prevMouseX = mouseX;
-	prevMouseY = mouseY;
-	scene->camera->offsetOrientation(mouseSensitivity * (float)mouseX, mouseSensitivity * (float)mouseY);
-
-	glfwSetCursorPos(window, 0, 0);
+    if (!ImGui::IsMouseHoveringAnyWindow() && ImGui::IsMouseDown(0))
+    {
+        ImVec2 mouseDelta = ImGui::GetMouseDragDelta();
+        scene->camera->offsetOrientation(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
+        scene->camera->isMoving = true;
+        ImGui::ResetMouseDragDelta();
+    }
 }
 
 void main()
 {
 	srand(unsigned int(time(0)));
-	initScene();
+
+    int currentSceneIndex = 0;
+	loadScene(currentSceneIndex);
 
 	GLFWwindow *window;
 	glfwInit();
 	window = glfwCreateWindow((int)scene->renderOptions.resolution.x, (int)scene->renderOptions.resolution.y, "PathTracer", 0, 0);
 	glfwSetWindowPos(window, 300, 100);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPos(window, 0, 0);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	//glfwSetCursorPos(window, 0, 0);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(0);
 	glewInit();
@@ -208,13 +221,30 @@ void main()
         ImGui::NewFrame();
 
         {
-            static float f = 0.0f;
-            static int counter = 0;
-
             ImGui::Begin("GLSL PathTracer");                          // Create a window called "Hello, world!" and append into it.
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            if (ImGui::Combo("Scene", &currentSceneIndex, "cornell\0ajax\0bathroom\0boy\0coffee\0diningroom\0glassBoy\0hyperion\0rank3police\0spaceship\0staircase\0"))
+            {
+                loadScene(currentSceneIndex);
+                initRenderer();
+            }
 
+            bool renderOptionsChanged = false;
+            renderOptionsChanged |= ImGui::Combo("Render Type", &renderOptions.rendererType, "Progressive\0Tiled\0");
+            renderOptionsChanged |= ImGui::InputInt2("Resolution", &renderOptions.resolution.x);
+            renderOptionsChanged |= ImGui::InputInt("Max Samples", &renderOptions.maxSamples);
+            renderOptionsChanged |= ImGui::InputInt("Max Depth", &renderOptions.maxDepth);
+            renderOptionsChanged |= ImGui::InputInt("Tiles X", &renderOptions.numTilesX);
+            renderOptionsChanged |= ImGui::InputInt("Tiles Y", &renderOptions.numTilesY);
+            renderOptionsChanged |= ImGui::Checkbox("Use envmap", &renderOptions.useEnvMap);
+            renderOptionsChanged |= ImGui::InputFloat("HDR multiplier", &renderOptions.hdrMultiplier);
+
+            if (renderOptionsChanged)
+            {
+                scene->renderOptions = renderOptions;
+                initRenderer();
+            }
             ImGui::End();
         }
 
