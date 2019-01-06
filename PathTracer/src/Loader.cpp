@@ -130,7 +130,7 @@ namespace GLSLPathTracer
         return true;
     }
 
-    bool LoadScene(Scene *scene, const std::string &filename)
+    Scene* LoadScene(const std::string &filename)
     {
         FILE* file;
         fopen_s(&file, filename.c_str(), "r");
@@ -138,7 +138,7 @@ namespace GLSLPathTracer
         if (!file)
         {
             Log("Couldn't open %s for reading\n", filename.c_str());
-            return false;
+            return nullptr;
         }
 
         Log("Loading Scene..\n");
@@ -159,6 +159,7 @@ namespace GLSLPathTracer
 
         //Defaults
         MaterialData defaultMat;
+        Scene *scene = new Scene(filename);
         scene->materialData.push_back(defaultMat);
         materialCount++;
         Camera *defaultCamera = new Camera(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), 35.0f);
@@ -453,6 +454,6 @@ namespace GLSLPathTracer
         }
         scene->texData.normalTextureSize = glm::vec2(width, height);
 
-        return true;
+        return scene;
     }
 }
