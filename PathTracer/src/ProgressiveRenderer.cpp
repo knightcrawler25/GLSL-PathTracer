@@ -182,6 +182,13 @@ namespace GLSLPathTracer
         }
     }
 
+    float ProgressiveRenderer::getProgress() const
+    {
+        if (lowRes || fadeIn)
+            return 0.f;
+        return 1.f;
+    }
+
     void ProgressiveRenderer::present() const
     {
         if (!initialized)

@@ -26,7 +26,7 @@ namespace GLSLPathTracer
         void render();
         void present() const;
         void update(float secondsElapsed);
-        float getProgress() const { return 1.f; }
+        float getProgress() const;
         RendererType getType() const { return Renderer_Progressive; }
     };
 }

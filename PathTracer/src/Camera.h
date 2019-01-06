@@ -7,6 +7,8 @@ namespace GLSLPathTracer
     {
     public:
         Camera(glm::vec3 pos, glm::vec3 lookAt, float fov);
+        Camera(const Camera& other);
+        Camera& operator = (const Camera& other);
 
         void offsetOrientation(float x, float y);
         void offsetPosition(glm::vec3 val);
