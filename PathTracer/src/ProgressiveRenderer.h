@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Renderer.h>
+#include "Renderer.h"
 
 namespace GLSLPathTracer
 {

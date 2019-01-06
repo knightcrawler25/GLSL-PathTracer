@@ -1,3 +1,4 @@
+#include "Config.h"
 #include "TiledRenderer.h"
 #include "Camera.h"
 

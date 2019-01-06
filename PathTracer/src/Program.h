@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Shader.h>
+#include "Shader.h"
 
 // standard C++ libraries
 #include <vector>
