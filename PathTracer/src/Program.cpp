@@ -1,4 +1,3 @@
-#include <GL/glew.h>
 #include "Program.h"
 
 namespace GLSLPathTracer
