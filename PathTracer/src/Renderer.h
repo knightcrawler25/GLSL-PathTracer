@@ -1,18 +1,21 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Scene.h>
-#include <Quad.h>
-#include <Program.h>
-#include <GPUBVH.h>
-#include <Loader.h>
-#include <GLFW/glfw3.h>	
-#include <SOIL.h>
+#include "Scene.h"
+#include "Quad.h"
+#include "Program.h"
+#include "GPUBVH.h"
+#include "Loader.h"
+#include "SOIL.h"
 
 namespace GLSLPathTracer
 {
     Program *loadShaders(const std::string &vertex_shader_fileName, const std::string &frag_shader_fileName);
 
+    enum RendererType
+    {
+        Renderer_Progressive,
+        Renderer_Tiled,
+    };
     class Renderer
     {
     protected:
@@ -42,5 +45,7 @@ namespace GLSLPathTracer
         virtual void update(float secondsElapsed) = 0;
         // range is [0..1]
         virtual float getProgress() const = 0;
+        // used for UI
+        virtual RendererType getType() const = 0;
     };
 }

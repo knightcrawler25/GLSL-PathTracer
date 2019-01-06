@@ -28,9 +28,9 @@ Renderer *renderer;
 
 void initScene()
 {
-	scene = new Scene;
+	scene = LoadScene("./assets/ajax.scene");
 
-	if (!LoadScene(scene, "./assets/ajax.scene"))
+	if (!scene)
 	{
 		std::cout << "Unable to load scene\n";
 		exit(0);
