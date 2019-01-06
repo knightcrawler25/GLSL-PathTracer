@@ -23,7 +23,8 @@ namespace GLSLPathTracer
         };
         void init(const std::string& shadersDirectory);
         void render();
-        void present();
+        void present() const;
         void update(float secondsElapsed);
+        float getProgress() const { return 1.f; }
     };
 }

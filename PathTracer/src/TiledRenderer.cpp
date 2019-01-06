@@ -184,11 +184,16 @@ namespace GLSLPathTracer
         }
     }
 
-    void TiledRenderer::present()
+    void TiledRenderer::present() const
     {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tileOutputTexture);
         quad->Draw(tileOutputShader);
+    }
+
+    float TiledRenderer::getProgress() const
+    {
+        return float((numTilesY - tileY - 1) * numTilesX + tileX) / float(numTilesX * numTilesY);
     }
 
     void TiledRenderer::update(float secondsElapsed)
