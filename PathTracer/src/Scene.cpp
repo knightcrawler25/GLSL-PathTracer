@@ -7,9 +7,15 @@ namespace GLSLPathTracer
 {
     void Scene::addCamera(glm::vec3 pos, glm::vec3 lookAt, float fov)
     {
+        delete camera;
         camera = new Camera(pos, lookAt, fov);
     }
 
+    Scene::~Scene()
+    {
+        delete camera;
+        delete gpuBVH;
+    }
     void Scene::buildBVH()
     {
         Array<GPUScene::Triangle> tris;

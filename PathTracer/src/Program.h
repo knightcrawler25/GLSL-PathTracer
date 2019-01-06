@@ -13,6 +13,7 @@ namespace GLSLPathTracer
         GLuint _object;
     public:
         Program(const std::vector<Shader> shaders);
+        ~Program();
         void use();
         void stopUsing();
         GLuint object();

@@ -70,15 +70,20 @@ void initScene()
 
 bool initRenderer()
 {
-	if(scene->renderOptions.rendererType.compare("Tiled") == 0)
-		renderer = new TiledRenderer(scene, "./PathTracer/src/shaders/Tiled/");
-	else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
-		renderer = new ProgressiveRenderer(scene, "./PathTracer/src/shaders/Progressive/");
+    if (scene->renderOptions.rendererType.compare("Tiled") == 0)
+    {
+        renderer = new TiledRenderer(scene, "./PathTracer/src/shaders/Tiled/");
+    }
+    else if (scene->renderOptions.rendererType.compare("Progressive") == 0)
+    {
+        renderer = new ProgressiveRenderer(scene, "./PathTracer/src/shaders/Progressive/");
+    }
 	else
 	{
 		Log("Invalid Renderer Type\n");
         return false;
 	}
+    renderer->init();
     return true;
 }
 
@@ -159,9 +164,8 @@ void main()
 		render(window);
 	}
 
-    renderer->finish();
     delete renderer;
-
+    delete scene;
 	glfwTerminate();
 }
 

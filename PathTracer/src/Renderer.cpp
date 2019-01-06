@@ -13,6 +13,9 @@ namespace GLSLPathTracer
 
     void Renderer::finish()
     {
+        if (!initialized)
+            return;
+
         glDeleteTextures(1, &BVHTexture);
         glDeleteTextures(1, &triangleIndicesTexture);
         glDeleteTextures(1, &verticesTexture);
@@ -32,17 +35,23 @@ namespace GLSLPathTracer
         glDeleteBuffers(1, &lightArrayBuffer);
         glDeleteBuffers(1, &BVHBuffer);
         glDeleteBuffers(1, &normalTexCoordBuffer);
+
+        initialized = false;
+        Log("Renderer finished!\n");
     }
 
-    bool Renderer::init()
+    void Renderer::init()
     {
-        quad = new Quad();
+        if (initialized)
+            return;
 
-        if (scene == NULL)
+        if (scene == nullptr)
         {
             Log("Error: No Scene Found\n");
-            return false;
+            return ;
         }
+
+        quad = new Quad();
 
         //Create Texture for BVH Tree
         glGenBuffers(1, &BVHBuffer);
@@ -158,6 +167,7 @@ namespace GLSLPathTracer
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
-        return true;
+
+        initialized = true;
     }
 }
