@@ -91,7 +91,11 @@ namespace GLSLPathTracer
     class Scene
     {
     public:
-        Scene(const std::string filename) : filename(filename) {};
+        Scene(const std::string filename) : filename(filename)
+            , camera(nullptr) 
+            , gpuBVH(nullptr)
+        {}
+        ~Scene();
         void addCamera(glm::vec3 pos, glm::vec3 lookAt, float fov);
         Camera *camera;
         GPUBVH *gpuBVH;

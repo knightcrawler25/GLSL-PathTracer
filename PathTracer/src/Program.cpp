@@ -31,6 +31,11 @@ namespace GLSLPathTracer
         }
     }
 
+    Program::~Program()
+    {
+        glDeleteProgram(_object);
+    }
+
     void Program::use()
     {
         glUseProgram(_object);

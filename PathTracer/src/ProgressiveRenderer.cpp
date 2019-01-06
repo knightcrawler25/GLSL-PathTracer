@@ -4,8 +4,13 @@
 
 namespace GLSLPathTracer
 {
-    void ProgressiveRenderer::init(const std::string& shadersDirectory)
+    void ProgressiveRenderer::init()
     {
+        if (initialized)
+            return;
+
+        Renderer::init();
+
         sampleCounter = 1;
         timeToFade = 2.0f;
         fadeTimer = 0.0f;
@@ -90,11 +95,37 @@ namespace GLSLPathTracer
         glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTexture"), 12);
 
         pathTraceShader->stopUsing();
+    }
 
+    void ProgressiveRenderer::finish()
+    {
+        if (!initialized)
+            return;
+
+        glDeleteFramebuffers(1, &pathTraceFBO);
+        glDeleteFramebuffers(1, &pathTraceFBOHalf);
+        glDeleteFramebuffers(1, &accumFBO);
+
+        glDeleteTextures(1, &pathTraceTexture);
+        glDeleteTextures(1, &pathTraceTextureHalf);
+        glDeleteTextures(1, &accumTexture);
+
+        delete pathTraceShader;
+        delete accumShader;
+        delete outputShader;
+        delete outputFadeShader;
+
+        Renderer::finish();
     }
 
     void ProgressiveRenderer::render()
     {
+        if (!initialized)
+        {
+            Log("Tiled Renderer is not initialized\n");
+            return;
+        }
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, accumTexture);
         glActiveTexture(GL_TEXTURE1);
@@ -153,6 +184,9 @@ namespace GLSLPathTracer
 
     void ProgressiveRenderer::present() const
     {
+        if (!initialized)
+            return;
+
         //----------------------------------------------------------
         // final output
         //----------------------------------------------------------
@@ -180,6 +214,9 @@ namespace GLSLPathTracer
 
     void ProgressiveRenderer::update(float secondsElapsed)
     {
+        if (!initialized)
+            return;
+
         float r1, r2, r3;
         r1 = r2 = r3 = 0;
 
