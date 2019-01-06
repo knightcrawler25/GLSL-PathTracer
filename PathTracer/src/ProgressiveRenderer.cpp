@@ -150,7 +150,7 @@ namespace GLSLPathTracer
         }
     }
 
-    void ProgressiveRenderer::present()
+    void ProgressiveRenderer::present() const
     {
         //----------------------------------------------------------
         // final output
