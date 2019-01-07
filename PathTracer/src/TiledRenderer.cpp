@@ -1,10 +1,29 @@
+#include "Config.h"
 #include "TiledRenderer.h"
 #include "Camera.h"
+#include "Scene.h"
 
 namespace GLSLPathTracer
 {
-    void TiledRenderer::init(const std::string& shadersDirectory)
+    TiledRenderer::TiledRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
+        , numTilesX(scene->renderOptions.numTilesX)
+        , numTilesY(scene->renderOptions.numTilesY)
+        , maxSamples(scene->renderOptions.maxSamples)
+        , maxDepth(scene->renderOptions.maxDepth)
     {
+    }
+
+    TiledRenderer::~TiledRenderer() 
+    {
+    }
+
+    void TiledRenderer::init()
+    {
+        if (initialized)
+            return;
+
+        Renderer::init();
+
         renderCompleted = false;
         totalTime = 0.0f;
         sampleCounter = new float*[numTilesX];
@@ -110,8 +129,35 @@ namespace GLSLPathTracer
 
     }
 
+    void TiledRenderer::finish()
+    {
+        if (!initialized)
+            return;
+
+        glDeleteTextures(1, &pathTraceTexture);
+        glDeleteTextures(1, &accumTexture);
+        glDeleteTextures(1, &tileOutputTexture);
+
+        glDeleteFramebuffers(1, &pathTraceFBO);
+        glDeleteFramebuffers(1, &accumFBO);
+        glDeleteFramebuffers(1, &outputFBO);
+
+        delete pathTraceShader;
+        delete accumShader;
+        delete tileOutputShader;
+        delete outputShader;
+
+        Renderer::finish();
+    }
+
     void TiledRenderer::render()
     {
+        if (!initialized)
+        {
+            Log("Tiled Renderer is not initialized\n");
+            return;
+        }
+
         if (!renderCompleted)
         {
             GLuint shaderObject;
@@ -184,42 +230,48 @@ namespace GLSLPathTracer
         }
     }
 
-    void TiledRenderer::present()
+    void TiledRenderer::present() const
     {
+        if (!initialized)
+            return;
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tileOutputTexture);
         quad->Draw(tileOutputShader);
     }
 
+    float TiledRenderer::getProgress() const
+    {
+        return float((numTilesY - tileY - 1) * numTilesX + tileX) / float(numTilesX * numTilesY);
+    }
+
     void TiledRenderer::update(float secondsElapsed)
     {
-        if (!renderCompleted)
-        {
-            totalTime += secondsElapsed;
-            sampleCounter[tileX][tileY] += 1;
+        if (renderCompleted || !initialized)
+            return;
+        totalTime += secondsElapsed;
+        sampleCounter[tileX][tileY] += 1;
 
-            float r1 = ((float)rand() / (RAND_MAX));
-            float r2 = ((float)rand() / (RAND_MAX));
-            float r3 = ((float)rand() / (RAND_MAX));
+        float r1 = ((float)rand() / (RAND_MAX));
+        float r2 = ((float)rand() / (RAND_MAX));
+        float r3 = ((float)rand() / (RAND_MAX));
 
-            GLuint shaderObject;
+        GLuint shaderObject;
 
-            pathTraceShader->use();
-            shaderObject = pathTraceShader->object();
-            glUniform3fv(glGetUniformLocation(shaderObject, "randomVector"), 1, glm::value_ptr(glm::vec3(r1, r2, r3)));
-            glUniform1i(glGetUniformLocation(shaderObject, "tileX"), tileX);
-            glUniform1i(glGetUniformLocation(shaderObject, "tileY"), tileY);
-            pathTraceShader->stopUsing();
+        pathTraceShader->use();
+        shaderObject = pathTraceShader->object();
+        glUniform3fv(glGetUniformLocation(shaderObject, "randomVector"), 1, glm::value_ptr(glm::vec3(r1, r2, r3)));
+        glUniform1i(glGetUniformLocation(shaderObject, "tileX"), tileX);
+        glUniform1i(glGetUniformLocation(shaderObject, "tileY"), tileY);
+        pathTraceShader->stopUsing();
 
-            outputShader->use();
-            shaderObject = outputShader->object();
-            glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f / sampleCounter[tileX][tileY]);
-            outputShader->stopUsing();
+        outputShader->use();
+        shaderObject = outputShader->object();
+        glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f / sampleCounter[tileX][tileY]);
+        outputShader->stopUsing();
 
-            tileOutputShader->use();
-            shaderObject = tileOutputShader->object();
-            glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f);
-            tileOutputShader->stopUsing();
-        }
+        tileOutputShader->use();
+        shaderObject = tileOutputShader->object();
+        glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f);
+        tileOutputShader->stopUsing();
     }
 }

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Renderer.h>
+#include "Renderer.h"
 
 namespace GLSLPathTracer
 {
+    class Scene;
     class TiledRenderer : public Renderer
     {
     private:
@@ -15,17 +15,16 @@ namespace GLSLPathTracer
         bool renderCompleted;
         float **sampleCounter, totalTime;
     public:
-        TiledRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene)
-        {
-            this->numTilesX = scene->renderOptions.numTilesX;
-            this->numTilesY = scene->renderOptions.numTilesY;
-            this->maxSamples = scene->renderOptions.maxSamples;
-            this->maxDepth = scene->renderOptions.maxDepth;
-            init(shadersDirectory);
-        };
-        void init(const std::string& shadersDirectory);
+        TiledRenderer(const Scene *scene, const std::string& shadersDirectory);
+        ~TiledRenderer();
+        
+        void init();
+        void finish();
+
         void render();
-        void present();
+        void present() const;
         void update(float secondsElapsed);
+        float getProgress() const;
+        RendererType getType() const { return Renderer_Tiled; }
     };
 }

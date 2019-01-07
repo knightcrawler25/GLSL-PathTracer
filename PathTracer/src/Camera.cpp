@@ -15,6 +15,20 @@ namespace GLSLPathTracer
         focalDist = 0.1f;
         aperture = 0.0;
         updateCamera();
+    
+    }
+
+    Camera::Camera(const Camera& other)
+    {
+        *this = other;
+    }
+
+    Camera& Camera::operator = (const Camera& other)
+    {
+        ptrdiff_t l = (unsigned char*)&isMoving - (unsigned char*)&position.x;
+        isMoving = memcmp(&position.x, &other.position.x, l) != 0;
+        memcpy(&position.x, &other.position.x, l);
+        return *this;
     }
 
     void Camera::offsetOrientation(float x, float y)
