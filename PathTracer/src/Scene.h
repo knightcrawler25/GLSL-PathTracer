@@ -77,6 +77,8 @@ namespace GLSLPathTracer
         void addCamera(glm::vec3 pos, glm::vec3 lookAt, float fov);
         Camera *camera;
         GPUBVH *gpuBVH;
+		GPUScene *gpuScene;
+		BVH *bvh;
         std::vector<TriangleData> triangleIndices;
         std::vector<NormalTexData> normalTexData;
         std::vector<VertexData> vertexData;

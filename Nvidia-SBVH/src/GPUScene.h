@@ -44,7 +44,7 @@ public:
 	GPUScene(const S32 numTris, const S32 numVerts, const Array<Triangle>& tris, const Array<Vec3f>& verts) : 
 		m_numTris(numTris), m_numVerts(numVerts), m_tris(tris), m_verts(verts) {}
 
-	~GPUScene(void);
+	~GPUScene(void) {};
 
 	int             getNumTriangles(void) const   { return m_numTris; }
 	const Triangle* getTrianglePtr(int idx = 0)   { FW_ASSERT(idx >= 0 && idx <= m_numTris); return (const Triangle*)m_tris.getPtr() + idx; }
