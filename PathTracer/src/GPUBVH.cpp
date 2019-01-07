@@ -3,8 +3,6 @@
 
 namespace GLSLPathTracer
 {
-    static int current;
-
     int GPUBVH::traverseBVH(BVHNode *root)
     {
         AABB *cbox = &root->m_bounds;
@@ -49,8 +47,14 @@ namespace GLSLPathTracer
     GPUBVH::GPUBVH(const BVH* bvh)
     {
         this->bvh = bvh;
+		current = 0;
         createGPUBVH();
     }
+
+	GPUBVH::~GPUBVH()
+	{
+		delete[] gpuNodes;
+	}
 
     void GPUBVH::createGPUBVH()
     {

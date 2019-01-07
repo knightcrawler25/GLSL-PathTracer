@@ -22,10 +22,12 @@ namespace GLSLPathTracer
     {
     public:
         GPUBVH(const BVH *bvh);
+		~GPUBVH();
         void createGPUBVH();
         int traverseBVH(BVHNode *root);
         GPUBVHNode *gpuNodes;
         const BVH *bvh;
+		int current;
         std::vector<TriIndexData> bvhTriangleIndices;
     };
 }

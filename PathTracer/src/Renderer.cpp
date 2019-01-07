@@ -131,7 +131,6 @@ namespace GLSLPathTracer
             glGenTextures(1, &albedoTextures);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D_ARRAY, albedoTextures);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount);
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.albedoTextures);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -143,7 +142,6 @@ namespace GLSLPathTracer
         {
             glGenTextures(1, &metallicRoughnessTextures);
             glBindTexture(GL_TEXTURE_2D_ARRAY, metallicRoughnessTextures);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount);
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.metallicRoughnessTextures);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -155,7 +153,6 @@ namespace GLSLPathTracer
         {
             glGenTextures(1, &normalTextures);
             glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount);
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.normalTextures);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

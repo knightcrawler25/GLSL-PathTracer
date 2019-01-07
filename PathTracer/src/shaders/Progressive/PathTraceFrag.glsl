@@ -916,8 +916,7 @@ vec3 PathTrace(Ray r)
 		if (state.mat.albedo.w == 0.0) // UE4 Brdf
 		{
 			state.specularBounce = false;
-			if(depth < maxDepth - 1)
-				radiance += DirectLight(r, state) * throughput;
+			radiance += DirectLight(r, state) * throughput;
 
 			bsdfSampleRec.bsdfDir = UE4Sample(r, state);
 			bsdfSampleRec.pdf = UE4Pdf(r, state, bsdfSampleRec.bsdfDir);

@@ -15,6 +15,8 @@ namespace GLSLPathTracer
     {
         delete camera;
         delete gpuBVH;
+		delete gpuScene;
+		delete bvh;
     }
     void Scene::buildBVH()
     {
@@ -40,17 +42,17 @@ namespace GLSLPathTracer
         }
 
         std::cout << "Building a new GPU Scene\n";
-        GPUScene* gpuScene = new GPUScene(triCount, verCount, tris, verts);
+        gpuScene = new GPUScene(triCount, verCount, tris, verts);
 
         std::cout << "Building BVH with spatial splits\n";
         // create a default platform
         Platform defaultplatform;
         BVH::BuildParams defaultparams;
         BVH::Stats stats;
-        BVH *myBVH = new BVH(gpuScene, defaultplatform, defaultparams);
+        bvh = new BVH(gpuScene, defaultplatform, defaultparams);
 
         std::cout << "Building GPU-BVH\n";
-        gpuBVH = new GPUBVH(myBVH);
+        gpuBVH = new GPUBVH(bvh);
         std::cout << "GPU-BVH successfully created\n";
     }
 }
