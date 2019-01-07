@@ -1,10 +1,10 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Renderer.h>
+#include "Renderer.h"
 
 namespace GLSLPathTracer
 {
+    class Scene;
     class ProgressiveRenderer : public Renderer
     {
     private:
@@ -16,14 +16,15 @@ namespace GLSLPathTracer
         bool lowRes, fadeIn;
 
     public:
-        ProgressiveRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene)
-        {
-            this->maxDepth = scene->renderOptions.maxDepth;
-            init(shadersDirectory);
-        };
-        void init(const std::string& shadersDirectory);
+        ProgressiveRenderer(const Scene *scene, const std::string& shadersDirectory);
+        
+        void init();
+        void finish();
+
         void render();
-        void present();
+        void present() const;
         void update(float secondsElapsed);
+        float getProgress() const;
+        RendererType getType() const { return Renderer_Progressive; }
     };
 }

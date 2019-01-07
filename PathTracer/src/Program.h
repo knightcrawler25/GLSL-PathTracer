@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <Shader.h>
+#include "Shader.h"
 
 // standard C++ libraries
 #include <vector>
@@ -14,6 +13,7 @@ namespace GLSLPathTracer
         GLuint _object;
     public:
         Program(const std::vector<Shader> shaders);
+        ~Program();
         void use();
         void stopUsing();
         GLuint object();

@@ -1,4 +1,6 @@
-#include <Renderer.h>
+#include "Config.h"
+#include "Renderer.h"
+#include "Scene.h"
 
 namespace GLSLPathTracer
 {
@@ -10,15 +12,65 @@ namespace GLSLPathTracer
         return new Program(shaders);
     }
 
-    bool Renderer::init()
+    Renderer::Renderer(const Scene *scene, const std::string& shadersDirectory) : albedoTextures(0)
+        , metallicRoughnessTextures(0)
+        , normalTextures(0)
+        , hdrTexture(0)
+        , hdrMarginalDistTexture(0)
+        , hdrConditionalDistTexture(0)
+        , initialized(false)
+        , scene(scene)
+        , screenSize(scene->renderOptions.resolution)
+        , shadersDirectory(shadersDirectory)
     {
-        quad = new Quad();
+    }
+    Renderer::~Renderer()
+    {
+        if (initialized)
+            this->finish();
+    }
 
-        if (scene == NULL)
+    void Renderer::finish()
+    {
+        if (!initialized)
+            return;
+
+        glDeleteTextures(1, &BVHTexture);
+        glDeleteTextures(1, &triangleIndicesTexture);
+        glDeleteTextures(1, &verticesTexture);
+        glDeleteTextures(1, &materialsTexture);
+        glDeleteTextures(1, &lightsTexture);
+        glDeleteTextures(1, &normalsTexCoordsTexture);
+        glDeleteTextures(1, &albedoTextures);
+        glDeleteTextures(1, &metallicRoughnessTextures);
+        glDeleteTextures(1, &normalTextures);
+        glDeleteTextures(1, &hdrTexture);
+        glDeleteTextures(1, &hdrMarginalDistTexture);
+        glDeleteTextures(1, &hdrConditionalDistTexture);
+
+        glDeleteBuffers(1, &materialArrayBuffer);
+        glDeleteBuffers(1, &triangleBuffer);
+        glDeleteBuffers(1, &verticesBuffer);
+        glDeleteBuffers(1, &lightArrayBuffer);
+        glDeleteBuffers(1, &BVHBuffer);
+        glDeleteBuffers(1, &normalTexCoordBuffer);
+
+        initialized = false;
+        Log("Renderer finished!\n");
+    }
+
+    void Renderer::init()
+    {
+        if (initialized)
+            return;
+
+        if (scene == nullptr)
         {
             Log("Error: No Scene Found\n");
-            return false;
+            return ;
         }
+
+        quad = new Quad();
 
         //Create Texture for BVH Tree
         glGenBuffers(1, &BVHBuffer);
@@ -79,7 +131,7 @@ namespace GLSLPathTracer
             glGenTextures(1, &albedoTextures);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D_ARRAY, albedoTextures);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount);
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount);
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, scene->texData.albedoTextureSize.x, scene->texData.albedoTextureSize.y, scene->texData.albedoTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.albedoTextures);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -91,7 +143,7 @@ namespace GLSLPathTracer
         {
             glGenTextures(1, &metallicRoughnessTextures);
             glBindTexture(GL_TEXTURE_2D_ARRAY, metallicRoughnessTextures);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount);
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount);
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, scene->texData.metallicRoughnessTextureSize.x, scene->texData.metallicRoughnessTextureSize.y, scene->texData.metallicRoughnessTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.metallicRoughnessTextures);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -103,7 +155,7 @@ namespace GLSLPathTracer
         {
             glGenTextures(1, &normalTextures);
             glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextures);
-            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount);
+            glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount);
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8, scene->texData.normalTextureSize.x, scene->texData.normalTextureSize.y, scene->texData.normalTexCount, 0, GL_RGB, GL_UNSIGNED_BYTE, scene->texData.normalTextures);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -134,6 +186,7 @@ namespace GLSLPathTracer
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
-        return true;
+
+        initialized = true;
     }
 }

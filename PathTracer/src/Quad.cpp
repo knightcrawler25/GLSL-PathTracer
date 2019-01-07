@@ -1,3 +1,4 @@
+#include "Config.h"
 #include "Quad.h"
 #include "Program.h"
 

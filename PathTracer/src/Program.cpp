@@ -1,4 +1,4 @@
-#include <Program.h>
+#include "Program.h"
 
 namespace GLSLPathTracer
 {
@@ -28,6 +28,11 @@ namespace GLSLPathTracer
             //std::cout << msg << std::endl; TODO
             throw std::runtime_error(msg);
         }
+    }
+
+    Program::~Program()
+    {
+        glDeleteProgram(_object);
     }
 
     void Program::use()
