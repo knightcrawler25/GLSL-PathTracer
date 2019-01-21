@@ -15,9 +15,10 @@ file(GLOB EXT_FILES
     ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/src/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/src/*.c
     ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src/*.h
-    ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src/*.c
+    ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src/*.cpp
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.h
-    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.c
+    ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp
+	${CMAKE_SOURCE_DIR}/thirdparty/glew/src/glew.c
 )
 
 include_directories(
@@ -27,10 +28,11 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src
   ${CMAKE_SOURCE_DIR}/thirdparty/glfw/include
   ${CMAKE_SOURCE_DIR}/thirdparty/glew/include
+  ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/include
 )
 
 link_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw/lib/x64
+  ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw/lib-vc2013
 )
 find_package(OpenGL)
 
@@ -38,18 +40,18 @@ set(GLFW_LIBS glfw3.lib)
 
 #######################################################################################
 
-set (USE_MSVC_RUNTIME_LIBRARY_DLL true)
-IF (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
-    #We statically link to reduce dependancies
-    FOREACH(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RETAIL)
-        IF(${flag_var} MATCHES "/MD")
-            STRING(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-        ENDIF(${flag_var} MATCHES "/MD")
-        IF(${flag_var} MATCHES "/MDd")
-            STRING(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
-        ENDIF(${flag_var} MATCHES "/MDd")
-    ENDFOREACH(flag_var)
-ENDIF (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
+#set (USE_MSVC_RUNTIME_LIBRARY_DLL true)
+#IF (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
+#    #We statically link to reduce dependancies
+#    FOREACH(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO CMAKE_CXX_FLAGS_RETAIL)
+#        IF(${flag_var} MATCHES "/MD")
+#            STRING(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+#        ENDIF(${flag_var} MATCHES "/MD")
+#        IF(${flag_var} MATCHES "/MDd")
+#            STRING(REGEX REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+#        ENDIF(${flag_var} MATCHES "/MDd")
+#    ENDFOREACH(flag_var)
+#ENDIF (NOT USE_MSVC_RUNTIME_LIBRARY_DLL)
 
 #######################################################################################
 
@@ -99,9 +101,11 @@ add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 if(MSVC)
 add_definitions(-DWIN32)
 add_definitions(-D_WIN32)
-add_definitions(-DNOMINMAX)
+#add_definitions(-DNOMINMAX)
 endif()
 add_definitions(-DUSE_DL_PREFIX)
+add_definitions(-DGLEW_STATIC)
+
 #--------------------------------------------------------------------
 # output dirs
 #--------------------------------------------------------------------

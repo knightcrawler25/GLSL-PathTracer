@@ -95,11 +95,11 @@ bool initRenderer()
     delete renderer;
     if (scene->renderOptions.rendererType == Renderer_Tiled)
     {
-        renderer = new TiledRenderer(scene, "./PathTracer/src/shaders/Tiled/");
+        renderer = new TiledRenderer(scene, "../PathTracer/shaders/Tiled/");
     }
     else if (scene->renderOptions.rendererType == Renderer_Progressive)
     {
-        renderer = new ProgressiveRenderer(scene, "./PathTracer/src/shaders/Progressive/");
+        renderer = new ProgressiveRenderer(scene, "../PathTracer/shaders/Progressive/");
     }
 	else
 	{
@@ -149,7 +149,7 @@ void update(float secondsElapsed, GLFWwindow *window)
     
 	//Mouse Handling
 	scene->camera->isMoving = false;
-    if (!ImGui::IsMouseHoveringAnyWindow() && ImGui::IsMouseDown(0))
+    if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && ImGui::IsMouseDown(0))
     {
         ImVec2 mouseDelta = ImGui::GetMouseDragDelta();
         scene->camera->offsetOrientation(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
