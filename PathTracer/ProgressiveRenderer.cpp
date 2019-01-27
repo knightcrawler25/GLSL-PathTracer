@@ -175,12 +175,14 @@ namespace GLSLPathTracer
             // Pass 1: Path trace to full-res texture
             //---------------------------------------------------------
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBO);
+            glViewport(0, 0, screenSize.x, screenSize.y);
             quad->Draw(pathTraceShader);
 
             //----------------------------------------------------------
             // Pass 2: Accumulation buffer
             //---------------------------------------------------------
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
+            glViewport(0, 0, screenSize.x, screenSize.y);
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
             quad->Draw(accumShader);
@@ -250,6 +252,7 @@ namespace GLSLPathTracer
             if (lowRes)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
+                glViewport(0, 0, screenSize.x, screenSize.y);
                 glClear(GL_COLOR_BUFFER_BIT);
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
             }
