@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no"/>
+    <title>Imogen 0.13</title>
+    <style>
+        body { margin: 0; background-color: black }
+        .emscripten {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            margin: 0px;
+            border: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            display: block;
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -o-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            -ms-interpolation-mode: nearest-neighbor;
+        }
+        /* Center the loader */
+        #loader {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          z-index: 1;
+          width: 150px;
+          height: 150px;
+          margin: -75px 0 0 -75px;
+          border: 16px solid #303030;
+          border-radius: 50%;
+          border-top: 16px solid #505050;
+          width: 120px;
+          height: 120px;
+          -webkit-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+
+        @-webkit-keyframes spin {
+          0% { -webkit-transform: rotate(0deg); }
+          100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Add animation to "page content" */
+        .animate-bottom {
+          position: relative;
+          -webkit-animation-name: animatebottom;
+          -webkit-animation-duration: 1s;
+          animation-name: animatebottom;
+          animation-duration: 1s
+        }
+
+        @-webkit-keyframes animatebottom {
+          from { bottom:-100px; opacity:0 } 
+          to { bottom:0px; opacity:1 }
+        }
+
+        @keyframes animatebottom { 
+          from{ bottom:-100px; opacity:0 } 
+          to{ bottom:0; opacity:1 }
+        }
+
+        #myDiv {
+          display: none;
+          text-align: center;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="loader"></div>
+    <input type="file" id="FileInput" visbility="hidden"/>
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <script type='text/javascript'>
+      function _arrayToHeap(typedArray){
+        var numBytes = typedArray.length * typedArray.BYTES_PER_ELEMENT;
+        var ptr = Module._malloc(numBytes);
+        var heapBytes = new Uint8Array(Module.HEAPU8.buffer, ptr, numBytes);
+        heapBytes.set(new Uint8Array(typedArray.buffer));
+        return heapBytes;
+      }
+      function _freeArray(heapBytes) {
+        Module._free(heapBytes.byteOffset);
+      }
+      function _createReader(filename, pos) {
+        var reader = new FileReader();
+        reader.fileName  = filename;
+        reader.clientPosition = pos;
+        reader.onload = function(evt) {
+          var array = new Uint8Array(this.result);
+          heapArray = _arrayToHeap(array);
+          pos = evt.target.clientPosition;
+          var enc = new TextEncoder();
+          var encodeName = _arrayToHeap(enc.encode(evt.target.fileName));
+          _OpenFileAsync(heapArray.byteOffset, array.length, encodeName.byteOffset, encodeName.length, pos.x, pos.y);
+          _freeArray(heapArray);
+        }
+        return reader;
+      }
+      var Module = {
+        preRun: [],
+        postRun: [
+            () => {
+                // setup drop zone
+                {
+                    let el = document.querySelector('#canvas')
+
+                    el.addEventListener("dragover", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+
+                    el.addEventListener("drop", (e) => {
+                        console.log('File dropped');
+                        e.preventDefault();
+                        e.stopPropagation();
+                        _createReader(e.dataTransfer.files[0].name, {x:e.clientX, y:e.clientY}).readAsArrayBuffer(e.dataTransfer.files[0]);
+                    });
+                }                
+                
+                // set up input tag
+                document.querySelector('input').addEventListener('change', function(e) {
+                  var reader = _createReader(this.files[0].name, {x:-1, y:-1});
+                  reader.onabort = () => { console.log("onabbort")};
+                  reader.onerror = () => { console.log("onerror")};
+                  reader.readAsArrayBuffer(this.files[0]);
+                }, false);
+            }],
+        fetchFile: function(req_id, url) {
+            var oReq = new XMLHttpRequest();
+            oReq.open("GET", url, true);
+            oReq.responseType = "arraybuffer";
+
+            oReq.onload = function (oEvent) {
+              //var arrayBuffer = oReq.response;
+            };
+
+            oReq.send(null);
+        },
+        openFile: function(req_id, default_url) {
+            Module.openFileReqId = req_id;
+            document.querySelector('input').click();
+        },
+        print: (function() {
+            return function(text) {
+                text = Array.prototype.slice.call(arguments).join(' ');
+                console.log(text);
+            };
+        })(),
+        printErr: function(text) {
+            text = Array.prototype.slice.call(arguments).join(' ');
+            console.error(text);
+        },
+        canvas: (function() {
+            var canvas = document.getElementById('canvas');
+            //canvas.addEventListener("webglcontextlost", function(e) { alert('FIXME: WebGL context lost, please reload the page'); e.preventDefault(); }, false);
+            return canvas;
+        })(),
+        setStatus: function(text) {
+            console.log("status: " + text);
+        },
+        monitorRunDependencies: function(left) {
+            // no run dependencies to log
+        }
+      };
+      window.onerror = function() {
+        console.log("onerror: " + event);
+      };
+    </script>
+    <script async type="text/javascript" src="PathTracer.js"></script>
+  </body>
+</html>

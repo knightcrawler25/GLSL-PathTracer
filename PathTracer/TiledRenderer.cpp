@@ -193,7 +193,7 @@ namespace GLSLPathTracer
             glActiveTexture(GL_TEXTURE10);
             glBindTexture(GL_TEXTURE_2D, hdrTexture);
             glActiveTexture(GL_TEXTURE11);
-            glBindTexture(GL_TEXTURE_1D, hdrMarginalDistTexture);
+            glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTexture);
             glActiveTexture(GL_TEXTURE12);
             glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTexture);
 

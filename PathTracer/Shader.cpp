@@ -39,7 +39,7 @@ namespace GLSLPathTracer
             delete[] info;
             glDeleteShader(_object);
             _object = 0;
-            Log("Shader compilation error %s\n", msg);
+            Log("Shader compilation error %s\n", msg.c_str());
             throw std::runtime_error(msg);
         }
     }
