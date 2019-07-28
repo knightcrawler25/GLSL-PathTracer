@@ -170,11 +170,11 @@ namespace GLSLPathTracer
             glBindTexture(GL_TEXTURE_2D, 0);
 
             glGenTextures(1, &hdrMarginalDistTexture);
-            glBindTexture(GL_TEXTURE_1D, hdrMarginalDistTexture);
-            glTexImage1D(GL_TEXTURE_1D, 0, GL_RG32F, scene->hdrLoaderRes.height, 0, GL_RG, GL_FLOAT, scene->hdrLoaderRes.marginalDistData);
-            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glBindTexture(GL_TEXTURE_1D, 0);
+            glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTexture);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->hdrLoaderRes.height, 1, 0, GL_RG, GL_FLOAT, scene->hdrLoaderRes.marginalDistData);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
 
             glGenTextures(1, &hdrConditionalDistTexture);
             glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTexture);

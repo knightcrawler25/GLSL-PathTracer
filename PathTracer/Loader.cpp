@@ -31,15 +31,24 @@ freely, subject to the following restrictions:
 #include <iostream>
 #include <iterator>
 #include <algorithm>
+#include <stdio.h>
 #include <SOIL.h>
 #include "linear_math.h"
 #include "Scene.h"
 #include "Camera.h"
 
+unsigned char*
+SOIL_load_image
+(
+    const char *filename,
+    int *width, int *height, int *channels,
+    int force_channels
+);
+
 namespace GLSLPathTracer
 {
 
-    static const float M_PI = 3.14159265358979323846f;
+    static const float _PI = 3.14159265358979323846f;
 
     static const int kMaxLineLength = 2048;
     int(*Log)(const char* szFormat, ...) = printf;
@@ -133,7 +142,7 @@ namespace GLSLPathTracer
     Scene* LoadScene(const std::string &filename)
     {
         FILE* file;
-        fopen_s(&file, filename.c_str(), "r");
+        file = fopen(filename.c_str(), "r");
 
         if (!file)
         {
@@ -298,7 +307,7 @@ namespace GLSLPathTracer
                 else if (strcmp(light_type, "Sphere") == 0)
                 {
                     light.radiusAreaType.z = 1;
-                    light.radiusAreaType.y = 4.0f * M_PI * light.radiusAreaType.x * light.radiusAreaType.x;
+                    light.radiusAreaType.y = 4.0f * _PI * light.radiusAreaType.x * light.radiusAreaType.x;
                 }
 
                 scene->lightData.push_back(light);
@@ -404,7 +413,7 @@ namespace GLSLPathTracer
                     Log("Loading Model: %s\n", meshPath.c_str());
                     if (!LoadModel(scene, meshPath, materialId))
                     {
-                        return false;
+                        return 0;
                     }
                 }
             }
