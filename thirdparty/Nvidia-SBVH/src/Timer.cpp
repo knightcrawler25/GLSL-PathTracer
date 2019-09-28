@@ -27,7 +27,10 @@
 
 #include "Timer.h"
 #include <iostream>
+
+#ifdef WIN32
 #include <windows.h>
+#endif
 
 using namespace FW;
 
@@ -37,9 +40,11 @@ F64 Timer::s_ticksToSecsCoef    = -1.0;
 S64 Timer::s_prevTicks          = 0;
 
 //------------------------------------------------------------------------
-
+#define max(x,y) ((x>y)?x:y)
+#ifdef WIN32
 void Timer::staticInit(void)
 {
+	#ifdef WIN
     LARGE_INTEGER freq;
 	if (!QueryPerformanceFrequency(&freq))
 	{
@@ -47,15 +52,30 @@ void Timer::staticInit(void)
 		exit(0);
 	}
     s_ticksToSecsCoef = max(1.0 / (F64)freq.QuadPart, 0.0);
+	#endif
  }
 
 S64 Timer::queryTicks(void)
 {
+	#ifdef WIN
+
 	LARGE_INTEGER ticks;
 	QueryPerformanceCounter(&ticks);
 	ticks.QuadPart = max(s_prevTicks, ticks.QuadPart);
 	s_prevTicks = ticks.QuadPart; // increasing little endian => thread-safe
 	return ticks.QuadPart;
+	#else
+	throw "";
+	#endif
 }
+#else
+void Timer::staticInit(void)
+{
+ }
 
+S64 Timer::queryTicks(void)
+{
+	return 0;
+}
+#endif
 //------------------------------------------------------------------------
