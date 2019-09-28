@@ -25,6 +25,8 @@
 	#include <OpenGL/gl.h>
 	#include <Carbon/Carbon.h>
 	#define APIENTRY
+#elif defined(__EMSCRIPTEN__)
+#include <GLES3/gl3.h>
 #else
 	#include <GL/gl.h>
 	#include <GL/glx.h>
@@ -37,7 +39,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#if 0
 /*	error reporting	*/
 char *result_string_pointer = "SOIL initialized";
 
@@ -1420,7 +1422,7 @@ int
     SOIL_free_image_data( pixel_data );
 	return save_result;
 }
-
+#endif
 unsigned char*
 	SOIL_load_image
 	(
@@ -1433,14 +1435,14 @@ unsigned char*
 			width, height, channels, force_channels );
 	if( result == NULL )
 	{
-		result_string_pointer = stbi_failure_reason();
+		//result_string_pointer = stbi_failure_reason();
 	} else
 	{
-		result_string_pointer = "Image loaded";
+		//result_string_pointer = "Image loaded";
 	}
 	return result;
 }
-
+#if 0
 unsigned char*
 	SOIL_load_image_from_memory
 	(
@@ -2022,3 +2024,4 @@ int query_DXT_capability( void )
 	/*	let the user know if we can do DXT or not	*/
 	return has_DXT_capability;
 }
+#endif

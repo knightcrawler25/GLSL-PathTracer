@@ -6,6 +6,9 @@ SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "Configuration types" FORCE)
 
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 file(GLOB_RECURSE SRC_FILES
     ${CMAKE_SOURCE_DIR}/PathTracer/*.h
@@ -18,25 +21,35 @@ file(GLOB EXT_FILES
     ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src/*.cpp
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp
-	${CMAKE_SOURCE_DIR}/thirdparty/glew/src/glew.c
 )
+
+if (NOT EMSCRIPTEN)
+file(GLOB EXT_FILES_SPECIFIC
+    ${CMAKE_SOURCE_DIR}/thirdparty/gl3w/GL/*.c
+)
+set(SDL2_LIBRARIES "SDL2" "SDL2main")
+endif()
+
+
+set(SDL2_INCLUDE_DIRS  ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/include)
+set(SDL2_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/lib/x64)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/PathTracer
   ${CMAKE_SOURCE_DIR}/thirdparty/glm
   ${CMAKE_SOURCE_DIR}/thirdparty/imgui
   ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src
-  ${CMAKE_SOURCE_DIR}/thirdparty/glfw/include
   ${CMAKE_SOURCE_DIR}/thirdparty/glew/include
   ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/include
+  ${CMAKE_SOURCE_DIR}/thirdparty/gl3w
+  ${SDL2_INCLUDE_DIRS}
 )
 
 link_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/glfw/lib-vc2013
+  ${SDL2_LIBDIR}
 )
 find_package(OpenGL)
 
-set(GLFW_LIBS glfw3.lib)
 
 #######################################################################################
 
@@ -85,9 +98,9 @@ endif()
 SET(LINK_OPTIONS " ")
 SET(EXE_NAME "PathTracer")
 
-ADD_EXECUTABLE(${EXE_NAME} ${SRC_FILES} ${EXT_FILES})
+ADD_EXECUTABLE(${EXE_NAME} ${SRC_FILES} ${EXT_FILES} ${EXT_FILES_SPECIFIC})
 
-TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${GLFW_LIBS})
+TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES})
 
 #--------------------------------------------------------------------
 # preproc
@@ -130,6 +143,26 @@ endif()
 if(WINDOWS)
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS")
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+endif()
+
+if (EMSCRIPTEN)
+add_definitions(-DEMSCRIPTEN)
+add_definitions(-D_X86_)
+set(EMS_OPTS "-s USE_SDL=2 -s USE_WEBGL2=1 -s WASM=1 -s FULL_ES3=2 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE=clamp --bind -O2 --no-heap-copy -g4 --source-map-base http://localhost:8000/")
+add_definitions(${EMS_OPTS})
+set(EMS_PRELOAD " --preload-file assets")
+set(EMS_LINK "${EMS_OPTS} ${EMS_PRELOAD}")
+set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS ${EMS_LINK})
+
+add_custom_command(TARGET ${EXE_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/bin/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
+)
+
+add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/PathTracer/index.html ${CMAKE_CURRENT_BINARY_DIR}/index.html
+)
+
+
 endif()
 
 if(ENABLE_HIDECONSOLE_BUILD)
