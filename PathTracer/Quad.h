@@ -1,7 +1,7 @@
 #pragma once
 #include "Config.h"
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
     class Program;
 

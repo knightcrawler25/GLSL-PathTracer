@@ -18,19 +18,21 @@
 
 #include "Scene.h"
 #include "TiledRenderer.h"
-#include "ProgressiveRenderer.h"
 #include "Camera.h"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
+#include "boyTestScene.h"
+#include "ajaxTestScene.h"
+#include "cornellTestScene.h"
 
 using namespace glm;
 using namespace std;
-using namespace GLSLPathTracer;
+using namespace GLSLPT;
 
 float moveSpeed = 0.5f;
-float mouseSensitivity = 0.05f;
+float mouseSensitivity = 1.0f;
 bool keyPressed = false;
 Scene *scene = nullptr;
 Renderer *renderer = nullptr;
@@ -55,20 +57,19 @@ struct LoopData
 
 void loadScene(int index)
 {
-    static const char *sceneFilenames[] = { "cornell.scene",
-        "ajax.scene",
-        "bathroom.scene",
-        "boy.scene",
-        "coffee.scene",
-        "diningroom.scene",
-        "glassBoy.scene",
-        "hyperion.scene",
-        "rank3police.scene",
-        "spaceship.scene",
-        "staircase.scene" };
-
     delete scene;
-	scene = LoadScene(std::string("./assets/")+sceneFilenames[index]);
+	//scene = LoadScene(std::string("./assets/")+sceneFilenames[index]);
+	scene = new Scene();
+	switch (index)
+	{
+		case 0:	loadAjaxTestScene(scene, renderOptions);
+				break;
+		case 1:	loadBoyTestScene(scene, renderOptions);
+				break;
+		case 2:	loadCornellTestScene(scene, renderOptions);
+			break;
+	}
+	
     scene->renderOptions = renderOptions;
 	if (!scene)
 	{
@@ -76,54 +77,12 @@ void loadScene(int index)
 		exit(0);
 	}
 	std::cout << "Scene Loaded\n\n";
-
-	scene->buildBVH();
-
-	// --------Print info on memory usage ------------- //
-
-	std::cout << "Triangles: " << scene->triangleIndices.size() << std::endl;
-	std::cout << "Triangle Indices: " << scene->gpuBVH->bvhTriangleIndices.size() << std::endl;
-	std::cout << "Vertices: " << scene->vertexData.size() << std::endl;
-
-	long long scene_data_bytes =
-		sizeof(GPUBVHNode) * scene->gpuBVH->bvh->getNumNodes() +
-		sizeof(TriangleData) * scene->gpuBVH->bvhTriangleIndices.size() +
-		sizeof(VertexData) * scene->vertexData.size() +
-		sizeof(NormalTexData) * scene->normalTexData.size() +
-		sizeof(MaterialData) * scene->materialData.size() +
-		sizeof(LightData) * scene->lightData.size();
-
-	std::cout << "GPU Memory used for BVH and scene data: " << scene_data_bytes / 1048576 << " MB" << std::endl;
-
-	long long tex_data_bytes =
-		int(scene->texData.albedoTextureSize.x * scene->texData.albedoTextureSize.y) * scene->texData.albedoTexCount * 3 +
-		int(scene->texData.metallicRoughnessTextureSize.x * scene->texData.metallicRoughnessTextureSize.y) * scene->texData.metallicRoughnessTexCount * 3 +
-		int(scene->texData.normalTextureSize.x * scene->texData.normalTextureSize.y) * scene->texData.normalTexCount * 3 +
-		scene->hdrLoaderRes.width * scene->hdrLoaderRes.height * sizeof(GL_FLOAT) * 3;
-
-	std::cout << "GPU Memory used for Textures: " << tex_data_bytes / 1048576 << " MB" << std::endl;
-
-	std::cout << "Total GPU Memory used: " << (scene_data_bytes + tex_data_bytes) / 1048576 << " MB" << std::endl;
-
-	// ----------------------------------- //
 }
 
 bool initRenderer()
 {
     delete renderer;
-    if (scene->renderOptions.rendererType == Renderer_Tiled)
-    {
-        renderer = new TiledRenderer(scene, "../PathTracer/shaders/Tiled/");
-    }
-    else if (scene->renderOptions.rendererType == Renderer_Progressive)
-    {
-        renderer = new ProgressiveRenderer(scene, "../PathTracer/shaders/Progressive/");
-    }
-	else
-	{
-		Log("Invalid Renderer Type\n");
-        return false;
-	}
+    renderer = new TiledRenderer(scene, "../PathTracer/shaders/");
     renderer->init();
     return true;
 }
@@ -146,32 +105,29 @@ void update(float secondsElapsed)
 	renderer->update(secondsElapsed);
 	keyPressed = false;
 	//Camera Movement
-	/*if (glfwGetKey(window, 'W')){
-		scene->camera->offsetPosition(secondsElapsed * moveSpeed * scene->camera->forward);
-		keyPressed = true;
-	}
-	else if (glfwGetKey(window, 'S')){
-		scene->camera->offsetPosition(secondsElapsed * moveSpeed * -scene->camera->forward);
-		keyPressed = true;
-	}
-    if (glfwGetKey(window, 'A')){
-		scene->camera->offsetPosition(secondsElapsed * moveSpeed * -scene->camera->right);
-		keyPressed = true;
-	}
-	else if (glfwGetKey(window, 'D')){
-		scene->camera->offsetPosition(secondsElapsed * moveSpeed * scene->camera->right);
-		keyPressed = true;
-	}
-    */
-	//Mouse Handling
 	scene->camera->isMoving = false;
-    if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && ImGui::IsMouseDown(0))
-    {
-        ImVec2 mouseDelta = ImGui::GetMouseDragDelta();
-        scene->camera->offsetOrientation(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
-        scene->camera->isMoving = true;
-        ImGui::ResetMouseDragDelta();
-    }
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && ImGui::IsAnyMouseDown())
+	{
+		if (ImGui::IsMouseDown(0))
+		{
+			ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0, 0);
+			scene->camera->offsetOrientation(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
+			ImGui::ResetMouseDragDelta(0);
+		}
+		else if (ImGui::IsMouseDown(2))
+		{
+			ImVec2 mouseDelta = ImGui::GetMouseDragDelta(2, 0);
+			scene->camera->strafe(0.01 * mouseDelta.x, 0.01 * mouseDelta.y);
+			ImGui::ResetMouseDragDelta(2);
+		}
+		else if (ImGui::IsMouseDown(1))
+		{
+			ImVec2 mouseDelta = ImGui::GetMouseDragDelta(1, 0);
+			scene->camera->changeRadius(mouseSensitivity * 0.01 * mouseDelta.y);
+			ImGui::ResetMouseDragDelta(1);
+		}
+		scene->camera->isMoving = true;
+	}
 }
 
 
@@ -200,22 +156,22 @@ void MainLoop(void* arg)
     ImGui::NewFrame();
 
     {
-        ImGui::Begin("GLSL PathTracer");                          // Create a window called "Hello, world!" and append into it.
+        ImGui::Begin("GLSL PathTracer"); // Create a window called "Hello, world!" and append into it.
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        if (ImGui::Combo("Scene", &currentSceneIndex, "cornell\0ajax\0bathroom\0boy\0coffee\0diningroom\0glassBoy\0hyperion\0rank3police\0spaceship\0staircase\0"))
+        if (ImGui::Combo("Scene", &currentSceneIndex, "Ajax Bust\0Substance Boy\0Cornell Box\0"))
         {
             loadScene(currentSceneIndex);
             initRenderer();
         }
 
         bool renderOptionsChanged = false;
-        renderOptionsChanged |= ImGui::Combo("Render Type", &renderOptions.rendererType, "Progressive\0Tiled\0");
-        renderOptionsChanged |= ImGui::InputInt2("Resolution", &renderOptions.resolution.x);
-        renderOptionsChanged |= ImGui::InputInt("Max Samples", &renderOptions.maxSamples);
+        //renderOptionsChanged |= ImGui::Combo("Render Type", &renderOptions.rendererType, "Progressive\0Tiled\0");
+        //renderOptionsChanged |= ImGui::InputInt2("Resolution", &renderOptions.resolution.x);
+        //renderOptionsChanged |= ImGui::InputInt("Max Samples", &renderOptions.maxSamples);
         renderOptionsChanged |= ImGui::InputInt("Max Depth", &renderOptions.maxDepth);
-        renderOptionsChanged |= ImGui::InputInt("Tiles X", &renderOptions.numTilesX);
-        renderOptionsChanged |= ImGui::InputInt("Tiles Y", &renderOptions.numTilesY);
+        //renderOptionsChanged |= ImGui::InputInt("Tiles X", &renderOptions.numTilesX);
+        //renderOptionsChanged |= ImGui::InputInt("Tiles Y", &renderOptions.numTilesY);
         renderOptionsChanged |= ImGui::Checkbox("Use envmap", &renderOptions.useEnvMap);
         renderOptionsChanged |= ImGui::InputFloat("HDR multiplier", &renderOptions.hdrMultiplier);
 
@@ -281,8 +237,8 @@ int main(int argc, char** argv)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MAXIMIZED);
-    loopdata.mWindow = SDL_CreateWindow("pathtrace", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 #ifndef __EMSCRIPTEN__
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
     //glThreadContext = SDL_GL_CreateContext(loopdata.mWindow);
@@ -294,7 +250,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "Failed to initialize GL context!\n");
         return 1;
     }
-    SDL_GL_SetSwapInterval(1); // Enable vsync
+    SDL_GL_SetSwapInterval(0); // Disable vsync
 
     // Initialize OpenGL loader
 #ifndef __EMSCRIPTEN__

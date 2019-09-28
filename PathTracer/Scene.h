@@ -3,93 +3,105 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <vector>
+#include <map>
 #include "hdrloader.h"
-#include "GPUBVH.h"
+#include "bvh.h"
 #include "Renderer.h"
+#include "Mesh.h"
+#include "Camera.h"
+#include "bvh_translator.h"
+#include "Texture.h"
+#include "Material.h"
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
-    class Camera;
+	class Camera;
 
-    struct TriangleData
-    {
-        glm::vec4 indices;
-    };
+	enum LightType
+	{
+		AreaLight,
+		SphereLight
+	};
 
-    struct NormalTexData
-    {
-        glm::vec3 normals[3];
-        glm::vec3 texCoords[3];
-    };
+	struct Light
+	{
+		glm::vec3 position;
+		glm::vec3 emission;
+		glm::vec3 u;
+		glm::vec3 v;
+		float radius;
+		float area;
+		LightType type;
+	};
 
-    struct VertexData
-    {
-        glm::vec3 vertex;
-    };
+	struct Indices
+	{
+		int x, y, z;
+	};
 
-    struct MaterialData
-    {
-        MaterialData()
-        {
-            albedo = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
-            emission = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
-            params = glm::vec4(0.0f, 0.5f, 0.0f, 0.0f);
-            texIDs = glm::vec4(-1.0f, -1.0f, -1.0f, -1.0f);
-        };
-        glm::vec4 albedo;  // layout: R,G,B, MaterialType
-        glm::vec4 emission;
-        glm::vec4 params;  // layout: metallic, roughness, IOR, transmittance
-        glm::vec4 texIDs;  // layout: (Texture Map IDs) albedo ID, metallicRoughness ID, normalMap ID
-    };
+	class Scene
+	{
+	public:
+		Scene() : camera(nullptr), hdrData(nullptr) {
+			sceneBvh = new RadeonRays::Bvh(10.0f, 64, false);
+		}
+		~Scene() { delete camera; delete sceneBvh; delete hdrData; };
+		void addCamera(glm::vec3 eye, glm::vec3 lookat, float fov);
+		int addMesh(const std::string &filename);
+		int addTexture(const std::string &filename);
+		int addMaterial(const Material &material);
+		int addMeshInstance(const MeshInstance &meshInstance);
+		int addLight(const Light &light);
+		void addHDR(const std::string &filename);
+		void createAccelerationStructures();
 
-    struct TexData
-    {
-        unsigned char* albedoTextures;
-        unsigned char* metallicRoughnessTextures;
-        unsigned char* normalTextures;
+		//Options
+		RenderOptions renderOptions;
 
-        int albedoTexCount;
-        int metallicRoughnessTexCount;
-        int normalTexCount;
+		//Mesh Data
+		std::vector<Mesh*> meshes;
 
-        glm::ivec2 albedoTextureSize;
-        glm::ivec2 metallicRoughnessTextureSize;
-        glm::ivec2 normalTextureSize;
-    };
+		//Instance Data
+		std::vector<Material> materials;
+		std::vector<MeshInstance> meshInstances;
 
-    struct LightData
-    {
-        glm::vec3 position;
-        glm::vec3 emission;
-        glm::vec3 u;
-        glm::vec3 v;
-        glm::vec3 radiusAreaType;
-    };
+		//Lights
+		std::vector<Light> lights;
 
-    class Scene
-    {
-    public:
-        Scene(const std::string filename) : filename(filename)
-            , camera(nullptr) 
-            , gpuBVH(nullptr)
-        {}
-        ~Scene();
-        void addCamera(glm::vec3 pos, glm::vec3 lookAt, float fov);
-        Camera *camera;
-        GPUBVH *gpuBVH;
-		GPUScene *gpuScene;
-		BVH *bvh;
-        std::vector<TriangleData> triangleIndices;
-        std::vector<NormalTexData> normalTexData;
-        std::vector<VertexData> vertexData;
-        std::vector<MaterialData> materialData;
-        std::vector<LightData> lightData;
-        TexData texData;
-        RenderOptions renderOptions;
-        HDRLoaderResult hdrLoaderRes;
-        void buildBVH();
-        const std::string& getSceneName() const { return filename; }
-    protected:
-        std::string filename;
-    };
+		//HDR
+		HDRData *hdrData;
+
+		//Camera
+		Camera *camera;
+
+		// Scene Mesh Data 
+		std::vector<Indices> vertIndices;
+		std::vector<glm::vec3> vertices;
+		std::vector<Indices> normalIndices;
+		std::vector<glm::vec3> normals;
+		std::vector<Indices> uvIndices;
+		std::vector<glm::vec2> uvs;
+		std::vector<glm::mat4> transforms;
+
+		int indicesTexWidth;
+		int verticesTexWidth;
+		int normalsTexWidth;
+		int uvsTexWidth;
+
+		//Bvh
+		RadeonRays::BvhTranslator bvhTranslator;
+
+		//Texture Data
+		std::vector<Texture *> textures;
+		std::vector<unsigned char> textureMapsArray;
+		int texWidth, texHeight; // TODO: allow textures of different sizes
+		RadeonRays::bbox sceneBounds;
+
+	private:
+		std::map<std::string, int> meshMap;
+		std::map<std::string, int> textureMap;
+		RadeonRays::Bvh *sceneBvh;
+		void createBLAS();
+		void createTLAS();
+	};
 }

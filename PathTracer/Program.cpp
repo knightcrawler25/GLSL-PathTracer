@@ -1,6 +1,6 @@
 #include "Program.h"
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
     Program::Program(const std::vector<Shader> shaders)
     {
