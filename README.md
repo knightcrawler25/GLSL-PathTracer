@@ -9,6 +9,10 @@ from [SketchFab](https://sketchfab.com/models/d7698f6a7acf49c68ff0a50c5a1b1d52) 
 
 ![Ajax](./screenshots/ajax_materials.png)
 --------
+![Panther](./screenshots/panther.png)
+Tried to recreate a scene from [Greyscalegorilla] (https://twitter.com/GSG3D)
+Render time: 2 minutes on a GTX 750 Ti. 3 bounces 
+--------
 ![Dragon](./screenshots/dragon.png)
 --------
 ![Dining Room](./screenshots/DiningRoom.png)
