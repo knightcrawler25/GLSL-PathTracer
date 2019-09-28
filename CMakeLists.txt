@@ -17,8 +17,8 @@ file(GLOB_RECURSE SRC_FILES
 file(GLOB EXT_FILES
     ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/src/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/src/*.c
-    ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src/*.h
-    ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src/*.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays/*.h
+    ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays/*.cpp
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp
 )
@@ -38,7 +38,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/PathTracer
   ${CMAKE_SOURCE_DIR}/thirdparty/glm
   ${CMAKE_SOURCE_DIR}/thirdparty/imgui
-  ${CMAKE_SOURCE_DIR}/thirdparty/Nvidia-SBVH/src
+  ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays
   ${CMAKE_SOURCE_DIR}/thirdparty/glew/include
   ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/include
   ${CMAKE_SOURCE_DIR}/thirdparty/gl3w
@@ -170,4 +170,3 @@ MESSAGE(STATUS "Console is hidden")
 else()
 MESSAGE(STATUS "Console is visible")
 endif()
-

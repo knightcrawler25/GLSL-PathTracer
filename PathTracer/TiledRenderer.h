@@ -2,18 +2,18 @@
 
 #include "Renderer.h"
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
     class Scene;
     class TiledRenderer : public Renderer
     {
     private:
-        GLuint pathTraceFBO, accumFBO, outputFBO;
-        Program *pathTraceShader, *accumShader, *tileOutputShader, *outputShader;
-        GLuint pathTraceTexture, accumTexture, tileOutputTexture;
-        int tileX, tileY, numTilesX, numTilesY, tileWidth, tileHeight, maxSamples, maxDepth;
-        bool renderCompleted;
-        float **sampleCounter, totalTime;
+		GLuint pathTraceFBO, pathTraceFBOLowRes, accumFBO, outputFBO;
+		Program *pathTraceShader, *pathTraceShaderLowRes, *accumShader, *tileOutputShader, *outputShader;
+		GLuint pathTraceTexture, pathTraceTextureLowRes, accumTexture, tileOutputTexture[2];
+		int tileX, tileY, numTilesX, numTilesY, tileWidth, tileHeight, maxSamples, maxDepth, currentBuffer;
+		bool renderCompleted;
+		float sampleCounter, totalTime;
     public:
         TiledRenderer(const Scene *scene, const std::string& shadersDirectory);
         ~TiledRenderer();
@@ -25,6 +25,5 @@ namespace GLSLPathTracer
         void present() const;
         void update(float secondsElapsed);
         float getProgress() const;
-        RendererType getType() const { return Renderer_Tiled; }
     };
 }

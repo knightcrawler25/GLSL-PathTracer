@@ -2,51 +2,42 @@
 
 #include "Quad.h"
 #include "Program.h"
-#include "GPUBVH.h"
-#include "Loader.h"
 #include "SOIL.h"
 
-namespace GLSLPathTracer
+#include <glm/glm.hpp>
+#include <vector>
+
+namespace GLSLPT
 {
     Program *loadShaders(const std::string &vertex_shader_fileName, const std::string &frag_shader_fileName);
-
-    enum RendererType
-    {
-        Renderer_Progressive,
-        Renderer_Tiled,
-    };
 
     struct RenderOptions
     {
         RenderOptions()
         {
-            rendererType = Renderer_Tiled;
-            maxSamples = 10;
             maxDepth = 2;
             numTilesX = 5;
             numTilesY = 5;
             useEnvMap = false;
-            resolution = glm::vec2(500, 500);
+            resolution = glm::vec2(1280, 720);
             hdrMultiplier = 1.0f;
         }
-        //std::string rendererType;
-        int rendererType; // see RendererType
         glm::ivec2 resolution;
-        int maxSamples;
         int maxDepth;
         int numTilesX;
         int numTilesY;
         bool useEnvMap;
         float hdrMultiplier;
     };
+
     class Scene;
+
     class Renderer
     {
     protected:
         const Scene *scene;
-        GLuint BVHTexture, triangleIndicesTexture, verticesTexture, materialsTexture, lightsTexture, normalsTexCoordsTexture;
-        GLuint albedoTextures, metallicRoughnessTextures, normalTextures, hdrTexture, hdrMarginalDistTexture, hdrConditionalDistTexture;
-        GLuint materialArrayBuffer, triangleBuffer, verticesBuffer, lightArrayBuffer, BVHBuffer, normalTexCoordBuffer;
+		GLuint BVHTex, BBoxminTex, BBoxmaxTex, vertexIndicesTex, verticesTex, normalIndicesTex, normalsTex, uvIndicesTex, uvTex, 
+			materialsTex, transformsTex, lightsTex, textureMapsArrayTex, hdrTex, hdrMarginalDistTex, hdrConditionalDistTex;
         Quad *quad;
         int numOfLights;
         glm::ivec2 screenSize;
@@ -65,7 +56,5 @@ namespace GLSLPathTracer
         virtual void update(float secondsElapsed) = 0;
         // range is [0..1]
         virtual float getProgress() const = 0;
-        // used for UI
-        virtual RendererType getType() const = 0;
     };
 }

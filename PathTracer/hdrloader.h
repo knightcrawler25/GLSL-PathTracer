@@ -14,13 +14,10 @@
 	This is modified version of the original code. Addeed code to build marginal & conditional densities for IBL importance sampling
 */
 
-class HDRLoaderResult {
+class HDRData {
 public:
-	HDRLoaderResult()
-	{
-		width = height = 0;
-		cols = NULL;
-	}
+	HDRData() : width(0), height(0), cols(nullptr), marginalDistData(nullptr), conditionalDistData(nullptr) {}
+	~HDRData() { delete cols; delete marginalDistData; delete conditionalDistData; }
 	int width, height;
 	// each pixel takes 3 float32, each component can be of any value...
 	float *cols;
@@ -30,8 +27,7 @@ public:
 
 class HDRLoader {
 private:
-	static void buildDistributions(HDRLoaderResult &res);
+	static void buildDistributions(HDRData* res);
 public:
-	static bool load(const char *fileName, HDRLoaderResult &res);
+	static HDRData* load(const char *fileName);
 };
-

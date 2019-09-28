@@ -12,33 +12,50 @@ uniform float invTileWidth;
 uniform float invTileHeight;
 
 uniform sampler2D accumTexture;
-uniform samplerBuffer BVH;
-uniform samplerBuffer triangleIndicesTex;
-uniform samplerBuffer verticesTex;
-uniform samplerBuffer normalsTexCoordsTex;
+uniform sampler2D BVH;
+uniform sampler2D vertexIndicesTex;
+uniform sampler2D verticesTex;
+uniform sampler2D normalIndicesTex;
+uniform sampler2D normalsTex;
+uniform sampler2D uvIndicesTex;
+uniform sampler2D uvTex;
+uniform sampler1D materialsTex;
+uniform sampler1D transformsTex;
+uniform sampler1D lightsTex;
+uniform sampler2DArray textureMapsArrayTex;
 
-uniform samplerBuffer materialsTex;
-uniform samplerBuffer lightsTex;
-uniform sampler2DArray albedoTextures;
-uniform sampler2DArray metallicRoughnessTextures;
-uniform sampler2DArray normalTextures;
-
-uniform sampler2D hdrTexture;
-uniform sampler1D hdrMarginalDistTexture;
-uniform sampler2D hdrCondDistTexture;
+uniform sampler2D hdrTex;
+uniform sampler1D hdrMarginalDistTex;
+uniform sampler2D hdrCondDistTex;
 uniform float hdrResolution;
 uniform float hdrMultiplier;
 
 uniform int numOfLights;
 uniform int maxDepth;
+uniform int topBVHIndex;
 
-#define PI        3.14159265358979323
-#define TWO_PI    6.28318530717958648
-#define INFINITY  1000000.0
-#define EPS 0.001
+uniform float test;
+
+#define PI         3.14159265358979323
+#define INV_PI     (1.0 / PI)
+#define TWO_PI     (PI * 2.0)
+#define INV_TWO_PI (1.0 / TWO_PI)
+#define INFINITY   1000000.0
+#define EPS        0.001
+
+// Global variables
+
+#define BVHSize 828
+#define vertIndicesSize 292
+#define normalIndicesSize 292
+#define uvIndicesSize 292
+#define verticesSize 208
+#define normalsSize 191
+#define uvsSize 212
+
+mat4 transform;
 
 vec2 seed;
-
 struct Ray { vec3 origin; vec3 direction; };
 struct Material { vec4 albedo; vec4 emission; vec4 param; vec4 texIDs; };
 struct Camera { vec3 up; vec3 right; vec3 forward; vec3 position; float fov; float focalDist; float aperture; };
@@ -152,14 +169,14 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 	float d;
 
 	// Intersect Emitters
-	for (int i = 0; i < numOfLights; i++)
+	for (int i = 0; i < numOfLights && state.depth > 1; i++)
 	{
 		// Fetch light Data
-		vec3 position = texelFetch(lightsTex, i * 5 + 0).xyz;
-		vec3 emission = texelFetch(lightsTex, i * 5 + 1).xyz;
-		vec3 u = texelFetch(lightsTex, i * 5 + 2).xyz;
-		vec3 v = texelFetch(lightsTex, i * 5 + 3).xyz;
-		vec3 radiusAreaType = texelFetch(lightsTex, i * 5 + 4).xyz;
+		vec3 position = texelFetch(lightsTex, i * 5 + 0, 0).xyz;
+		vec3 emission = texelFetch(lightsTex, i * 5 + 1, 0).xyz;
+		vec3 u = texelFetch(lightsTex, i * 5 + 2, 0).xyz;
+		vec3 v = texelFetch(lightsTex, i * 5 + 3, 0).xyz;
+		vec3 radiusAreaType = texelFetch(lightsTex, i * 5 + 4, 0).xyz;
 
 		if (radiusAreaType.z == 0) // Rectangular Area Light
 		{
@@ -179,7 +196,7 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 				float cosTheta = dot(-r.direction, normal);
 				float pdf = (t * t) / (radiusAreaType.y * cosTheta);
 				lightSampleRec.emission = emission;
-				lightSampleRec.pdf = pdf; 
+				lightSampleRec.pdf = pdf;
 				state.isEmitter = true;
 			}
 		}
@@ -203,41 +220,62 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 	int ptr = 0;
 	stack[ptr++] = -1;
 
-	int idx = 0;
+	int idx = 0x002c40cd;
 	float leftHit = 0.0;
 	float rightHit = 0.0;
 
-	while (idx > -1)
+	int currMatID = 0;
+	bool meshBVH = false;
+
+	Ray r_trans;
+	mat4 temp_transform;
+	r_trans.origin = r.origin;
+	r_trans.direction = r.direction;
+
+	while (idx > -1 || meshBVH)
 	{
 		int n = idx;
-		vec3 LRLeaf = texelFetch(BVH, n * 3 + 2).xyz;
+
+		if (meshBVH && idx < 0.0)
+		{
+			meshBVH = false;
+
+			idx = stack[--ptr];
+
+			r_trans.origin = r.origin;
+			r_trans.direction = r.direction;
+			continue;
+		}
+
+		ivec2 nIndex = ivec2((n >> 12) + 2, n & 0x00000FFF);
+		vec3 LRLeaf = texelFetch(BVH, nIndex, 0).xyz;
 
 		int leftIndex = int(LRLeaf.x);
 		int rightIndex = int(LRLeaf.y);
-		int isLeaf = int(LRLeaf.z);
+		int leaf = int(LRLeaf.z);
 
-		if (isLeaf == 1)
+		if (leaf > 0.0)
 		{
-			for (int i = 0; i <= rightIndex; i++) // Loop through indices
+			for (int i = 0; i < rightIndex; i++) // Loop through indices
 			{
 				int index = leftIndex + i;
-				vec4 triIndex = texelFetch(triangleIndicesTex, index).xyzw;
+				vec3 vert_indices = texelFetch(vertexIndicesTex, ivec2(index % vertIndicesSize, index / vertIndicesSize), 0).xyz;
 
-				vec3 v0 = texelFetch(verticesTex, int(triIndex.x)).xyz;
-				vec3 v1 = texelFetch(verticesTex, int(triIndex.y)).xyz;
-				vec3 v2 = texelFetch(verticesTex, int(triIndex.z)).xyz;
+				vec3 v0 = texelFetch(verticesTex, ivec2(int(vert_indices.x) % verticesSize, int(vert_indices.x) / verticesSize), 0).xyz;
+				vec3 v1 = texelFetch(verticesTex, ivec2(int(vert_indices.y) % verticesSize, int(vert_indices.y) / verticesSize), 0).xyz;
+				vec3 v2 = texelFetch(verticesTex, ivec2(int(vert_indices.z) % verticesSize, int(vert_indices.z) / verticesSize), 0).xyz;
 
 				vec3 e0 = v1 - v0;
 				vec3 e1 = v2 - v0;
-				vec3 pv = cross(r.direction, e1);
+				vec3 pv = cross(r_trans.direction, e1);
 				float det = dot(e0, pv);
 
-				vec3 tv = r.origin - v0.xyz;
+				vec3 tv = r_trans.origin - v0.xyz;
 				vec3 qv = cross(tv, e0);
 
 				vec4 uvt;
 				uvt.x = dot(tv, pv);
-				uvt.y = dot(r.direction, qv);
+				uvt.y = dot(r_trans.direction, qv);
 				uvt.z = dot(e1, qv);
 				uvt.xyz = uvt.xyz / det;
 				uvt.w = 1.0 - uvt.x - uvt.y;
@@ -246,16 +284,46 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 				{
 					t = uvt.z;
 					state.isEmitter = false;
-					state.triID = int(triIndex.w);
-					state.fhp = r.origin + r.direction * t;
+					state.triID = index;
+					state.matID = currMatID;
+					state.fhp = r_trans.origin + r_trans.direction * t;
 					state.bary = BarycentricCoord(state.fhp, v0, v1, v2);
+					state.fhp = vec3(temp_transform * vec4(state.fhp, 1.0));
+					transform = temp_transform;
 				}
 			}
 		}
+		else if (leaf < 0.0)
+		{
+			idx = leftIndex;
+
+			vec4 r1 = texelFetch(transformsTex, (-leaf - 1) * 4 + 0, 0).xyzw;
+			vec4 r2 = texelFetch(transformsTex, (-leaf - 1) * 4 + 1, 0).xyzw;
+			vec4 r3 = texelFetch(transformsTex, (-leaf - 1) * 4 + 2, 0).xyzw;
+			vec4 r4 = texelFetch(transformsTex, (-leaf - 1) * 4 + 3, 0).xyzw;
+
+			temp_transform = mat4(r1, r2, r3, r4);
+
+			r_trans.origin = vec3(inverse(temp_transform) * vec4(r.origin, 1.0));
+			r_trans.direction = vec3(inverse(temp_transform) * vec4(r.direction, 0.0));
+
+			stack[ptr++] = -1;
+			meshBVH = true;
+			currMatID = rightIndex;
+			continue;
+		}
 		else
 		{
-			leftHit = IntersectRayAABB(texelFetch(BVH, leftIndex * 3 + 0).xyz, texelFetch(BVH, leftIndex * 3 + 1).xyz, r);
-			rightHit = IntersectRayAABB(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r);
+			ivec2 lc = ivec2(leftIndex  >> 12, leftIndex  & 0x00000FFF);
+			ivec2 rc = ivec2(rightIndex >> 12, rightIndex & 0x00000FFF);
+
+			vec3 LCmincorner = texelFetch(BVH, ivec2(lc.x + 0, lc.y), 0).xyz;
+			vec3 LCmaxcorner = texelFetch(BVH, ivec2(lc.x + 1, lc.y), 0).xyz;
+			vec3 RCmincorner = texelFetch(BVH, ivec2(rc.x + 0, rc.y), 0).xyz;
+			vec3 RCmaxcorner = texelFetch(BVH, ivec2(rc.x + 1, rc.y), 0).xyz;
+
+			leftHit  = IntersectRayAABB(LCmincorner, LCmaxcorner, r_trans);
+			rightHit = IntersectRayAABB(RCmincorner, RCmaxcorner, r_trans);
 
 			if (leftHit > 0.0 && rightHit > 0.0)
 			{
@@ -300,41 +368,62 @@ bool SceneIntersectShadow(Ray r, float maxDist)
 	int ptr = 0;
 	stack[ptr++] = -1;
 
-	int idx = 0;
+	int idx = 0x002c40cd;
 	float leftHit = 0.0;
 	float rightHit = 0.0;
 
-	while (idx > -1)
+	int currMatID = 0;
+	bool meshBVH = false;
+
+	Ray r_trans;
+	mat4 temp_transform;
+	r_trans.origin = r.origin;
+	r_trans.direction = r.direction;
+
+	while (idx > -1 || meshBVH)
 	{
 		int n = idx;
-		vec3 LRLeaf = texelFetch(BVH, n * 3 + 2).xyz;
+
+		if (meshBVH && idx < 0.0)
+		{
+			meshBVH = false;
+
+			idx = stack[--ptr];
+
+			r_trans.origin = r.origin;
+			r_trans.direction = r.direction;
+			continue;
+		}
+
+		ivec2 nIndex = ivec2((n >> 12) + 2, n & 0x00000FFF);
+		vec3 LRLeaf = texelFetch(BVH, nIndex, 0).xyz;
 
 		int leftIndex = int(LRLeaf.x);
 		int rightIndex = int(LRLeaf.y);
-		int isLeaf = int(LRLeaf.z);
+		int leaf = int(LRLeaf.z);
 
-		if (isLeaf == 1)
+		if (leaf > 0.0)
 		{
-			for (int i = 0; i <= rightIndex; i++) // Loop through indices
+			for (int i = 0; i < rightIndex; i++) // Loop through indices
 			{
 				int index = leftIndex + i;
-				vec4 triIndex = texelFetch(triangleIndicesTex, index).xyzw;
+				vec3 vert_indices = texelFetch(vertexIndicesTex, ivec2(index % vertIndicesSize, index / vertIndicesSize), 0).xyz;
 
-				vec3 v0 = texelFetch(verticesTex, int(triIndex.x)).xyz;
-				vec3 v1 = texelFetch(verticesTex, int(triIndex.y)).xyz;
-				vec3 v2 = texelFetch(verticesTex, int(triIndex.z)).xyz;
+				vec3 v0 = texelFetch(verticesTex, ivec2(int(vert_indices.x) % verticesSize, int(vert_indices.x) / verticesSize), 0).xyz;
+				vec3 v1 = texelFetch(verticesTex, ivec2(int(vert_indices.y) % verticesSize, int(vert_indices.y) / verticesSize), 0).xyz;
+				vec3 v2 = texelFetch(verticesTex, ivec2(int(vert_indices.z) % verticesSize, int(vert_indices.z) / verticesSize), 0).xyz;
 
 				vec3 e0 = v1 - v0;
 				vec3 e1 = v2 - v0;
-				vec3 pv = cross(r.direction, e1);
+				vec3 pv = cross(r_trans.direction, e1);
 				float det = dot(e0, pv);
 
-				vec3 tv = r.origin - v0.xyz;
+				vec3 tv = r_trans.origin - v0.xyz;
 				vec3 qv = cross(tv, e0);
 
 				vec4 uvt;
 				uvt.x = dot(tv, pv);
-				uvt.y = dot(r.direction, qv);
+				uvt.y = dot(r_trans.direction, qv);
 				uvt.z = dot(e1, qv);
 				uvt.xyz = uvt.xyz / det;
 				uvt.w = 1.0 - uvt.x - uvt.y;
@@ -343,10 +432,38 @@ bool SceneIntersectShadow(Ray r, float maxDist)
 					return true;
 			}
 		}
+		else if (leaf < 0.0)
+		{
+			idx = leftIndex;
+
+			vec4 r1 = texelFetch(transformsTex, (-leaf - 1) * 4 + 0, 0).xyzw;
+			vec4 r2 = texelFetch(transformsTex, (-leaf - 1) * 4 + 1, 0).xyzw;
+			vec4 r3 = texelFetch(transformsTex, (-leaf - 1) * 4 + 2, 0).xyzw;
+			vec4 r4 = texelFetch(transformsTex, (-leaf - 1) * 4 + 3, 0).xyzw;
+
+			temp_transform = mat4(r1, r2, r3, r4);
+
+			r_trans.origin = vec3(inverse(temp_transform) * vec4(r.origin, 1.0));
+			r_trans.direction = vec3(inverse(temp_transform) * vec4(r.direction, 0.0));
+
+			stack[ptr++] = -1;
+			meshBVH = true;
+			currMatID = rightIndex;
+			continue;
+		}
 		else
 		{
-			leftHit = IntersectRayAABB(texelFetch(BVH, leftIndex * 3 + 0).xyz, texelFetch(BVH, leftIndex * 3 + 1).xyz, r);
-			rightHit = IntersectRayAABB(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r);
+			ivec2 lc = ivec2(leftIndex  >> 12, leftIndex  & 0x00000FFF);
+			ivec2 rc = ivec2(rightIndex >> 12, rightIndex & 0x00000FFF);
+
+			vec3 LCmincorner = texelFetch(BVH, ivec2(lc.x + 0, lc.y), 0).xyz;
+			vec3 LCmaxcorner = texelFetch(BVH, ivec2(lc.x + 1, lc.y), 0).xyz;
+			vec3 RCmincorner = texelFetch(BVH, ivec2(rc.x + 0, rc.y), 0).xyz;
+			vec3 RCmaxcorner = texelFetch(BVH, ivec2(rc.x + 1, rc.y), 0).xyz;
+
+			leftHit  = IntersectRayAABB(LCmincorner, LCmaxcorner, r_trans);
+			rightHit = IntersectRayAABB(RCmincorner, RCmaxcorner, r_trans);
+
 
 			if (leftHit > 0.0 && rightHit > 0.0)
 			{
@@ -410,23 +527,24 @@ vec3 UniformSampleSphere(float u1, float u2)
 }
 
 //-----------------------------------------------------------------------
-void GetNormalAndTexCoord(inout State state, inout Ray r)
+void GetNormalsAndTexCoord(inout State state, inout Ray r)
 //-----------------------------------------------------------------------
 {
-	int index = state.triID;
+	vec3 nrm_indices = texelFetch(normalIndicesTex, ivec2(state.triID % normalIndicesSize, state.triID / normalIndicesSize), 0).xyz;
+	vec3 uv_indices = texelFetch(uvIndicesTex, ivec2(state.triID % uvIndicesSize, state.triID / uvIndicesSize), 0).xyz;
 
-	vec3 n1 = texelFetch(normalsTexCoordsTex, index * 6 + 0).xyz;
-	vec3 n2 = texelFetch(normalsTexCoordsTex, index * 6 + 1).xyz;
-	vec3 n3 = texelFetch(normalsTexCoordsTex, index * 6 + 2).xyz;
+	vec3 n1 = texelFetch(normalsTex, ivec2(int(nrm_indices.x) % normalsSize, int(nrm_indices.x) / normalsSize), 0).xyz;
+	vec3 n2 = texelFetch(normalsTex, ivec2(int(nrm_indices.y) % normalsSize, int(nrm_indices.y) / normalsSize), 0).xyz;
+	vec3 n3 = texelFetch(normalsTex, ivec2(int(nrm_indices.z) % normalsSize, int(nrm_indices.z) / normalsSize), 0).xyz;
 
-	vec3 t1 = texelFetch(normalsTexCoordsTex, index * 6 + 3).xyz;
-	vec3 t2 = texelFetch(normalsTexCoordsTex, index * 6 + 4).xyz;
-	vec3 t3 = texelFetch(normalsTexCoordsTex, index * 6 + 5).xyz;
+	vec2 t1 = texelFetch(uvTex, ivec2(int(uv_indices.x) % uvsSize, int(uv_indices.x) / uvsSize), 0).xy;
+	vec2 t2 = texelFetch(uvTex, ivec2(int(uv_indices.y) % uvsSize, int(uv_indices.y) / uvsSize), 0).xy;
+	vec2 t3 = texelFetch(uvTex, ivec2(int(uv_indices.z) % uvsSize, int(uv_indices.z) / uvsSize), 0).xy;
 
-	state.matID = int(t1.z);
-	state.texCoord = t1.xy * state.bary.x + t2.xy * state.bary.y + t3.xy * state.bary.z;
+	state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
 
 	vec3 normal = normalize(n1 * state.bary.x + n2 * state.bary.y + n3 * state.bary.z);
+	normal = normalize(vec3(transform * vec4(normal, 0.0)));
 	state.normal = normal;
 	state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : normal * -1.0;
 }
@@ -438,22 +556,23 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 	int index = state.matID;
 	Material mat;
 
-	mat.albedo = texelFetch(materialsTex, index * 4 + 0);
-	mat.emission = texelFetch(materialsTex, index * 4 + 1);
-	mat.param = texelFetch(materialsTex, index * 4 + 2);
-	mat.texIDs = texelFetch(materialsTex, index * 4 + 3);
+	mat.albedo = texelFetch(materialsTex, index * 4 + 0, 0);
+	mat.emission = texelFetch(materialsTex, index * 4 + 1, 0);
+	mat.param = texelFetch(materialsTex, index * 4 + 2, 0);
+	mat.texIDs = texelFetch(materialsTex, index * 4 + 3, 0);
 
 	vec2 texUV = state.texCoord;
+	texUV.y = 1.0 - texUV.y;
 
 	if (int(mat.texIDs.x) >= 0)
-		mat.albedo.xyz *= pow(texture(albedoTextures, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
+		mat.albedo.xyz *= pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
 
 	if (int(mat.texIDs.y) >= 0)
-		mat.param.xy = pow(texture(metallicRoughnessTextures, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
+		mat.param.xy = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
 
 	if (int(mat.texIDs.z) >= 0)
 	{
-		vec3 nrm = texture(normalTextures, vec3(texUV, int(mat.texIDs.z))).xyz;
+		vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
 		nrm = normalize(nrm * 2.0 - 1.0);
 
 		// Orthonormal Basis
@@ -468,62 +587,6 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
 	state.mat = mat;
 }
-
-
-//----------------------------Lambert BRDF----------------------------------
-
-//-----------------------------------------------------------------------
-float LambertPdf(Ray ray, inout State state, in vec3 bsdfDir)
-//-----------------------------------------------------------------------
-{
-	vec3 n = state.normal;
-	vec3 V = -ray.direction;
-	vec3 L = bsdfDir;
-
-	return abs(dot(L, n)) * (1.0 / PI);
-}
-
-//-----------------------------------------------------------------------
-vec3 LambertSample(in Ray ray, inout State state)
-//-----------------------------------------------------------------------
-{
-	vec3 N = state.normal;
-	vec3 V = -ray.direction;
-
-	vec3 dir;
-
-	float r1 = rand();
-	float r2 = rand();
-
-	vec3 UpVector = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
-	vec3 TangentX = normalize(cross(UpVector, N));
-	vec3 TangentY = cross(N, TangentX);
-
-	dir = CosineSampleHemisphere(r1, r2);
-	dir = TangentX * dir.x + TangentY * dir.y + N * dir.z;
-
-	return dir;
-}
-
-//-----------------------------------------------------------------------
-vec3 LambertEval(in Ray ray, inout State state, in vec3 bsdfDir)
-//-----------------------------------------------------------------------
-{
-	vec3 N = state.normal;
-	vec3 V = -ray.direction;
-	vec3 L = bsdfDir;
-
-	float NDotL = dot(N, L);
-	float NDotV = dot(N, V);
-	if (NDotL <= 0.0 || NDotV <= 0.0)
-		return vec3(0.0);
-
-	return state.mat.albedo.xyz / PI;
-}
-
-//-------------------------End of Lambert BRDF-------------------------------
-
-//----------------------------UE4 BRDF----------------------------------
 
 //-----------------------------------------------------------------------
 float SchlickFresnel(float u)
@@ -631,6 +694,7 @@ vec3 UE4Eval(in Ray ray, inout State state, in vec3 bsdfDir)
 
 	float NDotL = dot(N, L);
 	float NDotV = dot(N, V);
+
 	if (NDotL <= 0.0 || NDotV <= 0.0)
 		return vec3(0.0);
 
@@ -651,10 +715,6 @@ vec3 UE4Eval(in Ray ray, inout State state, in vec3 bsdfDir)
 
 	return (state.mat.albedo.xyz / PI) * (1.0 - state.mat.param.x) + Gs * Fs*Ds;
 }
-
-//-------------------------END OF UE4 BRDF-------------------------------
-
-//----------------------------Glass BSDF----------------------------------
 
 //-----------------------------------------------------------------------
 float GlassPdf(Ray ray, inout State state)
@@ -705,9 +765,6 @@ vec3 GlassEval(in Ray ray, inout State state)
 	return state.mat.albedo.xyz;
 }
 
-//-------------------------End of Glass BSDF-------------------------------
-
-//------------------------Direct Light Evaluation----------------------
 
 //-----------------------------------------------------------------------
 float powerHeuristic(float a, float b)
@@ -755,9 +812,9 @@ void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
 float EnvPdf(in Ray r)
 //-----------------------------------------------------------------------
 {
-	float theta = acos(r.direction.y);
+	float theta = acos(clamp(r.direction.y, -1.0, 1.0));
 	vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), theta * (1.0 / PI));
-	float pdf = texture(hdrCondDistTexture, uv).y * texture(hdrMarginalDistTexture, uv.y).y;
+	float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, uv.y).y;
 	return (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta));
 }
 
@@ -768,11 +825,11 @@ vec4 EnvSample(inout vec3 color)
 	float r1 = rand();
 	float r2 = rand();
 
-	float v = texture(hdrMarginalDistTexture, r1).x;
-	float u = texture(hdrCondDistTexture, vec2(r2, v)).x;
+	float v = texture(hdrMarginalDistTex, r1).x;
+	float u = texture(hdrCondDistTex, vec2(r2, v)).x;
 
-	color = texture(hdrTexture, vec2(u, v)).xyz * hdrMultiplier;
-	float pdf = texture(hdrCondDistTexture, vec2(u, v)).y * texture(hdrMarginalDistTexture, v).y;
+	color = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
+	float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, v).y;
 
 	float phi = u * TWO_PI;
 	float theta = v * PI;
@@ -823,11 +880,11 @@ vec3 DirectLight(in Ray r, in State state)
 		int index = int(rand() * numOfLights);
 
 		// Fetch light Data
-		vec3 p = texelFetch(lightsTex, index * 5 + 0).xyz;
-		vec3 e = texelFetch(lightsTex, index * 5 + 1).xyz;
-		vec3 u = texelFetch(lightsTex, index * 5 + 2).xyz;
-		vec3 v = texelFetch(lightsTex, index * 5 + 3).xyz;
-		vec3 rad = texelFetch(lightsTex, index * 5 + 4).xyz;
+		vec3 p = texelFetch(lightsTex, index * 5 + 0, 0).xyz;
+		vec3 e = texelFetch(lightsTex, index * 5 + 1, 0).xyz;
+		vec3 u = texelFetch(lightsTex, index * 5 + 2, 0).xyz;
+		vec3 v = texelFetch(lightsTex, index * 5 + 3, 0).xyz;
+		vec3 rad = texelFetch(lightsTex, index * 5 + 4, 0).xyz;
 
 		light = Light(p, e, u, v, rad);
 		sampleLight(light, lightSampleRec);
@@ -870,8 +927,6 @@ vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, i
 	return Le;
 }
 
-//---------------------------End of Direct Light Evaluation---------------------------
-
 //-----------------------------------------------------------------------
 vec3 PathTrace(Ray r)
 //-----------------------------------------------------------------------
@@ -884,6 +939,7 @@ vec3 PathTrace(Ray r)
 
 	for (int depth = 0; depth < maxDepth; depth++)
 	{
+		float lightPdf = 1.0f;
 		state.depth = depth;
 		float t = SceneIntersect(r, state, lightSampleRec);
 
@@ -896,16 +952,15 @@ vec3 PathTrace(Ray r)
 
 				if (depth > 0 && !state.specularBounce)
 				{
-					float lightPdf = EnvPdf(r);
+					lightPdf = EnvPdf(r);
 					misWeight = powerHeuristic(bsdfSampleRec.pdf, lightPdf);
 				}
-
-				radiance += misWeight * texture(hdrTexture, uv).xyz * throughput * hdrMultiplier;
+				radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
 			}
 			break;
 		}
 
-		GetNormalAndTexCoord(state, r);
+		GetNormalsAndTexCoord(state, r);
 		GetMaterialsAndTextures(state, r);
 
 		radiance += state.mat.emission.xyz * throughput;
@@ -988,6 +1043,11 @@ void main(void)
 		accumColor = vec3(0);
 
 	vec3 pixelColor = PathTrace(ray);
+
+	/*if((int(test) >> 12 & 0xFFA) == 0xFFA)
+		pixelColor = vec3(1.0, 0.0, 0.0);//= PathTrace(ray);
+	else 
+		pixelColor = vec3(0.0, 1.0, 0.0);*/
 
 	color = pixelColor + accumColor;
 }

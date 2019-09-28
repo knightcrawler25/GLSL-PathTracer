@@ -5,7 +5,7 @@
 // standard C++ libraries
 #include <vector>
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
     class Program
     {

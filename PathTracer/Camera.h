@@ -1,24 +1,25 @@
 #pragma once
 #include <glm/glm.hpp>
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
-    class Camera
-    {
-    public:
-        Camera(glm::vec3 pos, glm::vec3 lookAt, float fov);
-        Camera(const Camera& other);
-        Camera& operator = (const Camera& other);
+	class Camera
+	{
+	public:
+		Camera(glm::vec3 eye, glm::vec3 lookat, float fov);
+		Camera(const Camera& other);
+		Camera& operator = (const Camera& other);
 
-        void offsetOrientation(float x, float y);
-        void offsetPosition(glm::vec3 val);
-        void updateCamera();
-        glm::vec3 position;
-        glm::vec3 up;
-        glm::vec3 right;
-        glm::vec3 forward;
-        glm::vec3 worldUp;
-        float pitch, yaw, fov, focalDist, aperture;
-        bool isMoving;
-    };
+		void offsetOrientation(float dx, float dy);
+		void strafe(float dx, float dy);
+		void changeRadius(float dr);
+		void updateCamera();
+		glm::vec3 position, pivot;
+		glm::vec3 up;
+		glm::vec3 right;
+		glm::vec3 forward;
+		glm::vec3 worldUp;
+		float pitch, yaw, fov, focalDist, aperture, radius;
+		bool isMoving;
+	};
 }

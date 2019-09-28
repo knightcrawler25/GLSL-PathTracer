@@ -2,7 +2,7 @@
 #include "Quad.h"
 #include "Program.h"
 
-namespace GLSLPathTracer
+namespace GLSLPT
 {
     Quad::Quad()
     {
