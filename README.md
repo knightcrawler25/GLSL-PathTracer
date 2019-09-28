@@ -1,15 +1,14 @@
 
 GLSL-PathTracer
 ==========
-![Panther](./screenshots/panther.png)
-Recreation of a scene from [Greyscalegorilla](https://twitter.com/GSG3D). Render time: 2 minutes on a GTX 750 Ti. 3 bounces
-
--------
 ![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
 [Rank 3 Police Unit](https://nikvili.artstation.com/projects/xggaR)
 Scene by Nika Zautashvili. Make sure you check out his ArtStation page (https://nikvili.artstation.com/) since this render doesn't do justice to the original.
 He has put up this amazing blender scene for free and it was immensely useful for me in evaluating this renderer :) The one used here is a slightly simplified version
 from [SketchFab](https://sketchfab.com/models/d7698f6a7acf49c68ff0a50c5a1b1d52) since I barely had any GPU memory left on my poor GTX 750ti. Render is color corrected
+
+![Panther](./screenshots/panther.png)
+Recreation of a scene from [Greyscalegorilla](https://twitter.com/GSG3D). Render time: 2 minutes on a GTX 750 Ti. 3 bounces
 
 ![Ajax](./screenshots/ajax_materials.png) 
 --------
