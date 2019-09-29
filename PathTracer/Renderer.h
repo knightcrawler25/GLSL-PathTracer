@@ -36,8 +36,8 @@ namespace GLSLPT
     {
     protected:
         const Scene *scene;
-		GLuint BVHTex, BBoxminTex, BBoxmaxTex, vertexIndicesTex, verticesTex, normalIndicesTex, normalsTex, uvIndicesTex, uvTex, 
-			materialsTex, transformsTex, lightsTex, textureMapsArrayTex, hdrTex, hdrMarginalDistTex, hdrConditionalDistTex;
+		GLuint BVHTex, BBoxminTex, BBoxmaxTex, vertexIndicesTex, verticesTex, normalsTex,
+			   materialsTex, transformsTex, lightsTex, textureMapsArrayTex, hdrTex, hdrMarginalDistTex, hdrConditionalDistTex;
         Quad *quad;
         int numOfLights;
         glm::ivec2 screenSize;

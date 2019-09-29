@@ -21,60 +21,62 @@ namespace GLSLPT
 			return false;
 		}
 
-		// Load vertices
-		int vertCount = int(attrib.vertices.size() / 3);
-		vertices.resize(vertCount);
-		#pragma omp parallel for
-		for (int i = 0; i < vertCount; i++)
-			vertices[i] = glm::vec3(attrib.vertices[3 * i + 0], attrib.vertices[3 * i + 1], attrib.vertices[3 * i + 2]);
-
-		// Load normals
-		int nrmCount = int(attrib.normals.size() / 3);
-		normals.resize(nrmCount);
-		#pragma omp parallel for
-		for (int i = 0; i < nrmCount; i++)
-			normals[i] = glm::vec3(attrib.normals[3 * i + 0], attrib.normals[3 * i + 1], attrib.normals[3 * i + 2]);
-			
-		// Load uvs
-		int uvCount = int(attrib.texcoords.size() / 2);
-		uvs.resize(uvCount);
-		#pragma omp parallel for
-		for (int i = 0; i < uvCount; i++)
-			uvs[i] = glm::vec2(attrib.texcoords[2 * i + 0], attrib.texcoords[2 * i + 1]);
-
 		// Loop over shapes
-		for (int s = 0; s < shapes.size(); s++)
+		for (size_t s = 0; s < shapes.size(); s++) 
 		{
 			// Loop over faces(polygon)
-			int index_offset = 0;
+			size_t index_offset = 0;
 
-			for (int f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+			for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) 
 			{
 				int fv = shapes[s].mesh.num_face_vertices[f];
-				for (int i = 0; i < fv; i++)
+				// Loop over vertices in the face.
+				for (size_t v = 0; v < fv; v++)
 				{
-					tinyobj::index_t idx = tinyobj::index_t(shapes[s].mesh.indices[index_offset + i]);
-					vert_indices.push_back(idx.vertex_index);
-					nrm_indices.push_back(idx.normal_index);
-					uv_indices.push_back(idx.texcoord_index);
+					// access to vertex
+					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
+					tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
+					tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
+					tinyobj::real_t vz = attrib.vertices[3 * idx.vertex_index + 2];
+					tinyobj::real_t nx = attrib.normals[3 * idx.normal_index + 0];
+					tinyobj::real_t ny = attrib.normals[3 * idx.normal_index + 1];
+					tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
+
+					tinyobj::real_t tx, ty;
+					
+					// temporary fix
+					if (attrib.texcoords.size() > 0)
+					{
+						tx = attrib.texcoords[2 * idx.texcoord_index + 0];
+						ty = attrib.texcoords[2 * idx.texcoord_index + 1];
+					}
+					else
+					{
+						tx = ty = 0;
+					}
+
+					vertices_uvx.push_back(glm::vec4(vx, vy, vz, tx));
+					normals_uvy.push_back(glm::vec4(nx, ny, nz, ty));
 				}
+	
 				index_offset += fv;
 			}
 		}
+
 		return true;
 	}
 
 	void Mesh::buildBVH()
 	{
-		const int numTris = vert_indices.size() / 3;
+		const int numTris = vertices_uvx.size() / 3;
 		std::vector<RadeonRays::bbox> bounds(numTris);
 
 		#pragma omp parallel for
 		for (int i = 0; i < numTris; ++i)
 		{
-			const glm::vec3 v1 = vertices[vert_indices[i * 3 + 0]];
-			const glm::vec3 v2 = vertices[vert_indices[i * 3 + 1]];
-			const glm::vec3 v3 = vertices[vert_indices[i * 3 + 2]];
+			const glm::vec3 v1 = glm::vec3(vertices_uvx[i * 3 + 0]);
+			const glm::vec3 v2 = glm::vec3(vertices_uvx[i * 3 + 1]);
+			const glm::vec3 v3 = glm::vec3(vertices_uvx[i * 3 + 2]);
 
 			bounds[i].grow(v1);
 			bounds[i].grow(v2);

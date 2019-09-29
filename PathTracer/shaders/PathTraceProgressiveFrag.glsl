@@ -21,10 +21,7 @@ uniform sampler2D BBoxMin;
 uniform sampler2D BBoxMax;
 uniform isampler2D vertexIndicesTex;
 uniform sampler2D verticesTex;
-uniform isampler2D normalIndicesTex;
 uniform sampler2D normalsTex;
-uniform isampler2D uvIndicesTex;
-//uniform sampler2D uvTex;
 uniform sampler2D materialsTex;
 uniform sampler2D transformsTex;
 uniform sampler2D lightsTex;
@@ -51,11 +48,12 @@ uniform int vertIndicesSize;
 mat4 transform;
 
 vec2 seed;
+vec3 tempTexCoords;
 struct Ray { vec3 origin; vec3 direction; };
 struct Material { vec4 albedo; vec4 emission; vec4 param; vec4 texIDs; };
 struct Camera { vec3 up; vec3 right; vec3 forward; vec3 position; float fov; float focalDist; float aperture; };
 struct Light { vec3 position; vec3 emission; vec3 u; vec3 v; vec3 radiusAreaType; };
-struct State { vec3 normal; vec3 ffnormal; vec3 fhp; bool isEmitter; int depth; float hitDist; vec2 texCoord; vec3 bary; ivec2 triID; int matID; Material mat; bool specularBounce; };
+struct State { vec3 normal; vec3 ffnormal; vec3 fhp; bool isEmitter; int depth; float hitDist; vec2 texCoord; vec3 bary; ivec3 triID; int matID; Material mat; bool specularBounce; };
 struct BsdfSampleRec { vec3 bsdfDir; float pdf; };
 struct LightSampleRec { vec3 surfacePos; vec3 normal; vec3 emission; float pdf; };
 
@@ -256,12 +254,12 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 				ivec2 index = ivec2((leftIndex + i) % vertIndicesSize, (leftIndex + i) / vertIndicesSize);
 				ivec3 vert_indices = texelFetch(vertexIndicesTex, index, 0).xyz;
 
-				vec3 v0 = texelFetch(verticesTex, ivec2(vert_indices.x >> 12, vert_indices.x & 0x00000FFF), 0).xyz;
-				vec3 v1 = texelFetch(verticesTex, ivec2(vert_indices.y >> 12, vert_indices.y & 0x00000FFF), 0).xyz;
-				vec3 v2 = texelFetch(verticesTex, ivec2(vert_indices.z >> 12, vert_indices.z & 0x00000FFF), 0).xyz;
+				vec4 v0 = texelFetch(verticesTex, ivec2(vert_indices.x >> 12, vert_indices.x & 0x00000FFF), 0).xyzw;
+				vec4 v1 = texelFetch(verticesTex, ivec2(vert_indices.y >> 12, vert_indices.y & 0x00000FFF), 0).xyzw;
+				vec4 v2 = texelFetch(verticesTex, ivec2(vert_indices.z >> 12, vert_indices.z & 0x00000FFF), 0).xyzw;
 
-				vec3 e0 = v1 - v0;
-				vec3 e1 = v2 - v0;
+				vec3 e0 = v1.xyz - v0.xyz;
+				vec3 e1 = v2.xyz - v0.xyz;
 				vec3 pv = cross(r_trans.direction, e1);
 				float det = dot(e0, pv);
 
@@ -279,10 +277,11 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 				{
 					t = uvt.z;
 					state.isEmitter = false;
-					state.triID = index;
+					state.triID = vert_indices;
 					state.matID = currMatID;
 					state.fhp = r_trans.origin + r_trans.direction * t;
-					state.bary = BarycentricCoord(state.fhp, v0, v1, v2);
+					state.bary = BarycentricCoord(state.fhp, v0.xyz, v1.xyz, v2.xyz);
+					tempTexCoords = vec3(v0.w, v1.w, v2.w);
 					state.fhp = vec3(temp_transform * vec4(state.fhp, 1.0));
 					transform = temp_transform;
 				}
@@ -515,20 +514,18 @@ vec3 UniformSampleSphere(float u1, float u2)
 void GetNormalsAndTexCoord(inout State state, inout Ray r)
 //-----------------------------------------------------------------------
 {
-	ivec3 nrm_indices = texelFetch(normalIndicesTex, state.triID, 0).xyz;
-	ivec3 uv_indices = texelFetch(uvIndicesTex, state.triID, 0).xyz;
+	vec4 n1 = texelFetch(normalsTex, ivec2(state.triID.x >> 12, state.triID.x & 0x00000FFF), 0).xyzw;
+	vec4 n2 = texelFetch(normalsTex, ivec2(state.triID.y >> 12, state.triID.y & 0x00000FFF), 0).xyzw;
+	vec4 n3 = texelFetch(normalsTex, ivec2(state.triID.z >> 12, state.triID.z & 0x00000FFF), 0).xyzw;
 
-	vec3 n1 = texelFetch(normalsTex, ivec2(nrm_indices.x >> 12, nrm_indices.x & 0x00000FFF), 0).xyz;
-	vec3 n2 = texelFetch(normalsTex, ivec2(nrm_indices.y >> 12, nrm_indices.y & 0x00000FFF), 0).xyz;
-	vec3 n3 = texelFetch(normalsTex, ivec2(nrm_indices.z >> 12, nrm_indices.z & 0x00000FFF), 0).xyz;
-/*
-	vec2 t1 = texelFetch(uvTex, ivec2(uv_indices.x >> 12, uv_indices.x & 0x00000FFF), 0).xy;
-	vec2 t2 = texelFetch(uvTex, ivec2(uv_indices.y >> 12, uv_indices.y & 0x00000FFF), 0).xy;
-	vec2 t3 = texelFetch(uvTex, ivec2(uv_indices.z >> 12, uv_indices.z & 0x00000FFF), 0).xy;
-*/
-	state.texCoord = vec2(0., 0.);//t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
+	vec2 t1 = vec2(tempTexCoords.x, n1.w);
+	vec2 t2 = vec2(tempTexCoords.y, n2.w);
+	vec2 t3 = vec2(tempTexCoords.z, n3.w);
 
-	vec3 normal = normalize(n1 * state.bary.x + n2 * state.bary.y + n3 * state.bary.z);
+	state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
+
+	vec3 normal = normalize(n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
+
 	normal = normalize(vec3(transform * vec4(normal, 0.0)));
 	state.normal = normal;
 	state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : normal * -1.0;

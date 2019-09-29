@@ -38,10 +38,7 @@ namespace GLSLPT
 		glDeleteTextures(1, &BBoxmaxTex);
 		glDeleteTextures(1, &vertexIndicesTex);
 		glDeleteTextures(1, &verticesTex);
-		glDeleteTextures(1, &normalIndicesTex);
 		glDeleteTextures(1, &normalsTex);
-		glDeleteTextures(1, &uvIndicesTex);
-		//glDeleteTextures(1, &uvTex);
 		glDeleteTextures(1, &materialsTex);
 		glDeleteTextures(1, &transformsTex);
 		glDeleteTextures(1, &lightsTex);
@@ -101,43 +98,18 @@ namespace GLSLPT
 		//Create texture for Vertices
 		glGenTextures(1, &verticesTex);
 		glBindTexture(GL_TEXTURE_2D, verticesTex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->verticesTexWidth, scene->verticesTexWidth, 0, GL_RGB, GL_FLOAT, &scene->vertices[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, scene->triDataTexWidth, scene->triDataTexWidth, 0, GL_RGBA, GL_FLOAT, &scene->vertices_uvx[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		
-		//Create texture for Normal Indices
-		glGenTextures(1, &normalIndicesTex);
-		glBindTexture(GL_TEXTURE_2D, normalIndicesTex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, scene->indicesTexWidth, scene->indicesTexWidth, 0, GL_RGB_INTEGER, GL_INT, &scene->normalIndices[0]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
 		//Create texture for Normals
 		glGenTextures(1, &normalsTex);
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->normalsTexWidth, scene->normalsTexWidth, 0, GL_RGB, GL_FLOAT, &scene->normals[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, scene->triDataTexWidth, scene->triDataTexWidth, 0, GL_RGBA, GL_FLOAT, &scene->normals_uvy[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glBindTexture(GL_TEXTURE_2D, 0);
-
-		//Create texture for TexCoords Indices
-		glGenTextures(1, &uvIndicesTex);
-		glBindTexture(GL_TEXTURE_2D, uvIndicesTex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, scene->indicesTexWidth, scene->indicesTexWidth, 0, GL_RGB_INTEGER, GL_INT, &scene->uvIndices[0]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		/*
-		//Create texture for TexCoords
-		glGenTextures(1, &uvTex);
-		glBindTexture(GL_TEXTURE_2D, uvTex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->uvsTexWidth, scene->uvsTexWidth, 0, GL_RG, GL_FLOAT, &scene->uvs[0]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		*/
 
 		//Create texture for Materials
 		glGenTextures(1, &materialsTex);
