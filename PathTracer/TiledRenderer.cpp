@@ -131,17 +131,14 @@ namespace GLSLPT
 		glUniform1i(glGetUniformLocation(shaderObject, "BBoxMax"), 3);
 		glUniform1i(glGetUniformLocation(shaderObject, "vertexIndicesTex"), 4);
 		glUniform1i(glGetUniformLocation(shaderObject, "verticesTex"), 5);
-		glUniform1i(glGetUniformLocation(shaderObject, "normalIndicesTex"), 6);
-		glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 7);
-		glUniform1i(glGetUniformLocation(shaderObject, "uvIndicesTex"), 8);
-		//glUniform1i(glGetUniformLocation(shaderObject, "uvTex"), 8);
-		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 9);
-		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 10);
-		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 11);
-		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 12);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 13);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 14);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 15);
+		glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 6);
+		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 7);
+		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 8);
+		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 9);
+		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 10);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 11);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 12);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 13);
 
 		pathTraceShader->stopUsing();
 
@@ -159,17 +156,14 @@ namespace GLSLPT
 		glUniform1i(glGetUniformLocation(shaderObject, "BBoxMax"), 3);
 		glUniform1i(glGetUniformLocation(shaderObject, "vertexIndicesTex"), 4);
 		glUniform1i(glGetUniformLocation(shaderObject, "verticesTex"), 5);
-		glUniform1i(glGetUniformLocation(shaderObject, "normalIndicesTex"), 6);
-		glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 7);
-		glUniform1i(glGetUniformLocation(shaderObject, "uvIndicesTex"), 8);
-		//glUniform1i(glGetUniformLocation(shaderObject, "uvTex"), 9);
-		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 9);
-		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 10);
-		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 11);
-		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 12);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 13);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 14);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 15);
+		glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 6);
+		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 7);
+		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 8);
+		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 9);
+		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 10);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 11);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 12);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 13);
 
 		pathTraceShaderLowRes->stopUsing();
 
@@ -220,27 +214,20 @@ namespace GLSLPT
 		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_2D, verticesTex);
 		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_2D, normalIndicesTex);
-		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
-		glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D, uvIndicesTex);
-		/*glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D, uvTex);
-		*/
-		glActiveTexture(GL_TEXTURE9);
+		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, materialsTex);
-		glActiveTexture(GL_TEXTURE10);
+		glActiveTexture(GL_TEXTURE8);
 		glBindTexture(GL_TEXTURE_2D, transformsTex);
-		glActiveTexture(GL_TEXTURE11);
+		glActiveTexture(GL_TEXTURE9);
 		glBindTexture(GL_TEXTURE_2D, lightsTex);
-		glActiveTexture(GL_TEXTURE12);
+		glActiveTexture(GL_TEXTURE10);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, textureMapsArrayTex);
-		glActiveTexture(GL_TEXTURE13);
+		glActiveTexture(GL_TEXTURE11);
 		glBindTexture(GL_TEXTURE_2D, hdrTex);
-		glActiveTexture(GL_TEXTURE14);
+		glActiveTexture(GL_TEXTURE12);
 		glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
-		glActiveTexture(GL_TEXTURE15);
+		glActiveTexture(GL_TEXTURE13);
 		glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
 
 		if (!scene->camera->isMoving)

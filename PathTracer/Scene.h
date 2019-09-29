@@ -76,17 +76,12 @@ namespace GLSLPT
 
 		// Scene Mesh Data 
 		std::vector<Indices> vertIndices;
-		std::vector<glm::vec3> vertices;
-		std::vector<Indices> normalIndices;
-		std::vector<glm::vec3> normals;
-		std::vector<Indices> uvIndices;
-		std::vector<glm::vec2> uvs;
+		std::vector<glm::vec4> vertices_uvx;
+		std::vector<glm::vec4> normals_uvy;
 		std::vector<glm::mat4> transforms;
 
 		int indicesTexWidth;
-		int verticesTexWidth;
-		int normalsTexWidth;
-		int uvsTexWidth;
+		int triDataTexWidth;
 
 		//Bvh
 		RadeonRays::BvhTranslator bvhTranslator;
