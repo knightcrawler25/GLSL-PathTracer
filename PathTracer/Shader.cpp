@@ -22,6 +22,7 @@ namespace GLSLPT
 
         std::string source = buffer.str();
         _object = glCreateShader(shaderType);
+		printf("Compiling Shader %s -> %d\n", filePath.c_str(), int(_object));
         const GLchar *src = (const GLchar *)source.c_str();
         glShaderSource(_object, 1, &src, 0);
         glCompileShader(_object);
@@ -34,6 +35,8 @@ namespace GLSLPT
             glGetShaderiv(_object, GL_INFO_LOG_LENGTH, &logSize);
             char *info = new char[logSize + 1];
             glGetShaderInfoLog(_object, logSize, NULL, info);
+			msg += filePath;
+			msg += "\n";
             msg += info;
             delete[] info;
             glDeleteShader(_object);
@@ -42,7 +45,7 @@ namespace GLSLPT
             throw std::runtime_error(msg);
         }
     }
-
+	
     GLuint Shader::object() const
     {
         return _object;

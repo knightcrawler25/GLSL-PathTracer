@@ -1,4 +1,11 @@
-#version 330
+#version 300 es
+
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+precision highp samplerCube;
+precision highp isampler2D;
+precision highp sampler2DArray;
 
 out vec3 color;
 in vec2 TexCoords;
@@ -18,14 +25,14 @@ uniform sampler2D verticesTex;
 uniform sampler2D normalIndicesTex;
 uniform sampler2D normalsTex;
 uniform sampler2D uvIndicesTex;
-uniform sampler2D uvTex;
-uniform sampler1D materialsTex;
-uniform sampler1D transformsTex;
-uniform sampler1D lightsTex;
+//uniform sampler2D uvTex;
+uniform sampler2D materialsTex;
+uniform sampler2D transformsTex;
+uniform sampler2D lightsTex;
 uniform sampler2DArray textureMapsArrayTex;
 
 uniform sampler2D hdrTex;
-uniform sampler1D hdrMarginalDistTex;
+uniform sampler2D hdrMarginalDistTex;
 uniform sampler2D hdrCondDistTex;
 uniform float hdrResolution;
 uniform float hdrMultiplier;
@@ -297,10 +304,10 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 		{
 			idx = leftIndex;
 
-			vec4 r1 = texelFetch(transformsTex, (-leaf - 1) * 4 + 0, 0).xyzw;
-			vec4 r2 = texelFetch(transformsTex, (-leaf - 1) * 4 + 1, 0).xyzw;
-			vec4 r3 = texelFetch(transformsTex, (-leaf - 1) * 4 + 2, 0).xyzw;
-			vec4 r4 = texelFetch(transformsTex, (-leaf - 1) * 4 + 3, 0).xyzw;
+			vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
+			vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
+			vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
+			vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
 
 			temp_transform = mat4(r1, r2, r3, r4);
 
@@ -436,10 +443,10 @@ bool SceneIntersectShadow(Ray r, float maxDist)
 		{
 			idx = leftIndex;
 
-			vec4 r1 = texelFetch(transformsTex, (-leaf - 1) * 4 + 0, 0).xyzw;
-			vec4 r2 = texelFetch(transformsTex, (-leaf - 1) * 4 + 1, 0).xyzw;
-			vec4 r3 = texelFetch(transformsTex, (-leaf - 1) * 4 + 2, 0).xyzw;
-			vec4 r4 = texelFetch(transformsTex, (-leaf - 1) * 4 + 3, 0).xyzw;
+			vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
+			vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
+			vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
+			vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
 
 			temp_transform = mat4(r1, r2, r3, r4);
 
@@ -536,12 +543,12 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 	vec3 n1 = texelFetch(normalsTex, ivec2(int(nrm_indices.x) % normalsSize, int(nrm_indices.x) / normalsSize), 0).xyz;
 	vec3 n2 = texelFetch(normalsTex, ivec2(int(nrm_indices.y) % normalsSize, int(nrm_indices.y) / normalsSize), 0).xyz;
 	vec3 n3 = texelFetch(normalsTex, ivec2(int(nrm_indices.z) % normalsSize, int(nrm_indices.z) / normalsSize), 0).xyz;
-
+/*
 	vec2 t1 = texelFetch(uvTex, ivec2(int(uv_indices.x) % uvsSize, int(uv_indices.x) / uvsSize), 0).xy;
 	vec2 t2 = texelFetch(uvTex, ivec2(int(uv_indices.y) % uvsSize, int(uv_indices.y) / uvsSize), 0).xy;
 	vec2 t3 = texelFetch(uvTex, ivec2(int(uv_indices.z) % uvsSize, int(uv_indices.z) / uvsSize), 0).xy;
-
-	state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
+*/
+	state.texCoord = vec2(0., 0.);//t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
 
 	vec3 normal = normalize(n1 * state.bary.x + n2 * state.bary.y + n3 * state.bary.z);
 	normal = normalize(vec3(transform * vec4(normal, 0.0)));
@@ -556,10 +563,10 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 	int index = state.matID;
 	Material mat;
 
-	mat.albedo = texelFetch(materialsTex, index * 4 + 0, 0);
-	mat.emission = texelFetch(materialsTex, index * 4 + 1, 0);
-	mat.param = texelFetch(materialsTex, index * 4 + 2, 0);
-	mat.texIDs = texelFetch(materialsTex, index * 4 + 3, 0);
+	mat.albedo = texelFetch(materialsTex, ivec2(index * 4 + 0, 0), 0);
+	mat.emission = texelFetch(materialsTex, ivec2(index * 4 + 1, 0), 0);
+	mat.param = texelFetch(materialsTex, ivec2(index * 4 + 2, 0), 0);
+	mat.texIDs = texelFetch(materialsTex, ivec2(index * 4 + 3, 0), 0);
 
 	vec2 texUV = state.texCoord;
 	texUV.y = 1.0 - texUV.y;
@@ -814,7 +821,7 @@ float EnvPdf(in Ray r)
 {
 	float theta = acos(clamp(r.direction.y, -1.0, 1.0));
 	vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), theta * (1.0 / PI));
-	float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, uv.y).y;
+	float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, vec2(uv.y, 0.)).y;
 	return (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta));
 }
 
@@ -825,11 +832,11 @@ vec4 EnvSample(inout vec3 color)
 	float r1 = rand();
 	float r2 = rand();
 
-	float v = texture(hdrMarginalDistTex, r1).x;
+	float v = texture(hdrMarginalDistTex, vec2(r1, 0.)).x;
 	float u = texture(hdrCondDistTex, vec2(r2, v)).x;
 
 	color = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
-	float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, v).y;
+	float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, vec2(v, 0.)).y;
 
 	float phi = u * TWO_PI;
 	float theta = v * PI;
