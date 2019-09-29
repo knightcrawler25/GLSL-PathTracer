@@ -166,8 +166,6 @@ namespace GLSLPT
 		bvhTranslator.Process(sceneBvh, meshes, meshInstances);
 
 		int verticesCnt = 0;
-		int normalsCnt = 0;
-		int uvsCnt = 0;
 
 		//Copy mesh data
 		for (int i = 0; i < meshes.size(); i++)
@@ -179,59 +177,32 @@ namespace GLSLPT
 			for (int j = 0; j < numIndices; j++)
 			{
 				int index = triIndices[j];
-				int v1 = meshes[i]->vert_indices[index * 3 + 0] + verticesCnt;
-				int v2 = meshes[i]->vert_indices[index * 3 + 1] + verticesCnt;
-				int v3 = meshes[i]->vert_indices[index * 3 + 2] + verticesCnt;
-
-				int n1 = meshes[i]->nrm_indices[index * 3 + 0] + normalsCnt;
-				int n2 = meshes[i]->nrm_indices[index * 3 + 1] + normalsCnt;
-				int n3 = meshes[i]->nrm_indices[index * 3 + 2] + normalsCnt;
-
-				int t1 = meshes[i]->uv_indices[index * 3 + 0] + uvsCnt;
-				int t2 = meshes[i]->uv_indices[index * 3 + 1] + uvsCnt;
-				int t3 = meshes[i]->uv_indices[index * 3 + 2] + uvsCnt;
+				int v1 = (index * 3 + 0) + verticesCnt;
+				int v2 = (index * 3 + 1) + verticesCnt;
+				int v3 = (index * 3 + 2) + verticesCnt;
 
 				vertIndices.push_back(Indices{ v1, v2, v3 });
-				normalIndices.push_back(Indices{ n1, n2, n3 });
-				uvIndices.push_back(Indices{ t1, t2, t3 });
 			}
 
-			vertices.insert(vertices.end(), meshes[i]->vertices.begin(), meshes[i]->vertices.end());
-			normals.insert(normals.end(), meshes[i]->normals.begin(), meshes[i]->normals.end());
-			uvs.insert(uvs.end(), meshes[i]->uvs.begin(), meshes[i]->uvs.end());
+			vertices_uvx.insert(vertices_uvx.end(), meshes[i]->vertices_uvx.begin(), meshes[i]->vertices_uvx.end());
+			normals_uvy.insert(normals_uvy.end(), meshes[i]->normals_uvy.begin(), meshes[i]->normals_uvy.end());
 
-			verticesCnt += meshes[i]->vertices.size();
-			normalsCnt += meshes[i]->normals.size();
-			uvsCnt += meshes[i]->uvs.size();
+			verticesCnt += meshes[i]->vertices_uvx.size();
 		}
 
 		// Resize to power of 2
-		indicesTexWidth  = (int)(sqrt(vertIndices.size()) + 1); // size of array is the same for vertices/normals/uvs
-		verticesTexWidth = (int)(sqrt(vertices.size())    + 1);
-		normalsTexWidth  = (int)(sqrt(normals.size())     + 1);
-		uvsTexWidth      = (int)(sqrt(uvs.size())         + 1);
+		indicesTexWidth  = (int)(sqrt(vertIndices.size()) + 1); 
+		triDataTexWidth  = (int)(sqrt(vertices_uvx.size())+ 1); 
 
 		vertIndices.resize(indicesTexWidth * indicesTexWidth);
-		normalIndices.resize(indicesTexWidth * indicesTexWidth);
-		uvIndices.resize(indicesTexWidth * indicesTexWidth);
-
-		vertices.resize(verticesTexWidth * verticesTexWidth);
-		normals.resize(normalsTexWidth * normalsTexWidth);
-		uvs.resize(uvsTexWidth * uvsTexWidth);
+		vertices_uvx.resize(triDataTexWidth * triDataTexWidth);
+		normals_uvy.resize(triDataTexWidth * triDataTexWidth);
 
 		for (int i = 0; i < vertIndices.size(); i++)
 		{
-			vertIndices[i].x = ((vertIndices[i].x % verticesTexWidth) << 12) | (vertIndices[i].x / verticesTexWidth);
-			vertIndices[i].y = ((vertIndices[i].y % verticesTexWidth) << 12) | (vertIndices[i].y / verticesTexWidth);
-			vertIndices[i].z = ((vertIndices[i].z % verticesTexWidth) << 12) | (vertIndices[i].z / verticesTexWidth);
-
-			normalIndices[i].x = ((normalIndices[i].x % normalsTexWidth) << 12) | (normalIndices[i].x / normalsTexWidth);
-			normalIndices[i].y = ((normalIndices[i].y % normalsTexWidth) << 12) | (normalIndices[i].y / normalsTexWidth);
-			normalIndices[i].z = ((normalIndices[i].z % normalsTexWidth) << 12) | (normalIndices[i].z / normalsTexWidth);
-
-			uvIndices[i].x = ((uvIndices[i].x % uvsTexWidth) << 12) | (uvIndices[i].x / uvsTexWidth);
-			uvIndices[i].y = ((uvIndices[i].y % uvsTexWidth) << 12) | (uvIndices[i].y / uvsTexWidth);
-			uvIndices[i].z = ((uvIndices[i].z % uvsTexWidth) << 12) | (uvIndices[i].z / uvsTexWidth);
+			vertIndices[i].x = ((vertIndices[i].x % triDataTexWidth) << 12) | (vertIndices[i].x / triDataTexWidth);
+			vertIndices[i].y = ((vertIndices[i].y % triDataTexWidth) << 12) | (vertIndices[i].y / triDataTexWidth);
+			vertIndices[i].z = ((vertIndices[i].z % triDataTexWidth) << 12) | (vertIndices[i].z / triDataTexWidth);
 		}
 
 		//Copy transforms
