@@ -145,7 +145,7 @@ HDRData* HDRLoader::load(const char *fileName)
 	fread(str, 10, 1, file);
 	if (memcmp(str, "#?RADIANCE", 10)) {
 		fclose(file);
-		return false;
+		return nullptr;
 	}
 
 	fseek(file, 1, SEEK_CUR);
@@ -173,7 +173,7 @@ HDRData* HDRLoader::load(const char *fileName)
 	int w, h;
 	if (!sscanf(reso, "-Y %ld +X %ld", &h, &w)) {
 		fclose(file);
-		return false;
+		return nullptr;
 	}
 
 	res->width = w;
@@ -185,7 +185,7 @@ HDRData* HDRLoader::load(const char *fileName)
 	RGBE *scanline = new RGBE[w];
 	if (!scanline) {
 		fclose(file);
-		return false;
+		return nullptr;
 	}
 
 	// convert image 

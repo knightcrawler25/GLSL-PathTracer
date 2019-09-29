@@ -148,14 +148,17 @@ endif()
 if (EMSCRIPTEN)
 add_definitions(-DEMSCRIPTEN)
 add_definitions(-D_X86_)
-set(EMS_OPTS "-s USE_SDL=2 -s USE_WEBGL2=1 -s WASM=1 -s FULL_ES3=2 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE=clamp --bind -O2 --no-heap-copy -g4 --source-map-base http://localhost:8000/")
+set(EMS_OPTS "-s USE_SDL=2 -s USE_WEBGL2=1 -s WASM=1 -s FULL_ES3=1 -s ALLOW_MEMORY_GROWTH=1 -s BINARYEN_TRAP_MODE=clamp --bind -O2 --no-heap-copy -g4 --source-map-base localhost:8000")
 add_definitions(${EMS_OPTS})
-set(EMS_PRELOAD " --preload-file assets")
+set(EMS_PRELOAD " --preload-file assets --preload-file shaders")
 set(EMS_LINK "${EMS_OPTS} ${EMS_PRELOAD}")
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS ${EMS_LINK})
 
 add_custom_command(TARGET ${EXE_NAME} PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/bin/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
+)
+add_custom_command(TARGET ${EXE_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/PathTracer/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
 )
 
 add_custom_command(TARGET ${EXE_NAME} POST_BUILD
