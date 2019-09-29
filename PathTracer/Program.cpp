@@ -1,4 +1,5 @@
 #include "Program.h"
+#include <stdexcept>
 
 namespace GLSLPT
 {
@@ -9,7 +10,7 @@ namespace GLSLPT
             glAttachShader(_object, shaders[i].object());
 
         glLinkProgram(_object);
-
+		printf("Linking program %d\n", int(_object));
         for (unsigned i = 0; i < shaders.size(); i++)
             glDetachShader(_object, shaders[i].object());
         GLint success = 0;

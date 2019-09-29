@@ -36,7 +36,7 @@ float mouseSensitivity = 1.0f;
 bool keyPressed = false;
 Scene *scene = nullptr;
 Renderer *renderer = nullptr;
-int currentSceneIndex = 0;
+int currentSceneIndex = 2;
 double lastTime = SDL_GetTicks(); //glfwGetTime();
 bool done = false;
 
@@ -82,7 +82,11 @@ void loadScene(int index)
 bool initRenderer()
 {
     delete renderer;
+#ifdef __EMSCRIPTEN__
+	renderer = new TiledRenderer(scene, "./shaders/");
+#else
     renderer = new TiledRenderer(scene, "../PathTracer/shaders/");
+#endif
     renderer->init();
     return true;
 }
