@@ -1,4 +1,11 @@
-#version 330
+#version 300 es
+
+precision highp float;
+precision highp int;
+precision highp sampler2D;
+precision highp samplerCube;
+precision highp isampler2D;
+precision highp sampler2DArray;
 
 out vec3 color;
 in vec2 TexCoords;
@@ -17,14 +24,14 @@ uniform sampler2D verticesTex;
 uniform isampler2D normalIndicesTex;
 uniform sampler2D normalsTex;
 uniform isampler2D uvIndicesTex;
-uniform sampler2D uvTex;
-uniform sampler1D materialsTex;
-uniform sampler1D transformsTex;
-uniform sampler1D lightsTex;
+//uniform sampler2D uvTex;
+uniform sampler2D materialsTex;
+uniform sampler2D transformsTex;
+uniform sampler2D lightsTex;
 uniform sampler2DArray textureMapsArrayTex;
 
 uniform sampler2D hdrTex;
-uniform sampler1D hdrMarginalDistTex;
+uniform sampler2D hdrMarginalDistTex;
 uniform sampler2D hdrCondDistTex;
 uniform float hdrResolution;
 uniform float hdrMultiplier;
@@ -97,10 +104,10 @@ float RectIntersect(in vec3 pos, in vec3 u, in vec3 v, in vec3 normal, in vec4 p
 		vec3 p = r.origin + r.direction * t;
 		vec3 vi = p - pos;
 		float a1 = dot(u, vi);
-		if (a1 >= 0 && a1 <= 1)
+		if (a1 >= 0. && a1 <= 1.)
 		{
 			float a2 = dot(v, vi);
-			if (a2 >= 0 && a2 <= 1)
+			if (a2 >= 0. && a2 <= 1.)
 				return t;
 		}
 	}
@@ -160,23 +167,23 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 	for (int i = 0; i < numOfLights; i++)
 	{
 		// Fetch light Data
-		vec3 position = texelFetch(lightsTex, i * 5 + 0, 0).xyz;
-		vec3 emission = texelFetch(lightsTex, i * 5 + 1, 0).xyz;
-		vec3 u = texelFetch(lightsTex, i * 5 + 2, 0).xyz;
-		vec3 v = texelFetch(lightsTex, i * 5 + 3, 0).xyz;
-		vec3 radiusAreaType = texelFetch(lightsTex, i * 5 + 4, 0).xyz;
+		vec3 position = texelFetch(lightsTex, ivec2(i * 5 + 0, 0), 0).xyz;
+		vec3 emission = texelFetch(lightsTex, ivec2(i * 5 + 1, 0), 0).xyz;
+		vec3 u = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
+		vec3 v = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
+		vec3 radiusAreaType = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
 
-		if (radiusAreaType.z == 0) // Rectangular Area Light
+		if (radiusAreaType.z == 0.) // Rectangular Area Light
 		{
 			vec3 normal = normalize(cross(u, v));
-			if (dot(normal, r.direction) > 0) // Hide backfacing quad light
+			if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
 				continue;
 			vec4 plane = vec4(normal, dot(normal, position));
 			u *= 1.0f / dot(u, u);
 			v *= 1.0f / dot(v, v);
 
 			d = RectIntersect(position, u, v, normal, plane, r);
-			if (d < 0)
+			if (d < 0.)
 				d = INFINITY;
 			if (d < t)
 			{
@@ -188,10 +195,10 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 				state.isEmitter = true;
 			}
 		}
-		if (radiusAreaType.z == 1) // Spherical Area Light
+		if (radiusAreaType.z == 1.) // Spherical Area Light
 		{
 			d = SphereIntersect(radiusAreaType.x, position, r);
-			if (d < 0)
+			if (d < 0.)
 				d = INFINITY;
 			if (d < t)
 			{
@@ -285,10 +292,10 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 		{
 			idx = leftIndex;
 
-			vec4 r1 = texelFetch(transformsTex, (-leaf - 1) * 4 + 0, 0).xyzw;
-			vec4 r2 = texelFetch(transformsTex, (-leaf - 1) * 4 + 1, 0).xyzw;
-			vec4 r3 = texelFetch(transformsTex, (-leaf - 1) * 4 + 2, 0).xyzw;
-			vec4 r4 = texelFetch(transformsTex, (-leaf - 1) * 4 + 3, 0).xyzw;
+			vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
+			vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
+			vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
+			vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
 
 			temp_transform = mat4(r1, r2, r3, r4);
 
@@ -325,12 +332,12 @@ float SceneIntersect(Ray r, inout State state, inout LightSampleRec lightSampleR
 				stack[ptr++] = deferred;
 				continue;
 			}
-			else if (leftHit > 0)
+			else if (leftHit > 0.)
 			{
 				idx = leftIndex;
 				continue;
 			}
-			else if (rightHit > 0)
+			else if (rightHit > 0.)
 			{
 				idx = rightIndex;
 				continue;
@@ -419,10 +426,10 @@ bool SceneIntersectShadow(Ray r, float maxDist)
 		{
 			idx = leftIndex;
 
-			vec4 r1 = texelFetch(transformsTex, (-leaf - 1) * 4 + 0, 0).xyzw;
-			vec4 r2 = texelFetch(transformsTex, (-leaf - 1) * 4 + 1, 0).xyzw;
-			vec4 r3 = texelFetch(transformsTex, (-leaf - 1) * 4 + 2, 0).xyzw;
-			vec4 r4 = texelFetch(transformsTex, (-leaf - 1) * 4 + 3, 0).xyzw;
+			vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
+			vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
+			vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
+			vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
 
 			temp_transform = mat4(r1, r2, r3, r4);
 
@@ -460,12 +467,12 @@ bool SceneIntersectShadow(Ray r, float maxDist)
 				stack[ptr++] = deferred;
 				continue;
 			}
-			else if (leftHit > 0)
+			else if (leftHit > 0.)
 			{
 				idx = leftIndex;
 				continue;
 			}
-			else if (rightHit > 0)
+			else if (rightHit > 0.)
 			{
 				idx = rightIndex;
 				continue;
@@ -514,12 +521,12 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 	vec3 n1 = texelFetch(normalsTex, ivec2(nrm_indices.x >> 12, nrm_indices.x & 0x00000FFF), 0).xyz;
 	vec3 n2 = texelFetch(normalsTex, ivec2(nrm_indices.y >> 12, nrm_indices.y & 0x00000FFF), 0).xyz;
 	vec3 n3 = texelFetch(normalsTex, ivec2(nrm_indices.z >> 12, nrm_indices.z & 0x00000FFF), 0).xyz;
-
+/*
 	vec2 t1 = texelFetch(uvTex, ivec2(uv_indices.x >> 12, uv_indices.x & 0x00000FFF), 0).xy;
 	vec2 t2 = texelFetch(uvTex, ivec2(uv_indices.y >> 12, uv_indices.y & 0x00000FFF), 0).xy;
 	vec2 t3 = texelFetch(uvTex, ivec2(uv_indices.z >> 12, uv_indices.z & 0x00000FFF), 0).xy;
-
-	state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
+*/
+	state.texCoord = vec2(0., 0.);//t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
 
 	vec3 normal = normalize(n1 * state.bary.x + n2 * state.bary.y + n3 * state.bary.z);
 	normal = normalize(vec3(transform * vec4(normal, 0.0)));
@@ -534,10 +541,10 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 	int index = state.matID;
 	Material mat;
 
-	mat.albedo = texelFetch(materialsTex, index * 4 + 0, 0);
-	mat.emission = texelFetch(materialsTex, index * 4 + 1, 0);
-	mat.param = texelFetch(materialsTex, index * 4 + 2, 0);
-	mat.texIDs = texelFetch(materialsTex, index * 4 + 3, 0);
+	mat.albedo = texelFetch(materialsTex, ivec2(index * 4 + 0, 0), 0);
+	mat.emission = texelFetch(materialsTex, ivec2(index * 4 + 1, 0), 0);
+	mat.param = texelFetch(materialsTex, ivec2(index * 4 + 2, 0), 0);
+	mat.texIDs = texelFetch(materialsTex, ivec2(index * 4 + 3, 0), 0);
 
 	vec2 texUV = state.texCoord;
 	texUV.y = 1.0 - texUV.y;
@@ -710,7 +717,7 @@ vec3 GlassSample(in Ray ray, inout State state)
 	float R0 = (n1 - n2) / (n1 + n2);
 	R0 *= R0;
 	float theta = dot(-ray.direction, state.ffnormal);
-	float prob = R0 + (1 - R0) * SchlickFresnel(theta);
+	float prob = R0 + (1. - R0) * SchlickFresnel(theta);
 	vec3 dir;
 
 	//vec3 transmittance = vec3(1.0);
@@ -761,7 +768,7 @@ void sampleSphereLight(in Light light, inout LightSampleRec lightSampleRec)
 
 	lightSampleRec.surfacePos = light.position + UniformSampleSphere(r1, r2) * light.radiusAreaType.x;
 	lightSampleRec.normal = normalize(lightSampleRec.surfacePos - light.position);
-	lightSampleRec.emission = light.emission * numOfLights;
+	lightSampleRec.emission = light.emission * float(numOfLights);
 }
 
 //-----------------------------------------------------------------------
@@ -773,7 +780,7 @@ void sampleQuadLight(in Light light, inout LightSampleRec lightSampleRec)
 
 	lightSampleRec.surfacePos = light.position + light.u * r1 + light.v * r2;
 	lightSampleRec.normal = normalize(cross(light.u, light.v));
-	lightSampleRec.emission = light.emission * numOfLights;
+	lightSampleRec.emission = light.emission * float(numOfLights);
 }
 
 //-----------------------------------------------------------------------
@@ -792,7 +799,7 @@ float EnvPdf(in Ray r)
 {
 	float theta = acos(clamp(r.direction.y, -1.0, 1.0));
 	vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), theta * (1.0 / PI));
-	float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, uv.y).y;
+	float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, vec2(uv.y, 0.)).y;
 	return (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta));
 }
 
@@ -803,11 +810,11 @@ vec4 EnvSample(inout vec3 color)
 	float r1 = rand();
 	float r2 = rand();
 
-	float v = texture(hdrMarginalDistTex, r1).x;
+	float v = texture(hdrMarginalDistTex, vec2(r1, 0.)).x;
 	float u = texture(hdrCondDistTex, vec2(r2, v)).x;
 
 	color = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
-	float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, v).y;
+	float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, vec2(v, 0.)).y;
 
 	float phi = u * TWO_PI;
 	float theta = v * PI;
@@ -855,14 +862,14 @@ vec3 DirectLight(in Ray r, in State state)
 		Light light;
 
 		//Pick a light to sample
-		int index = int(rand() * numOfLights);
+		int index = int(rand() * float(numOfLights));
 
 		// Fetch light Data
-		vec3 p = texelFetch(lightsTex, index * 5 + 0, 0).xyz;
-		vec3 e = texelFetch(lightsTex, index * 5 + 1, 0).xyz;
-		vec3 u = texelFetch(lightsTex, index * 5 + 2, 0).xyz;
-		vec3 v = texelFetch(lightsTex, index * 5 + 3, 0).xyz;
-		vec3 rad = texelFetch(lightsTex, index * 5 + 4, 0).xyz;
+		vec3 p = texelFetch(lightsTex, ivec2(index * 5 + 0, 0), 0).xyz;
+		vec3 e = texelFetch(lightsTex, ivec2(index * 5 + 1, 0), 0).xyz;
+		vec3 u = texelFetch(lightsTex, ivec2(index * 5 + 2, 0), 0).xyz;
+		vec3 v = texelFetch(lightsTex, ivec2(index * 5 + 3, 0), 0).xyz;
+		vec3 rad = texelFetch(lightsTex, ivec2(index * 5 + 4, 0), 0).xyz;
 
 		light = Light(p, e, u, v, rad);
 		sampleLight(light, lightSampleRec);

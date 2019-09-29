@@ -43,30 +43,33 @@ namespace GLSLPT
 		tileOutputShader = loadShaders(shadersDirectory + "TileOutputVert.glsl", shadersDirectory + "TileOutputFrag.glsl");
 		outputShader = loadShaders(shadersDirectory + "OutputVert.glsl", shadersDirectory + "OutputFrag.glsl");
 
+		printf("Debug sizes : %d %d - %d %d\n", tileWidth, tileHeight, screenSize.x, screenSize.y);
         //----------------------------------------------------------
         // FBO Setup
         //----------------------------------------------------------
 	    //Create FBOs for path trace shader (Tiled)
+		printf("Buffer pathTraceFBO\n");
 		glGenFramebuffers(1, &pathTraceFBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBO);
 
 		//Create Texture for FBO
 		glGenTextures(1, &pathTraceTexture);
 		glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, tileWidth, tileHeight, 0, GL_RGB, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tileWidth, tileHeight, 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pathTraceTexture, 0);
 
 		//Create FBOs for path trace shader (Progressive)
+		printf("Buffer pathTraceFBOLowRes\n");
 		glGenFramebuffers(1, &pathTraceFBOLowRes);
 		glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
 
 		//Create Texture for FBO
 		glGenTextures(1, &pathTraceTextureLowRes);
 		glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x / 4, screenSize.y / 4, 0, GL_RGB, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 4, screenSize.y / 4, 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -75,33 +78,35 @@ namespace GLSLPT
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pathTraceTextureLowRes, 0);
 
 		//Create FBOs for accum buffer
+		printf("Buffer accumFBO\n");
 		glGenFramebuffers(1, &accumFBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
 
 		//Create Texture for FBO
 		glGenTextures(1, &accumTexture);
 		glBindTexture(GL_TEXTURE_2D, accumTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, GLsizei(screenSize.x), GLsizei(screenSize.y), 0, GL_RGB, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, GLsizei(screenSize.x), GLsizei(screenSize.y), 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, accumTexture, 0);
 
 		//Create FBOs for tile output shader
+		printf("Buffer outputFBO\n");
 		glGenFramebuffers(1, &outputFBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, outputFBO);
 
 		//Create Texture for FBO
 		glGenTextures(1, &tileOutputTexture[0]);
 		glBindTexture(GL_TEXTURE_2D, tileOutputTexture[0]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x, screenSize.y, 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		glGenTextures(1, &tileOutputTexture[1]);
 		glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x, screenSize.y, 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -129,14 +134,14 @@ namespace GLSLPT
 		glUniform1i(glGetUniformLocation(shaderObject, "normalIndicesTex"), 6);
 		glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 7);
 		glUniform1i(glGetUniformLocation(shaderObject, "uvIndicesTex"), 8);
-		glUniform1i(glGetUniformLocation(shaderObject, "uvTex"), 9);
-		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 10);
-		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 11);
-		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 12);
-		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 13);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 14);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 15);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 16);
+		//glUniform1i(glGetUniformLocation(shaderObject, "uvTex"), 8);
+		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 9);
+		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 10);
+		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 11);
+		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 12);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 13);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 14);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 15);
 
 		pathTraceShader->stopUsing();
 
@@ -157,14 +162,14 @@ namespace GLSLPT
 		glUniform1i(glGetUniformLocation(shaderObject, "normalIndicesTex"), 6);
 		glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 7);
 		glUniform1i(glGetUniformLocation(shaderObject, "uvIndicesTex"), 8);
-		glUniform1i(glGetUniformLocation(shaderObject, "uvTex"), 9);
-		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 10);
-		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 11);
-		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 12);
-		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 13);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 14);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 15);
-		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 16);
+		//glUniform1i(glGetUniformLocation(shaderObject, "uvTex"), 9);
+		glUniform1i(glGetUniformLocation(shaderObject, "materialsTex"), 9);
+		glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 10);
+		glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 11);
+		glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 12);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 13);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 14);
+		glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 15);
 
 		pathTraceShaderLowRes->stopUsing();
 
@@ -220,21 +225,22 @@ namespace GLSLPT
 		glBindTexture(GL_TEXTURE_2D, normalsTex);
 		glActiveTexture(GL_TEXTURE8);
 		glBindTexture(GL_TEXTURE_2D, uvIndicesTex);
-		glActiveTexture(GL_TEXTURE9);
+		/*glActiveTexture(GL_TEXTURE8);
 		glBindTexture(GL_TEXTURE_2D, uvTex);
+		*/
+		glActiveTexture(GL_TEXTURE9);
+		glBindTexture(GL_TEXTURE_2D, materialsTex);
 		glActiveTexture(GL_TEXTURE10);
-		glBindTexture(GL_TEXTURE_1D, materialsTex);
+		glBindTexture(GL_TEXTURE_2D, transformsTex);
 		glActiveTexture(GL_TEXTURE11);
-		glBindTexture(GL_TEXTURE_1D, transformsTex);
+		glBindTexture(GL_TEXTURE_2D, lightsTex);
 		glActiveTexture(GL_TEXTURE12);
-		glBindTexture(GL_TEXTURE_1D, lightsTex);
-		glActiveTexture(GL_TEXTURE13);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, textureMapsArrayTex);
-		glActiveTexture(GL_TEXTURE14);
+		glActiveTexture(GL_TEXTURE13);
 		glBindTexture(GL_TEXTURE_2D, hdrTex);
+		glActiveTexture(GL_TEXTURE14);
+		glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
 		glActiveTexture(GL_TEXTURE15);
-		glBindTexture(GL_TEXTURE_1D, hdrMarginalDistTex);
-		glActiveTexture(GL_TEXTURE16);
 		glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
 
 		if (!scene->camera->isMoving)
@@ -378,7 +384,7 @@ namespace GLSLPT
 
 		outputShader->use();
 		shaderObject = outputShader->object();
-		glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), scene->camera->isMoving ? 1.0 : 1.0f / sampleCounter);
+		glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), scene->camera->isMoving ? 1.0f : 1.0f / sampleCounter);
 		outputShader->stopUsing();
     }
 }

@@ -63,7 +63,7 @@ namespace RadeonRays
 
         bool contains(glm::vec3 const& p) const;
 
-		inline int bbox::maxdim() const
+		inline int maxdim() const
 		{
 			glm::vec3 ext = extents();
 

@@ -41,7 +41,7 @@ namespace GLSLPT
 		glDeleteTextures(1, &normalIndicesTex);
 		glDeleteTextures(1, &normalsTex);
 		glDeleteTextures(1, &uvIndicesTex);
-		glDeleteTextures(1, &uvTex);
+		//glDeleteTextures(1, &uvTex);
 		glDeleteTextures(1, &materialsTex);
 		glDeleteTextures(1, &transformsTex);
 		glDeleteTextures(1, &lightsTex);
@@ -105,7 +105,7 @@ namespace GLSLPT
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glBindTexture(GL_TEXTURE_2D, 0);
-
+		
 		//Create texture for Normal Indices
 		glGenTextures(1, &normalIndicesTex);
 		glBindTexture(GL_TEXTURE_2D, normalIndicesTex);
@@ -129,7 +129,7 @@ namespace GLSLPT
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glBindTexture(GL_TEXTURE_2D, 0);
-
+		/*
 		//Create texture for TexCoords
 		glGenTextures(1, &uvTex);
 		glBindTexture(GL_TEXTURE_2D, uvTex);
@@ -137,23 +137,23 @@ namespace GLSLPT
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glBindTexture(GL_TEXTURE_2D, 0);
-
+		*/
 
 		//Create texture for Materials
 		glGenTextures(1, &materialsTex);
-		glBindTexture(GL_TEXTURE_1D, materialsTex);
-		glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(glm::vec4)) * scene->materials.size(), 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
-		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_1D, 0);
+		glBindTexture(GL_TEXTURE_2D, materialsTex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(glm::vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		//Create texture for Transforms
 		glGenTextures(1, &transformsTex);
-		glBindTexture(GL_TEXTURE_1D, transformsTex);
-		glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA32F, (sizeof(glm::mat4) / sizeof(glm::vec4)) * scene->transforms.size(), 0, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
-		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_1D, 0);
+		glBindTexture(GL_TEXTURE_2D, transformsTex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(glm::mat4) / sizeof(glm::vec4)) * scene->transforms.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		//Create Buffer and Texture for Lights
 		numOfLights = int(scene->lights.size());
@@ -162,11 +162,11 @@ namespace GLSLPT
 		{
 			//Create texture for lights
 			glGenTextures(1, &lightsTex);
-			glBindTexture(GL_TEXTURE_1D, lightsTex);
-			glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, (sizeof(Light) / sizeof(glm::vec3)) * scene->lights.size(), 0, GL_RGB, GL_FLOAT, &scene->lights[0]);
-			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glBindTexture(GL_TEXTURE_1D, 0);
+			glBindTexture(GL_TEXTURE_2D, lightsTex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, (sizeof(Light) / sizeof(glm::vec3)) * scene->lights.size(), 1, 0, GL_RGB, GL_FLOAT, &scene->lights[0]);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
 		if (scene->textures.size() > 0)
@@ -191,11 +191,11 @@ namespace GLSLPT
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			glGenTextures(1, &hdrMarginalDistTex);
-			glBindTexture(GL_TEXTURE_1D, hdrMarginalDistTex);
-			glTexImage1D(GL_TEXTURE_1D, 0, GL_RG32F, scene->hdrData->height, 0, GL_RG, GL_FLOAT, scene->hdrData->marginalDistData);
-			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glBindTexture(GL_TEXTURE_1D, 0);
+			glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->hdrData->height, 1, 0, GL_RG, GL_FLOAT, scene->hdrData->marginalDistData);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glBindTexture(GL_TEXTURE_2D, 0);
 
 			glGenTextures(1, &hdrConditionalDistTex);
 			glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
