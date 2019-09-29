@@ -16,13 +16,8 @@ namespace GLSLPT
 		~Mesh() { delete bvh; }
 		
 		// Mesh Data
-		std::vector<int> vert_indices;
-		std::vector<int> nrm_indices;
-		std::vector<int> uv_indices;
-
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec2> uvs;
+		std::vector<glm::vec4> vertices_uvx;
+		std::vector<glm::vec4> normals_uvy;
 
 		RadeonRays::Bvh *bvh;
 		std::string meshName;
