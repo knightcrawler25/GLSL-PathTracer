@@ -36,7 +36,7 @@ float mouseSensitivity = 1.0f;
 bool keyPressed = false;
 Scene *scene = nullptr;
 Renderer *renderer = nullptr;
-int currentSceneIndex = 2;
+int currentSceneIndex = 1;
 double lastTime = SDL_GetTicks(); //glfwGetTime();
 bool done = false;
 
@@ -93,12 +93,13 @@ bool initRenderer()
 
 void render()
 {
+	auto io = ImGui::GetIO();
 	renderer->render();
     const glm::ivec2 screenSize = renderer->getScreenSize();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, screenSize.x, screenSize.y);
+    glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     renderer->present();
-
+	
     // Rendering
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
