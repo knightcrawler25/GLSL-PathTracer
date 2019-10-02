@@ -129,11 +129,19 @@ namespace RadeonRays
 	void BvhTranslator::ProcessTLAS()
 	{
 		curNode = topLevelIndex;
-		topLevelIndex = ((topLevelIndex % nodeTexWidth) << 12) | (topLevelIndex / nodeTexWidth);
+		topLevelIndexPackedXY = ((topLevelIndex % nodeTexWidth) << 12) | (topLevelIndex / nodeTexWidth);
 		ProcessTLASNodes(TLBvh->m_root);
 	}
 
-	void BvhTranslator::Process(const Bvh *topLevelBvh, std::vector<GLSLPT::Mesh*> &sceneMeshes, std::vector<GLSLPT::MeshInstance> &sceneInstances)
+	void BvhTranslator::UpdateTLAS(const Bvh *topLevelBvh, const std::vector<GLSLPT::MeshInstance> &sceneInstances)
+	{
+		TLBvh = topLevelBvh;
+		meshInstances = sceneInstances;
+		curNode = topLevelIndex;
+		ProcessTLASNodes(TLBvh->m_root);
+	}
+
+	void BvhTranslator::Process(const Bvh *topLevelBvh, const std::vector<GLSLPT::Mesh*> &sceneMeshes,const std::vector<GLSLPT::MeshInstance> &sceneInstances)
 	{
 		TLBvh = topLevelBvh;
 		meshes = sceneMeshes;
