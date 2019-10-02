@@ -54,6 +54,7 @@ namespace GLSLPT
 		int addLight(const Light &light);
 		void addHDR(const std::string &filename);
 		void createAccelerationStructures();
+		void rebuildInstancesData();
 
 		//Options
 		RenderOptions renderOptions;
@@ -91,6 +92,8 @@ namespace GLSLPT
 		std::vector<unsigned char> textureMapsArray;
 		int texWidth, texHeight; // TODO: allow textures of different sizes
 		RadeonRays::bbox sceneBounds;
+
+		bool instancesModified = false;
 
 	private:
 		std::map<std::string, int> meshMap;

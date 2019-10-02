@@ -55,7 +55,9 @@ namespace RadeonRays
 
 		void ProcessBLAS();
 		void ProcessTLAS();
-		void Process(const Bvh *topLevelBvh, std::vector<GLSLPT::Mesh*> &meshes, std::vector<GLSLPT::MeshInstance> &instances);
+		void UpdateTLAS(const Bvh *topLevelBvh, const std::vector<GLSLPT::MeshInstance> &instances);
+		void Process(const Bvh *topLevelBvh, const std::vector<GLSLPT::Mesh*> &meshes, const std::vector<GLSLPT::MeshInstance> &instances);
+		int topLevelIndexPackedXY = 0;
 		int topLevelIndex = 0;
 		std::vector<glm::vec3> bboxmin;
 		std::vector<glm::vec3> bboxmax;

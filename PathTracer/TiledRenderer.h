@@ -15,7 +15,7 @@ namespace GLSLPT
 		bool renderCompleted;
 		float sampleCounter, totalTime;
     public:
-        TiledRenderer(const Scene *scene, const std::string& shadersDirectory);
+        TiledRenderer(Scene *scene, const std::string& shadersDirectory);
         ~TiledRenderer();
         
         void init();
