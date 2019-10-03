@@ -14,6 +14,7 @@ namespace GLSLPT
 		void strafe(float dx, float dy);
 		void changeRadius(float dr);
 		void updateCamera();
+		void computeViewProjectionMatrix(float* view, float* projection, float ratio);
 		glm::vec3 position, pivot;
 		glm::vec3 up;
 		glm::vec3 right;

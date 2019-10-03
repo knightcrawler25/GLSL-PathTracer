@@ -10,9 +10,6 @@
 #include <GL/gl3w.h>
 #endif
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <time.h>
 #include <math.h>
 
@@ -26,8 +23,8 @@
 #include "boyTestScene.h"
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
+#include "ImGuizmo.h"
 
-using namespace glm;
 using namespace std;
 using namespace GLSLPT;
 
@@ -112,7 +109,7 @@ void update(float secondsElapsed)
 	keyPressed = false;
 	//Camera Movement
 	scene->camera->isMoving = false;
-	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && ImGui::IsAnyMouseDown())
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver())
 	{
 		if (ImGui::IsMouseDown(0))
 		{
@@ -136,6 +133,65 @@ void update(float secondsElapsed)
 	}
 }
 
+void EditTransform(const float* view, const float* projection, float* matrix)
+{
+	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
+	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+	if (ImGui::IsKeyPressed(90))
+		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+	if (ImGui::IsKeyPressed(69))
+		mCurrentGizmoOperation = ImGuizmo::ROTATE;
+	if (ImGui::IsKeyPressed(82)) // r Key
+		mCurrentGizmoOperation = ImGuizmo::SCALE;
+	if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
+		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
+		mCurrentGizmoOperation = ImGuizmo::ROTATE;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
+		mCurrentGizmoOperation = ImGuizmo::SCALE;
+	float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+	ImGuizmo::DecomposeMatrixToComponents(matrix, matrixTranslation, matrixRotation, matrixScale);
+	ImGui::InputFloat3("Tr", matrixTranslation);
+	ImGui::InputFloat3("Rt", matrixRotation);
+	ImGui::InputFloat3("Sc", matrixScale);
+	ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix);
+
+	if (mCurrentGizmoOperation != ImGuizmo::SCALE)
+	{
+		if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
+			mCurrentGizmoMode = ImGuizmo::LOCAL;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
+			mCurrentGizmoMode = ImGuizmo::WORLD;
+	}
+	/*static bool useSnap(false);
+	if (ImGui::IsKeyPressed(83))
+		useSnap = !useSnap;
+	ImGui::Checkbox("", &useSnap);
+	ImGui::SameLine();
+	vec_t snap;
+	switch (mCurrentGizmoOperation)
+	{
+	case ImGuizmo::TRANSLATE:
+		snap = config.mSnapTranslation;
+		ImGui::InputFloat3("Snap", &snap.x);
+		break;
+	case ImGuizmo::ROTATE:
+		snap = config.mSnapRotation;
+		ImGui::InputFloat("Angle Snap", &snap.x);
+		break;
+	case ImGuizmo::SCALE:
+		snap = config.mSnapScale;
+		ImGui::InputFloat("Scale Snap", &snap.x);
+		break;
+	}
+	*/
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+	ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
+}
 
 void MainLoop(void* arg)
 {
@@ -165,7 +221,7 @@ void MainLoop(void* arg)
 					scene->meshInstances[1].materialID = scene->meshInstances[1].materialID == 4 ? 5 : 4;
 					scene->rebuildInstancesData();
 				}
-
+				
 				if (event.key.keysym.sym == SDLK_r)
 				{
 					rot += 30.0f;
@@ -175,7 +231,9 @@ void MainLoop(void* arg)
 					scene->meshInstances[1].transform = xform;
 					scene->rebuildInstancesData();
 				}
+				
 			}
+			
 		}
     }
 
@@ -183,7 +241,8 @@ void MainLoop(void* arg)
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
     ImGui::NewFrame();
-
+	ImGuizmo::SetOrthographic(false);
+	ImGuizmo::BeginFrame();
     {
         ImGui::Begin("GLSL PathTracer"); // Create a window called "Hello, world!" and append into it.
 
@@ -203,6 +262,18 @@ void MainLoop(void* arg)
         //renderOptionsChanged |= ImGui::InputInt("Tiles Y", &renderOptions.numTilesY);
         renderOptionsChanged |= ImGui::Checkbox("Use envmap", &renderOptions.useEnvMap);
         renderOptionsChanged |= ImGui::InputFloat("HDR multiplier", &renderOptions.hdrMultiplier);
+
+
+		float viewMatrix[16], projectionMatrix[16];
+		auto io = ImGui::GetIO();
+		scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
+		glm::mat4x4 tmpMat = scene->meshInstances[1].transform;
+		EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
+		if (memcmp(&tmpMat, &scene->meshInstances[1].transform, sizeof(float) * 16))
+		{
+			scene->meshInstances[1].transform = tmpMat;
+			scene->rebuildInstancesData();
+		}
 
         if (renderOptionsChanged)
         {
