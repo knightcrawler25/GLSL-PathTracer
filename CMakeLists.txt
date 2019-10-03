@@ -21,6 +21,8 @@ file(GLOB EXT_FILES
     ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays/*.cpp
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp
+    ${CMAKE_SOURCE_DIR}/thirdparty/imguizmo/*.h
+    ${CMAKE_SOURCE_DIR}/thirdparty/imguizmo/*.cpp	
 )
 
 if (NOT EMSCRIPTEN)
@@ -42,6 +44,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/thirdparty/glew/include
   ${CMAKE_SOURCE_DIR}/thirdparty/SOIL/include
   ${CMAKE_SOURCE_DIR}/thirdparty/gl3w
+  ${CMAKE_SOURCE_DIR}/thirdparty/imguizmo
   ${SDL2_INCLUDE_DIRS}
 )
 
