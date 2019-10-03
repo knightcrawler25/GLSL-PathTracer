@@ -10,9 +10,6 @@
 #include <GL/gl3w.h>
 #endif
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
 #include <time.h>
 #include <math.h>
 
@@ -27,7 +24,6 @@
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
 
-using namespace glm;
 using namespace std;
 using namespace GLSLPT;
 
