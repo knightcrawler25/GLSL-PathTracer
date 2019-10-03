@@ -27,6 +27,7 @@
 using namespace std;
 using namespace GLSLPT;
 
+float rot = 0.0f;
 float moveSpeed = 0.5f;
 float mouseSensitivity = 1.0f;
 bool keyPressed = false;
@@ -93,9 +94,9 @@ void render()
 	renderer->render();
     const glm::ivec2 screenSize = renderer->getScreenSize();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+	glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     renderer->present();
-	
+
     // Rendering
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -149,6 +150,29 @@ void MainLoop(void* arg)
         {
             done = true;
         }
+
+		// Test material/transform updates
+		if (currentSceneIndex == 1)
+		{
+			if (event.type == SDL_KEYDOWN && event.key.repeat == 0)
+			{
+				if (event.key.keysym.sym == SDLK_m)
+				{
+					scene->meshInstances[1].materialID = scene->meshInstances[1].materialID == 4 ? 5 : 4;
+					scene->rebuildInstancesData();
+				}
+
+				if (event.key.keysym.sym == SDLK_r)
+				{
+					rot += 30.0f;
+					glm::mat4 xform;
+					xform *= glm::translate(glm::vec3(0, 0, -0.05));
+					xform *= glm::rotate(rot, glm::vec3(0, 1, 0));
+					scene->meshInstances[1].transform = xform;
+					scene->rebuildInstancesData();
+				}
+			}
+		}
     }
 
     ImGui_ImplSDL2_ProcessEvent(&event);

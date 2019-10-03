@@ -25,6 +25,8 @@ namespace GLSLPT
 		Material body;
 		Material base;
 		Material white;
+		Material gold;
+		Material red_plastic;
 
 		int headAlbedo = scene->addTexture("./assets/Figurine/textures/01_Head_Base_Color.png");
 		int bodyAlbedo = scene->addTexture("./assets/Figurine/textures/02_Body_Base_Color.png");
@@ -46,10 +48,20 @@ namespace GLSLPT
 
 		white.albedoTexID = bgAlbedo;
 
+		gold.albedo = glm::vec3(1.0, 0.71, 0.29);
+		gold.roughness = 0.2;
+		gold.metallic = 1.0;
+
+		red_plastic.albedo = glm::vec3(1.0, 0.0, 0.0);
+		red_plastic.roughness = 0.01;
+		red_plastic.metallic = 0.0;
+
 		int head_mat_id = scene->addMaterial(head);
 		int body_mat_id = scene->addMaterial(body);
 		int base_mat_id = scene->addMaterial(base);
 		int white_mat_id = scene->addMaterial(white);
+		int gold_mat_id = scene->addMaterial(gold);
+		int red_mat_id = scene->addMaterial(red_plastic);
 
 		Light light;
 		light.type = LightType::AreaLight;

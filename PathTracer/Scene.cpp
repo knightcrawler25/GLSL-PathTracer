@@ -141,7 +141,6 @@ namespace GLSLPT
 
 			bounds[i] = bound;
 		}
-		printf("Building scene BVH\n");
 		sceneBvh->Build(&bounds[0], bounds.size());
 		sceneBounds = sceneBvh->Bounds();
 	}
@@ -156,10 +155,27 @@ namespace GLSLPT
 			meshes[i]->buildBVH();
 		}
 	}
+	
+	void Scene::rebuildInstancesData()
+	{
+		delete sceneBvh;
+		sceneBvh = new RadeonRays::Bvh(10.0f, 64, false);
+
+		createTLAS();
+		bvhTranslator.UpdateTLAS(sceneBvh, meshInstances);
+
+		//Copy transforms
+		for (int i = 0; i < meshInstances.size(); i++)
+			transforms[i] = meshInstances[i].transform;
+
+		instancesModified = true;
+	}
 
 	void Scene::createAccelerationStructures()
 	{
 		createBLAS();
+
+		printf("Building scene BVH\n");
 		createTLAS();
 
 		// Flatten BVH

@@ -12,7 +12,7 @@ namespace GLSLPT
         return new Program(shaders);
     }
 
-    Renderer::Renderer(const Scene *scene, const std::string& shadersDirectory) : textureMapsArrayTex(0)
+    Renderer::Renderer(Scene *scene, const std::string& shadersDirectory) : textureMapsArrayTex(0)
 		, hdrTex(0)
 		, hdrMarginalDistTex(0)
 		, hdrConditionalDistTex(0)
@@ -179,4 +179,28 @@ namespace GLSLPT
 
         initialized = true;
     }
+
+	void Renderer::update(float secondsElapsed)
+	{
+		if (scene->instancesModified)
+		{
+			glBindTexture(GL_TEXTURE_2D, transformsTex);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (sizeof(glm::mat4) / sizeof(glm::vec4)) * scene->transforms.size(), 1, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
+
+			glBindTexture(GL_TEXTURE_2D, materialsTex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(glm::vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
+
+			int yPos = scene->bvhTranslator.topLevelIndexPackedXY & 0x00000FFF;
+			int index = yPos * scene->bvhTranslator.nodeTexWidth;
+
+			glBindTexture(GL_TEXTURE_2D, BVHTex);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, yPos, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth - yPos, GL_RGB_INTEGER, GL_INT, &scene->bvhTranslator.nodes[index]);
+
+			glBindTexture(GL_TEXTURE_2D, BBoxminTex);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, yPos, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth - yPos, GL_RGB, GL_FLOAT, &scene->bvhTranslator.bboxmin[index]);
+
+			glBindTexture(GL_TEXTURE_2D, BBoxmaxTex);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, yPos, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth - yPos, GL_RGB, GL_FLOAT, &scene->bvhTranslator.bboxmax[index]);
+		}
+	}
 }

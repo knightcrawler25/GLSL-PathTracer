@@ -35,7 +35,7 @@ namespace GLSLPT
     class Renderer
     {
     protected:
-        const Scene *scene;
+        Scene *scene;
 		GLuint BVHTex, BBoxminTex, BBoxmaxTex, vertexIndicesTex, verticesTex, normalsTex,
 			   materialsTex, transformsTex, lightsTex, textureMapsArrayTex, hdrTex, hdrMarginalDistTex, hdrConditionalDistTex;
         Quad *quad;
@@ -44,7 +44,7 @@ namespace GLSLPT
         bool initialized;
         std::string shadersDirectory;
     public:
-        Renderer(const Scene *scene, const std::string& shadersDirectory);
+        Renderer(Scene *scene, const std::string& shadersDirectory);
         virtual ~Renderer();
         const glm::ivec2 getScreenSize() const { return screenSize; }
 
@@ -53,7 +53,7 @@ namespace GLSLPT
 
         virtual void render() = 0;
         virtual void present() const = 0;
-        virtual void update(float secondsElapsed) = 0;
+        virtual void update(float secondsElapsed);
         // range is [0..1]
         virtual float getProgress() const = 0;
     };
