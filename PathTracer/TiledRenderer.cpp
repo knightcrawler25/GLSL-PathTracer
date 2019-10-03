@@ -5,7 +5,7 @@
 
 namespace GLSLPT
 {
-    TiledRenderer::TiledRenderer(const Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
+    TiledRenderer::TiledRenderer(Scene *scene, const std::string& shadersDirectory) : Renderer(scene, shadersDirectory)
         , numTilesX(scene->renderOptions.numTilesX)
         , numTilesY(scene->renderOptions.numTilesY)
         , maxDepth(scene->renderOptions.maxDepth)
@@ -119,7 +119,7 @@ namespace GLSLPT
 		shaderObject = pathTraceShader->object();
 
 		glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
-		glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
+		glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndexPackedXY);
 		glUniform1i(glGetUniformLocation(shaderObject, "vertIndicesSize"), scene->indicesTexWidth);
 		glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
 		glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
@@ -146,7 +146,7 @@ namespace GLSLPT
 		shaderObject = pathTraceShaderLowRes->object();
 
 		glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
-		glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
+		glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndexPackedXY);
 		glUniform1i(glGetUniformLocation(shaderObject, "vertIndicesSize"), scene->indicesTexWidth);
 		glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
 		glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
@@ -232,6 +232,15 @@ namespace GLSLPT
 
 		if (!scene->camera->isMoving)
 		{
+			// Render to low res buffer once to avoid ghosting from previous frame
+			if (scene->instancesModified)
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
+				glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
+				quad->Draw(pathTraceShaderLowRes);
+				scene->instancesModified = false;
+			}
+
 			GLuint shaderObject;
 			pathTraceShader->use();
 
@@ -305,7 +314,9 @@ namespace GLSLPT
 
     void TiledRenderer::update(float secondsElapsed)
     {
-		if (scene->camera->isMoving)
+		Renderer::update(secondsElapsed);
+
+		if (scene->camera->isMoving || scene->instancesModified)
 		{
 			tileX = -1;
 			tileY = numTilesY - 1;
