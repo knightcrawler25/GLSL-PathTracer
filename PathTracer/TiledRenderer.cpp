@@ -70,8 +70,8 @@ namespace GLSLPT
 		glGenTextures(1, &pathTraceTextureLowRes);
 		glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 4, screenSize.y / 4, 0, GL_RGBA, GL_FLOAT, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -316,8 +316,11 @@ namespace GLSLPT
     {
 		Renderer::update(secondsElapsed);
 
+		float r1, r2, r3;
+
 		if (scene->camera->isMoving || scene->instancesModified)
 		{
+			r1 = r2 = r3 = 0;
 			tileX = -1;
 			tileY = numTilesY - 1;
 			sampleCounter = 1;
@@ -341,10 +344,13 @@ namespace GLSLPT
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
+		else
+		{
+			r1 = ((float)rand() / (RAND_MAX));
+			r2 = ((float)rand() / (RAND_MAX));
+			r3 = ((float)rand() / (RAND_MAX));
+		}
 
-		float r1 = ((float)rand() / (RAND_MAX));
-		float r2 = ((float)rand() / (RAND_MAX));
-		float r3 = ((float)rand() / (RAND_MAX));
 
 		GLuint shaderObject;
 
