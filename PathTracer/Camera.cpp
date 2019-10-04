@@ -166,6 +166,7 @@ namespace GLSLPT
 	{
 		auto at = position + forward;
 		LookAt(&position.x, &at.x, &up.x, view);
-		Perspective(glm::degrees(fov), ratio, 0.1f, 1000.f, projection);
+		const float fov_v = 2.f * atan((1.f/ratio) * tanf(fov / 2.f));
+		Perspective(glm::degrees(fov_v), ratio, 0.1f, 1000.f, projection);
 	}
 }
