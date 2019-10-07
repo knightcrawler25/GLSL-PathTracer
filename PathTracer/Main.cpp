@@ -271,6 +271,7 @@ void MainLoop(void* arg)
 		EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
 		if (memcmp(&tmpMat, &scene->meshInstances[1].transform, sizeof(float) * 16))
 		{
+			srand(1337);
 			scene->meshInstances[1].transform = tmpMat;
 			scene->rebuildInstancesData();
 		}
