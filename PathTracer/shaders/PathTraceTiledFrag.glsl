@@ -529,7 +529,8 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 
 	vec3 normal = normalize(n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
 
-	normal = normalize(vec3(transform * vec4(normal, 0.0)));
+	mat3 normalMatrix = transpose(inverse(mat3(transform)));
+	normal = normalize(normalMatrix * normal);
 	state.normal = normal;
 	state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : normal * -1.0;
 }
