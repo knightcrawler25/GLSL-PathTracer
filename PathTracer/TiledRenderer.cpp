@@ -38,7 +38,7 @@ namespace GLSLPT
 
 		//Todo : Avoid code duplication for Tiled and Progressive shaders 
 		pathTraceShader = loadShaders(shadersDirectory + "PathTraceTiledVert.glsl", shadersDirectory + "PathTraceTiledFrag.glsl");
-		pathTraceShaderLowRes = loadShaders(shadersDirectory + "PathTraceProgressiveVert.glsl", shadersDirectory + "PathTraceProgressiveFrag.glsl");
+		pathTraceShaderLowRes = loadShaders(shadersDirectory + "PathTraceProgressiveVert.glsl", shadersDirectory + "PathTraceProgressiveFragSimplified.glsl");
 		accumShader = loadShaders(shadersDirectory + "AccumVert.glsl", shadersDirectory + "AccumFrag.glsl");
 		tileOutputShader = loadShaders(shadersDirectory + "TileOutputVert.glsl", shadersDirectory + "TileOutputFrag.glsl");
 		outputShader = loadShaders(shadersDirectory + "OutputVert.glsl", shadersDirectory + "OutputFrag.glsl");
@@ -69,7 +69,7 @@ namespace GLSLPT
 		//Create Texture for FBO
 		glGenTextures(1, &pathTraceTextureLowRes);
 		glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 4, screenSize.y / 4, 0, GL_RGBA, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 2, screenSize.y / 2, 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -236,7 +236,7 @@ namespace GLSLPT
 			if (scene->instancesModified)
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-				glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
+				glViewport(0, 0, screenSize.x / 2, screenSize.y / 2);
 				quad->Draw(pathTraceShaderLowRes);
 				scene->instancesModified = false;
 			}
@@ -283,7 +283,7 @@ namespace GLSLPT
 		else
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-			glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
+			glViewport(0, 0, screenSize.x / 2, screenSize.y / 2);
 			quad->Draw(pathTraceShaderLowRes);
 		}
     }

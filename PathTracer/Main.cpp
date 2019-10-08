@@ -28,7 +28,6 @@
 using namespace std;
 using namespace GLSLPT;
 
-float rot = 0.0f;
 float moveSpeed = 0.5f;
 float mouseSensitivity = 1.0f;
 bool keyPressed = false;
@@ -210,31 +209,6 @@ void MainLoop(void* arg)
         {
             done = true;
         }
-
-		// Test material/transform updates
-		if (currentSceneIndex == 1)
-		{
-			if (event.type == SDL_KEYDOWN && event.key.repeat == 0)
-			{
-				if (event.key.keysym.sym == SDLK_m)
-				{
-					scene->meshInstances[1].materialID = scene->meshInstances[1].materialID == 4 ? 5 : 4;
-					scene->rebuildInstancesData();
-				}
-				
-				if (event.key.keysym.sym == SDLK_r)
-				{
-					rot += 30.0f;
-					glm::mat4 xform;
-					xform *= glm::translate(glm::vec3(0, 0, -0.05));
-					xform *= glm::rotate(rot, glm::vec3(0, 1, 0));
-					scene->meshInstances[1].transform = xform;
-					scene->rebuildInstancesData();
-				}
-				
-			}
-			
-		}
     }
 
     ImGui_ImplSDL2_ProcessEvent(&event);
@@ -267,12 +241,12 @@ void MainLoop(void* arg)
 		float viewMatrix[16], projectionMatrix[16];
 		auto io = ImGui::GetIO();
 		scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
-		glm::mat4x4 tmpMat = scene->meshInstances[1].transform;
+		glm::mat4x4 tmpMat = scene->meshInstances[0].transform;
 		EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
-		if (memcmp(&tmpMat, &scene->meshInstances[1].transform, sizeof(float) * 16))
+		if (memcmp(&tmpMat, &scene->meshInstances[0].transform, sizeof(float) * 16))
 		{
 			srand(1337);
-			scene->meshInstances[1].transform = tmpMat;
+			scene->meshInstances[0].transform = tmpMat;
 			scene->rebuildInstancesData();
 		}
 
