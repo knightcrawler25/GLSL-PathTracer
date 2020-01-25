@@ -3,12 +3,12 @@ GLSL-PathTracer
 ==========
 ![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
 [Rank 3 Police Unit](https://nikvili.artstation.com/projects/xggaR)
-Scene by Nika Zautashvili. (https://nikvili.artstation.com/) The one used here is a slightly simplified version from [SketchFab](https://sketchfab.com/models/d7698f6a7acf49c68ff0a50c5a1b1d52) 
+Scene by Nika Zautashvili. (https://nikvili.artstation.com/) The one used here is a slightly simplified version from [SketchFab](https://sketchfab.com/models/d7698f6a7acf49c68ff0a50c5a1b1d52)
 
 ![Panther](./screenshots/panther.png)
 Recreation of a scene from [Greyscalegorilla](https://twitter.com/GSG3D). Render time: 2 minutes on a GTX 750 Ti. 3 bounces
 
-![Ajax](./screenshots/ajax_materials.png) 
+![Ajax](./screenshots/ajax_materials.png)
 --------
 ![Dragon](./screenshots/dragon.png)
 --------
@@ -43,11 +43,13 @@ TODO
 - Support to render out animation sequences
 - Displacement mapping
 - Emissive mesh sampling
-- Sun Sky Model 
+- Sun Sky Model
 - Nested dielectrics
 - Fix issues with normal map (Microfacet-based normal mapping?)
 
 Additional Screenshots
+--------
+![Crown](./screenshots/crown.png)
 --------
 ![Staircase](./screenshots/staircase.png)
 --------
@@ -59,9 +61,9 @@ Additional Screenshots
 
 References/Credits
 --------
-- A huge shout-out to Cedric Guillemet (https://github.com/CedricGuillemet) for cleaning up the code, adding the UI, integrating ImGuizmo, cmake and quite a lot of fixes. 
+- A huge shout-out to Cedric Guillemet (https://github.com/CedricGuillemet) for cleaning up the code, adding the UI, integrating ImGuizmo, cmake and quite a lot of fixes.
 - Ray Tracing in One Weekend (https://github.com/petershirley/raytracinginoneweekend) Peter Shirley's excellent book introductory book on raytracing which helped me get started on this project
-- Mitsuba Renderer (https://github.com/mitsuba-renderer/mitsuba) Main reference for validation of the code. 
+- Mitsuba Renderer (https://github.com/mitsuba-renderer/mitsuba) Main reference for validation of the code.
 - Tinsel Renderer (https://github.com/mmacklin/tinsel) A really amazing renderer which has several features. A modified version of the scene description & loader are taken from here. Reference for MIS, light sampling
 - Sam Lapere's path tracing tutorial ((https://github.com/straaljager/GPU-path-tracing-tutorial-4) Source for the Nvidia's SBVH used here. Traversal isn't the same as this code though. No Woop triangles either
 - Erich Loftis's THREE.js PathTracer (https://github.com/erichlof/THREE.js-PathTracing-Renderer) Several amazing webgl examples including bidirectional path tracing all running in a web browser.
