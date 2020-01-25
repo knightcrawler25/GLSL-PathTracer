@@ -1,5 +1,5 @@
 ﻿#include "Shader.h"
-
+#include "ShaderIncludes.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -8,19 +8,8 @@ namespace GLSLPT
 {
     Shader::Shader(const std::string& filePath, GLenum shaderType)
     {
-        std::ifstream f;
-        f.open(filePath.c_str(), std::ios::in | std::ios::binary);
-        if (!f.is_open())
-        {
-            printf("Failed to open file: %s\n", filePath.c_str());
-            return;
-        }
+		std::string source = GLSLPT::ShaderInclude::load(filePath);
 
-        //read whole file into stringstream buffer
-        std::stringstream buffer;
-        buffer << f.rdbuf();
-
-        std::string source = buffer.str();
         _object = glCreateShader(shaderType);
 		printf("Compiling Shader %s -> %d\n", filePath.c_str(), int(_object));
         const GLchar *src = (const GLchar *)source.c_str();
@@ -30,7 +19,7 @@ namespace GLSLPT
         glGetShaderiv(_object, GL_COMPILE_STATUS, &success);
         if (success == GL_FALSE)
         {
-            std::string msg("Error while compiling shader\n");
+			std::string msg;
             GLint logSize = 0;
             glGetShaderiv(_object, GL_INFO_LOG_LENGTH, &logSize);
             char *info = new char[logSize + 1];

@@ -104,17 +104,17 @@ void render()
 
 void update(float secondsElapsed)
 {
-	renderer->update(secondsElapsed);
 	keyPressed = false;
-	//Camera Movement
-	scene->camera->isMoving = false;
-	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver())
+
+	ImGuiIO& io = ImGui::GetIO();
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) && (ImGui::IsMouseDown(2) || ImGui::IsMouseDown(1)) && !ImGuizmo::IsOver() )
 	{
-		if (ImGui::IsMouseDown(0))
+		
+		if (ImGui::IsMouseDown(2) && !io.KeyShift)
 		{
-			ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0, 0);
+			ImVec2 mouseDelta = ImGui::GetMouseDragDelta(2, 0);
 			scene->camera->offsetOrientation(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
-			ImGui::ResetMouseDragDelta(0);
+			ImGui::ResetMouseDragDelta(2);
 		}
 		else if (ImGui::IsMouseDown(2))
 		{
@@ -130,6 +130,8 @@ void update(float secondsElapsed)
 		}
 		scene->camera->isMoving = true;
 	}
+
+	renderer->update(secondsElapsed);
 }
 
 void EditTransform(const float* view, const float* projection, float* matrix)
@@ -189,6 +191,9 @@ void EditTransform(const float* view, const float* projection, float* matrix)
 	*/
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+	//float bounds[] = { 0.5,0.5,0.5, -0.5, -0.5 ,-0.5 };
+	RadeonRays::bbox a = scene->meshes[scene->meshInstances[1].meshID]->bvh->Bounds();
+	float bounds[] = { a.pmin.x, a.pmin.y,a.pmin.z, a.pmax.x,a.pmax.y,a.pmax.z };
 	ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
 }
 
@@ -220,41 +225,60 @@ void MainLoop(void* arg)
     {
         ImGui::Begin("GLSL PathTracer"); // Create a window called "Hello, world!" and append into it.
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        if (ImGui::Combo("Scene", &currentSceneIndex, "Ajax Bust\0Substance Boy\0Cornell Box\0"))
-        {
-            loadScene(currentSceneIndex);
-            initRenderer();
-        }
+        //ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-        bool renderOptionsChanged = false;
-        //renderOptionsChanged |= ImGui::Combo("Render Type", &renderOptions.rendererType, "Progressive\0Tiled\0");
-        //renderOptionsChanged |= ImGui::InputInt2("Resolution", &renderOptions.resolution.x);
-        //renderOptionsChanged |= ImGui::InputInt("Max Samples", &renderOptions.maxSamples);
-        renderOptionsChanged |= ImGui::InputInt("Max Depth", &renderOptions.maxDepth);
-        //renderOptionsChanged |= ImGui::InputInt("Tiles X", &renderOptions.numTilesX);
-        //renderOptionsChanged |= ImGui::InputInt("Tiles Y", &renderOptions.numTilesY);
-        renderOptionsChanged |= ImGui::Checkbox("Use envmap", &renderOptions.useEnvMap);
-        renderOptionsChanged |= ImGui::InputFloat("HDR multiplier", &renderOptions.hdrMultiplier);
+		ImGui::BulletText("RMB + drag to zoom in/out");
+		ImGui::BulletText("MMB + drag to rotate");
+		ImGui::BulletText("SHIFT + MMB + drag to pan");
 
+		if (ImGui::Combo("Scene", &currentSceneIndex, "Ajax Bust\0Substance Boy\0Cornell Box\0"))
+		{
+			loadScene(currentSceneIndex);
+			initRenderer();
+		}
+
+		bool optionsChanged = false;
+		if (ImGui::CollapsingHeader("Render Settings"))
+		{
+			optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
+			optionsChanged |= ImGui::Checkbox("Use envmap", &renderOptions.useEnvMap);
+			optionsChanged |= ImGui::SliderFloat("HDR multiplier", &renderOptions.hdrMultiplier, 0.1, 10);
+		}
+		
+		if (ImGui::CollapsingHeader("Camera"))
+		{
+			float fov = glm::degrees(scene->camera->fov);
+			float aperture = scene->camera->aperture * 1000.0f;
+			optionsChanged |= ImGui::SliderFloat("Fov", &fov, 10, 90);
+			scene->camera->setFov(fov);
+			optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 0.025f);
+			scene->camera->aperture = aperture / 1000.0f;
+			optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01, 1.0);
+			
+		}
+
+		scene->camera->isMoving = false;
+
+		if (optionsChanged)
+		{
+			scene->renderOptions = renderOptions;
+			scene->camera->isMoving = true;
+		}
 
 		float viewMatrix[16], projectionMatrix[16];
 		auto io = ImGui::GetIO();
 		scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
-		glm::mat4x4 tmpMat = scene->meshInstances[0].transform;
-		EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
-		if (memcmp(&tmpMat, &scene->meshInstances[0].transform, sizeof(float) * 16))
+		glm::mat4x4 tmpMat = scene->meshInstances[1].transform;
+
+		if (ImGui::CollapsingHeader("Transforms"))
+			EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
+
+		if (memcmp(&tmpMat, &scene->meshInstances[1].transform, sizeof(float) * 16))
 		{
-			srand(1337);
-			scene->meshInstances[0].transform = tmpMat;
+			scene->meshInstances[1].transform = tmpMat;
 			scene->rebuildInstancesData();
 		}
 
-        if (renderOptionsChanged)
-        {
-            scene->renderOptions = renderOptions;
-            initRenderer();
-        }
         ImGui::End();
     }
 
@@ -272,7 +296,6 @@ int main(int argc, char** argv)
 {
 	srand((unsigned int)time(0));
 
-    
 	loadScene(currentSceneIndex);
 
     // Setup SDL

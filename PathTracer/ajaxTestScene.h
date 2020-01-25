@@ -14,7 +14,7 @@ namespace GLSLPT
 		renderOptions.numTilesX = 5;
 		renderOptions.hdrMultiplier = 5.0f;
 		renderOptions.useEnvMap = true;
-		scene->addCamera(glm::vec3(0.0f, 0.5f, -1.8f), glm::vec3(0.0f, 0.5f, 0.0f), 35.0f);
+		scene->addCamera(glm::vec3(0.0f, 0.125f, -0.45f), glm::vec3(0.0f, 0.125f, 0.0f), 35.0f);
 
 		int mesh_id = scene->addMesh("./assets/ajax/ajax.obj");
 
@@ -41,12 +41,13 @@ namespace GLSLPT
 		glm::mat4 xform1;
 		glm::mat4 xform2;
 
-		xform1 = glm::translate(glm::vec3(0.6f, 0.0f, 0.0f));
-		xform2 = glm::translate(glm::vec3(-0.6f, 0.0f, 0.0f));
+		xform = glm::scale(glm::vec3(0.25f));
+		xform1 = glm::scale(glm::vec3(0.25f)) * glm::translate(glm::vec3(0.6f, 0.0f, 0.0f));
+		xform2 = glm::scale(glm::vec3(0.25f)) * glm::translate(glm::vec3(-0.6f, 0.0f, 0.0f));
 		
 		MeshInstance instance(mesh_id, xform, black_mat_id);
-		MeshInstance instance1(mesh_id, xform1, gold_mat_id);
-		MeshInstance instance2(mesh_id, xform2, red_mat_id);
+		//MeshInstance instance1(mesh_id, xform1, gold_mat_id);
+		//MeshInstance instance2(mesh_id, xform2, red_mat_id);
 
 		scene->addMeshInstance(instance);
 		//scene->addMeshInstance(instance1);

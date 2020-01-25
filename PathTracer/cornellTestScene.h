@@ -13,8 +13,8 @@ namespace GLSLPT
 		renderOptions.numTilesY = 5;
 		renderOptions.numTilesX = 5;
 		renderOptions.hdrMultiplier = 1.0f;
-		renderOptions.useEnvMap = false;
-		scene->addCamera(glm::vec3(27.6f, 27.5f, -75.0f), glm::vec3(27.6f, 27.5f, 75.0f), 39.0f);
+		renderOptions.useEnvMap = true;
+		scene->addCamera(glm::vec3(0.276f, 0.275f, -0.75f), glm::vec3(0.276f, 0.275f, 0), 39.0f);
 
 		int ceiling_mesh_id = scene->addMesh("./assets/cornell_box/cbox_ceiling.obj");
 		int floor_mesh_id = scene->addMesh("./assets/cornell_box/cbox_floor.obj");
@@ -39,15 +39,15 @@ namespace GLSLPT
 
 		Light light;
 		light.type = LightType::AreaLight;
-		light.position = glm::vec3(34.299999f, 54.779997f, 22.700010f);
-		light.u = glm::vec3(34.299999f, 54.779997f, 33.200008f) - light.position;
-		light.v = glm::vec3(21.300001f, 54.779997f, 22.700010f) - light.position;
+		light.position = glm::vec3(.34299999f, .54779997f, .22700010f);
+		light.u = glm::vec3(.34299999f, .54779997f, .33200008f) - light.position;
+		light.v = glm::vec3(.21300001f, .54779997f, .22700010f) - light.position;
 		light.area = glm::length(glm::cross(light.u, light.v));
 		light.emission = glm::vec3(17, 12, 4);
 
 		int light_id = scene->addLight(light);
 
-		glm::mat4 xform;
+		glm::mat4 xform = glm::scale(glm::vec3(0.01f));
 		
 		MeshInstance instance1(ceiling_mesh_id, xform, white_mat_id);
 		MeshInstance instance2(floor_mesh_id, xform, white_mat_id);
@@ -64,6 +64,8 @@ namespace GLSLPT
 		scene->addMeshInstance(instance5);
 		scene->addMeshInstance(instance6);
 		scene->addMeshInstance(instance7);
+
+		scene->addHDR("./assets/ajax/sunset.hdr");
 
 		scene->createAccelerationStructures();
 

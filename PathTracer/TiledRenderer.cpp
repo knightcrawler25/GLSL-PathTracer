@@ -1,7 +1,9 @@
 #include "Config.h"
 #include "TiledRenderer.h"
+#include "ShaderIncludes.h"
 #include "Camera.h"
 #include "Scene.h"
+#include <string>
 
 namespace GLSLPT
 {
@@ -29,7 +31,7 @@ namespace GLSLPT
 
 		tileWidth = (int)screenSize.x / numTilesX;
 		tileHeight = (int)screenSize.y / numTilesY;
-		tileX = 0;
+		tileX = -1;
 		tileY = numTilesY - 1;
 
         //----------------------------------------------------------
@@ -37,11 +39,11 @@ namespace GLSLPT
         //----------------------------------------------------------
 
 		//Todo : Avoid code duplication for Tiled and Progressive shaders 
-		pathTraceShader = loadShaders(shadersDirectory + "PathTraceTiledVert.glsl", shadersDirectory + "PathTraceTiledFrag.glsl");
-		pathTraceShaderLowRes = loadShaders(shadersDirectory + "PathTraceProgressiveVert.glsl", shadersDirectory + "PathTraceProgressiveFragSimplified.glsl");
-		accumShader = loadShaders(shadersDirectory + "AccumVert.glsl", shadersDirectory + "AccumFrag.glsl");
-		tileOutputShader = loadShaders(shadersDirectory + "TileOutputVert.glsl", shadersDirectory + "TileOutputFrag.glsl");
-		outputShader = loadShaders(shadersDirectory + "OutputVert.glsl", shadersDirectory + "OutputFrag.glsl");
+		pathTraceShader = loadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "Tiled.glsl");
+		pathTraceShaderLowRes = loadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "Progressive.glsl");
+		accumShader = loadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "Accumulation.glsl");
+		tileOutputShader = loadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "TileOutput.glsl");
+		outputShader = loadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "Output.glsl");
 
 		printf("Debug sizes : %d %d - %d %d\n", tileWidth, tileHeight, screenSize.x, screenSize.y);
         //----------------------------------------------------------
@@ -69,7 +71,7 @@ namespace GLSLPT
 		//Create Texture for FBO
 		glGenTextures(1, &pathTraceTextureLowRes);
 		glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 2, screenSize.y / 2, 0, GL_RGBA, GL_FLOAT, 0);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 4, screenSize.y / 4, 0, GL_RGBA, GL_FLOAT, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -167,6 +169,33 @@ namespace GLSLPT
 
 		pathTraceShaderLowRes->stopUsing();
 
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, BVHTex);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, BBoxminTex);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, BBoxmaxTex);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, vertexIndicesTex);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, verticesTex);
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, normalsTex);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, materialsTex);
+		glActiveTexture(GL_TEXTURE8);
+		glBindTexture(GL_TEXTURE_2D, transformsTex);
+		glActiveTexture(GL_TEXTURE9);
+		glBindTexture(GL_TEXTURE_2D, lightsTex);
+		glActiveTexture(GL_TEXTURE10);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, textureMapsArrayTex);
+		glActiveTexture(GL_TEXTURE11);
+		glBindTexture(GL_TEXTURE_2D, hdrTex);
+		glActiveTexture(GL_TEXTURE12);
+		glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
+		glActiveTexture(GL_TEXTURE13);
+		glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
+
     }
 
     void TiledRenderer::finish()
@@ -203,40 +232,14 @@ namespace GLSLPT
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, accumTexture);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, BVHTex);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, BBoxminTex);
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, BBoxmaxTex);
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, vertexIndicesTex);
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, verticesTex);
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_2D, normalsTex);
-		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, materialsTex);
-		glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D, transformsTex);
-		glActiveTexture(GL_TEXTURE9);
-		glBindTexture(GL_TEXTURE_2D, lightsTex);
-		glActiveTexture(GL_TEXTURE10);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, textureMapsArrayTex);
-		glActiveTexture(GL_TEXTURE11);
-		glBindTexture(GL_TEXTURE_2D, hdrTex);
-		glActiveTexture(GL_TEXTURE12);
-		glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
-		glActiveTexture(GL_TEXTURE13);
-		glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
 
 		if (!scene->camera->isMoving)
 		{
-			// Render to low res buffer once to avoid ghosting from previous frame
+			// If instances are moved then render to low res buffer once to avoid ghosting from previous frame
 			if (scene->instancesModified)
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-				glViewport(0, 0, screenSize.x / 2, screenSize.y / 2);
+				glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
 				quad->Draw(pathTraceShaderLowRes);
 				scene->instancesModified = false;
 			}
@@ -265,25 +268,11 @@ namespace GLSLPT
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, accumTexture);
 			quad->Draw(tileOutputShader);
-
-			tileX++;
-			if (tileX >= numTilesX)
-			{
-				tileX = 0;
-				tileY--;
-				if (tileY < 0)
-				{
-					tileX = 0;
-					tileY = numTilesY - 1;
-					sampleCounter++;
-					currentBuffer = 1 - currentBuffer;
-				}
-			}
 		}
 		else
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-			glViewport(0, 0, screenSize.x / 2, screenSize.y / 2);
+			glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
 			quad->Draw(pathTraceShaderLowRes);
 		}
     }
@@ -346,6 +335,20 @@ namespace GLSLPT
 		}
 		else
 		{
+			tileX++;
+			if (tileX >= numTilesX)
+			{
+				tileX = 0;
+				tileY--;
+				if (tileY < 0)
+				{
+					tileX = 0;
+					tileY = numTilesY - 1;
+					sampleCounter++;
+					currentBuffer = 1 - currentBuffer;
+				}
+			}
+
 			r1 = ((float)rand() / (RAND_MAX));
 			r2 = ((float)rand() / (RAND_MAX));
 			r3 = ((float)rand() / (RAND_MAX));
@@ -366,7 +369,7 @@ namespace GLSLPT
 		glUniform3fv(glGetUniformLocation(shaderObject, "randomVector"), 1, glm::value_ptr(glm::vec3(r1, r2, r3)));
 		glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
 		glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
-		glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), maxDepth);
+		glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
 		glUniform1i(glGetUniformLocation(shaderObject, "tileX"), tileX);
 		glUniform1i(glGetUniformLocation(shaderObject, "tileY"), tileY);
 		pathTraceShader->stopUsing();
@@ -383,7 +386,7 @@ namespace GLSLPT
 		glUniform3fv(glGetUniformLocation(shaderObject, "randomVector"), 1, glm::value_ptr(glm::vec3(r1, r2, r3)));
 		glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
 		glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
-		glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), maxDepth);
+		glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
 		pathTraceShaderLowRes->stopUsing();
 
 		outputShader->use();
