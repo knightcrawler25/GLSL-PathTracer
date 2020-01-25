@@ -148,6 +148,11 @@ namespace GLSLPT
 		updateCamera();
 	}
 
+	void Camera::setFov(float val)
+	{
+		fov = glm::radians(val);
+	}
+
 	void Camera::updateCamera()
 	{
 		glm::vec3 forward_temp;

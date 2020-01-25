@@ -15,6 +15,7 @@ namespace GLSLPT
 		void changeRadius(float dr);
 		void updateCamera();
 		void computeViewProjectionMatrix(float* view, float* projection, float ratio);
+		void setFov(float val);
 		glm::vec3 position, pivot;
 		glm::vec3 up;
 		glm::vec3 right;

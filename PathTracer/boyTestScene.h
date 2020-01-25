@@ -15,6 +15,8 @@ namespace GLSLPT
 		renderOptions.hdrMultiplier = 1.0f;
 		renderOptions.useEnvMap = false;
 		scene->addCamera(glm::vec3(0.3f, 0.11f, 0.0f), glm::vec3(0.2f, 0.095f, 0.0f), 35.0f);
+		scene->camera->aperture = 1e-6f; // 0.000001f;
+		scene->camera->focalDist = 0.262f;
 
 		int mesh_id1 = scene->addMesh("./assets/Figurine/head.obj");
 		int mesh_id2 = scene->addMesh("./assets/Figurine/body.obj");
@@ -82,34 +84,39 @@ namespace GLSLPT
 		int light1_id = scene->addLight(light);
 		int light2_id = scene->addLight(light2);
 
+		glm::mat4 xform_base = glm::translate(glm::vec3(0, 0.0075, 0));
+		glm::mat4 xform_body = glm::translate(glm::vec3(0, 0.049, 0));
+		glm::mat4 xform_head = glm::translate(glm::vec3(0.017, 0.107, 0));
+
 		glm::mat4 xform1;
 		glm::mat4 xform2;
 		glm::mat4 xform3;
 		glm::mat4 xform4;
 		glm::mat4 xform5;
-		xform2 = glm::translate(glm::vec3(0, 0,-0.05));
-		xform3 = glm::translate(glm::vec3(0, 0,+0.05));
+
+		xform2 = glm::translate(glm::vec3(0, 0, -0.05));
+		xform3 = glm::translate(glm::vec3(0, 0,  0.05));
 		xform4 = glm::translate(glm::vec3(-0.1, 0.0, -0.15));
 		//xform4 *= glm::rotate(90.0f, glm::vec3(0.0, 0, 1));
-		xform5 = glm::translate(glm::vec3(-0.1, 0, +0.15));
+		xform5 = glm::translate(glm::vec3(-0.1, 0, 0.15));
 
 		MeshInstance instance1(mesh_id4, xform1, white_mat_id);
 
-		MeshInstance instance2(mesh_id1, xform2, head_mat_id);
-		MeshInstance instance3(mesh_id2, xform2, body_mat_id);
-		MeshInstance instance4(mesh_id3, xform2, base_mat_id);
+		MeshInstance instance2(mesh_id1, xform_head * xform2, head_mat_id);
+		MeshInstance instance3(mesh_id2, xform_body * xform2, body_mat_id);
+		MeshInstance instance4(mesh_id3, xform_base * xform2, base_mat_id);
 		
-		MeshInstance instance5(mesh_id1, xform3, head_mat_id);
-		MeshInstance instance6(mesh_id2, xform3, body_mat_id);
-		MeshInstance instance7(mesh_id3, xform3, base_mat_id);
+		MeshInstance instance5(mesh_id1, xform_head * xform3, head_mat_id);
+		MeshInstance instance6(mesh_id2, xform_body * xform3, body_mat_id);
+		MeshInstance instance7(mesh_id3, xform_base * xform3, base_mat_id);
 
-		MeshInstance instance8(mesh_id1, xform4, head_mat_id);
-		MeshInstance instance9(mesh_id2, xform4, body_mat_id);
-		MeshInstance instance10(mesh_id3, xform4, base_mat_id);
+		MeshInstance instance8(mesh_id1, xform_head * xform4, head_mat_id);
+		MeshInstance instance9(mesh_id2, xform_body * xform4, body_mat_id);
+		MeshInstance instance10(mesh_id3, xform_base * xform4, base_mat_id);
 
-		MeshInstance instance11(mesh_id1, xform5, head_mat_id);
-		MeshInstance instance12(mesh_id2, xform5, body_mat_id);
-		MeshInstance instance13(mesh_id3, xform5, base_mat_id);
+		MeshInstance instance11(mesh_id1, xform_head * xform5, head_mat_id);
+		MeshInstance instance12(mesh_id2, xform_body * xform5, body_mat_id);
+		MeshInstance instance13(mesh_id3, xform_base * xform5, base_mat_id);
 
 		scene->addMeshInstance(instance1);
 		scene->addMeshInstance(instance2);
