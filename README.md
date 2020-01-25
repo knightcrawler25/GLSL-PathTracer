@@ -39,7 +39,7 @@ TODO
 - ~~IBL~~
 - ~~Emissive geometry~~
 - ~~IBL importance sampling~~
-- ~~Two-level BVH for instances and transforms
+- ~~Two-level BVH for instances and transforms~~
 - Support to render out animation sequences
 - Displacement mapping
 - Emissive mesh sampling
