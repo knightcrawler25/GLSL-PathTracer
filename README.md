@@ -5,6 +5,7 @@ A physically based Path Tracer that runs in a GLSL Fragment shader.
 
 ![Panther](./screenshots/panther.png)
 Recreation of a scene from [Greyscalegorilla](https://twitter.com/GSG3D). Render time: 2 minutes on a GTX 750 Ti. 3 bounces
+
 ![Crown](./screenshots/crown.png)
 --------
 ![Ajax](./screenshots/ajax_materials.png)
@@ -13,6 +14,7 @@ Recreation of a scene from [Greyscalegorilla](https://twitter.com/GSG3D). Render
 
 ![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
 [Rank 3 Police Unit](https://sketchfab.com/models/d7698f6a7acf49c68ff0a50c5a1b1d52) scene by [Nika Zautashvili](https://nikvili.artstation.com/projects/xggaR)
+
 Features
 --------
 - Unidirectional PathTracer
