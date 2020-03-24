@@ -103,7 +103,11 @@ SET(EXE_NAME "PathTracer")
 
 ADD_EXECUTABLE(${EXE_NAME} ${SRC_FILES} ${EXT_FILES} ${EXT_FILES_SPECIFIC})
 
+if(WINDOWS)
 TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES})
+else()
+TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} dl)
+endif()
 
 #--------------------------------------------------------------------
 # preproc

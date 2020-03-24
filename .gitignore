@@ -1,5 +1,5 @@
 # Don't track content of these folders
-
+build/
 .vs/
 bin/
 PathTracer/Release/
