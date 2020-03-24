@@ -1,0 +1,8 @@
+Instructions for building in Linux:
+
+mkdir build
+cd build
+cmake ..
+make -j8
+cd ../bin
+./PathTracer
