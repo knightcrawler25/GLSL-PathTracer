@@ -1,6 +1,6 @@
 #include <Camera.h>
 #include <iostream>
-#include <string>
+#include <string.h>
 
 namespace GLSLPT
 {
