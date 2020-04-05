@@ -20,6 +20,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
+#include "Loader.h"
 #include "boyTestScene.h"
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
@@ -33,7 +34,7 @@ float mouseSensitivity = 1.0f;
 bool keyPressed = false;
 Scene *scene = nullptr;
 Renderer *renderer = nullptr;
-int currentSceneIndex = 1;
+int currentSceneIndex = 0;
 double lastTime = SDL_GetTicks(); //glfwGetTime();
 bool done = false;
 
@@ -61,10 +62,14 @@ void loadScene(int index)
 	{
 		case 0:	loadAjaxTestScene(scene, renderOptions);
 				break;
-		case 1:	loadBoyTestScene(scene, renderOptions);
+		case 1: loadBoyTestScene(scene, renderOptions);
 				break;
 		case 2:	loadCornellTestScene(scene, renderOptions);
-			break;
+				break;
+		case 3:	LoadSceneFromFile("./assets/CoffeeCart.scene", scene, renderOptions);
+				break;
+		case 4:	LoadSceneFromFile("./assets/diningroom.scene", scene, renderOptions);
+				break;
 	}
 	
     scene->renderOptions = renderOptions;
@@ -251,9 +256,9 @@ void MainLoop(void* arg)
 			float aperture = scene->camera->aperture * 1000.0f;
 			optionsChanged |= ImGui::SliderFloat("Fov", &fov, 10, 90);
 			scene->camera->setFov(fov);
-			optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 0.025f);
+			optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
 			scene->camera->aperture = aperture / 1000.0f;
-			optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01, 1.0);
+			optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01, 50.0);
 			
 		}
 
@@ -268,14 +273,14 @@ void MainLoop(void* arg)
 		float viewMatrix[16], projectionMatrix[16];
 		auto io = ImGui::GetIO();
 		scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
-		glm::mat4x4 tmpMat = scene->meshInstances[1].transform;
+		glm::mat4x4 tmpMat = scene->meshInstances[0].transform;
 
 		if (ImGui::CollapsingHeader("Transforms"))
 			EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
 
-		if (memcmp(&tmpMat, &scene->meshInstances[1].transform, sizeof(float) * 16))
+		if (memcmp(&tmpMat, &scene->meshInstances[0].transform, sizeof(float) * 16))
 		{
-			scene->meshInstances[1].transform = tmpMat;
+			scene->meshInstances[0].transform = tmpMat;
 			scene->rebuildInstancesData();
 		}
 

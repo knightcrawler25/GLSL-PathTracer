@@ -19,7 +19,7 @@ namespace GLSLPT
 
 	enum LightType
 	{
-		AreaLight,
+		QuadLight,
 		SphereLight
 	};
 
@@ -31,7 +31,7 @@ namespace GLSLPT
 		glm::vec3 v;
 		float radius;
 		float area;
-		LightType type;
+		float type;
 	};
 
 	struct Indices

@@ -1,10 +1,9 @@
 # Don't track content of these folders
 
 .vs/
-bin/
+bin/*
+!bin/assets
+bin/assets/*
+!bin/assets/*.scene
 PathTracer/Release/
 PathTracer/Debug/
-Nvidia-SBVH/Release/
-Nvidia-SBVH/Debug/
-thirdparty/SOIL/Release/
-thirdparty/SOIL/Debug/

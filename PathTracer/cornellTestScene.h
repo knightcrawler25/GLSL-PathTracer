@@ -38,7 +38,7 @@ namespace GLSLPT
 		int green_mat_id = scene->addMaterial(green);
 
 		Light light;
-		light.type = LightType::AreaLight;
+		light.type = LightType::QuadLight;
 		light.position = glm::vec3(.34299999f, .54779997f, .22700010f);
 		light.u = glm::vec3(.34299999f, .54779997f, .33200008f) - light.position;
 		light.v = glm::vec3(.21300001f, .54779997f, .22700010f) - light.position;
