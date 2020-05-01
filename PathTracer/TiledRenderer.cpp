@@ -301,6 +301,11 @@ namespace GLSLPT
         return float((numTilesY - tileY - 1) * numTilesX + tileX) / float(numTilesX * numTilesY);
     }
 
+	int TiledRenderer::getSampleCount() const
+	{
+		return sampleCounter;
+	}
+
     void TiledRenderer::update(float secondsElapsed)
     {
 		Renderer::update(secondsElapsed);

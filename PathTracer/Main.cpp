@@ -228,7 +228,9 @@ void MainLoop(void* arg)
     {
         ImGui::Begin("GLSL PathTracer"); // Create a window called "Hello, world!" and append into it.
 
-        ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        //ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+		ImGui::Text("Samples: %d ", renderer->getSampleCount());
 
 		ImGui::BulletText("RMB + drag to zoom in/out");
 		ImGui::BulletText("MMB + drag to rotate");

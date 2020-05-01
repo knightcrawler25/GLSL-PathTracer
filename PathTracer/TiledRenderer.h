@@ -25,5 +25,6 @@ namespace GLSLPT
         void present() const;
         void update(float secondsElapsed);
         float getProgress() const;
+        int getSampleCount() const;
     };
 }

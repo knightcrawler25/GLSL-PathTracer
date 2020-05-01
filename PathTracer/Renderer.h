@@ -56,5 +56,6 @@ namespace GLSLPT
         virtual void update(float secondsElapsed);
         // range is [0..1]
         virtual float getProgress() const = 0;
+        virtual int getSampleCount() const = 0;
     };
 }
