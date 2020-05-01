@@ -180,6 +180,7 @@ namespace GLSLPT
                 glm::vec3 position;
                 glm::vec3 lookAt;
                 float fov;
+                float aperture = 0, focalDist = 1;
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -189,11 +190,15 @@ namespace GLSLPT
 
                     sscanf(line, " position %f %f %f", &position.x, &position.y, &position.z);
                     sscanf(line, " lookAt %f %f %f", &lookAt.x, &lookAt.y, &lookAt.z);
+                    sscanf(line, " aperture %f ", &aperture);
+                    sscanf(line, " focaldist %f", &focalDist);
                     sscanf(line, " fov %f", &fov);
                 }
 
                 delete scene->camera;
                 scene->addCamera(position, lookAt, fov);
+                scene->camera->aperture = aperture;
+                scene->camera->focalDist = focalDist;
                 cameraAdded = true;
             }
 
@@ -202,7 +207,6 @@ namespace GLSLPT
 
             if (strstr(line, "Renderer"))
             {
-                char rendererType[20] = "None";
                 char envMap[200] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
@@ -212,16 +216,17 @@ namespace GLSLPT
                         break;
 
                     sscanf(line, " envMap %s", &envMap);
+                    sscanf(line, " resolution %d %d", &renderOptions.resolution.x, &renderOptions.resolution.y);
                     sscanf(line, " hdrMultiplier %f", &renderOptions.hdrMultiplier);
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
                     sscanf(line, " numTilesX %i", &renderOptions.numTilesX);
                     sscanf(line, " numTilesY %i", &renderOptions.numTilesY);
+                }
 
-                    if (strcmp(envMap, "None") != 0)
-                    {
-                        scene->addHDR(envMap);
-                        renderOptions.useEnvMap = true;
-                    }
+                if (strcmp(envMap, "None") != 0)
+                {
+                    scene->addHDR(envMap);
+                    renderOptions.useEnvMap = true;
                 }
             }
 
@@ -273,6 +278,8 @@ namespace GLSLPT
                 }
             }
         }
+
+        fclose(file);
 
         // Add default camera if none was specified
         if (!cameraAdded)

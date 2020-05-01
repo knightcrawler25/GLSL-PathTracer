@@ -53,7 +53,7 @@ namespace GLSLPT
 		//scene->addMeshInstance(instance1);
 		//scene->addMeshInstance(instance2);
 
-		scene->addHDR("./assets/ajax/sunset.hdr");
+		scene->addHDR("./assets/HDR/sunset.hdr");
 
 		scene->createAccelerationStructures();
 

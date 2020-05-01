@@ -3,7 +3,7 @@
 .vs/
 bin/*
 !bin/assets
-bin/assets/*
-!bin/assets/*.scene
+#bin/assets/*
+#!bin/assets/*.scene
 PathTracer/Release/
 PathTracer/Debug/

@@ -34,7 +34,7 @@ float mouseSensitivity = 1.0f;
 bool keyPressed = false;
 Scene *scene = nullptr;
 Renderer *renderer = nullptr;
-int currentSceneIndex = 0;
+int sampleSceneIndex = -1;
 double lastTime = SDL_GetTicks(); //glfwGetTime();
 bool done = false;
 
@@ -53,25 +53,23 @@ struct LoopData
     SDL_GLContext           mGLContext = nullptr;
 };
 
-void loadScene(int index)
+void loadSampleScene(int index)
 {
     delete scene;
-	//scene = LoadScene(std::string("./assets/")+sceneFilenames[index]);
 	scene = new Scene();
+
 	switch (index)
 	{
-		case 0:	loadAjaxTestScene(scene, renderOptions);
+		case 0:	LoadSceneFromFile("assets/hyperion.scene", scene, renderOptions);
+			break;
+		case 1:	loadAjaxTestScene(scene, renderOptions);
 				break;
-		case 1: loadBoyTestScene(scene, renderOptions);
+		case 2: loadBoyTestScene(scene, renderOptions);
 				break;
-		case 2:	loadCornellTestScene(scene, renderOptions);
-				break;
-		case 3:	LoadSceneFromFile("./assets/CoffeeCart.scene", scene, renderOptions);
-				break;
-		case 4:	LoadSceneFromFile("./assets/diningroom.scene", scene, renderOptions);
+		case 3:	loadCornellTestScene(scene, renderOptions);
 				break;
 	}
-	
+
     scene->renderOptions = renderOptions;
 	if (!scene)
 	{
@@ -230,15 +228,15 @@ void MainLoop(void* arg)
     {
         ImGui::Begin("GLSL PathTracer"); // Create a window called "Hello, world!" and append into it.
 
-        //ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 		ImGui::BulletText("RMB + drag to zoom in/out");
 		ImGui::BulletText("MMB + drag to rotate");
 		ImGui::BulletText("SHIFT + MMB + drag to pan");
 
-		if (ImGui::Combo("Scene", &currentSceneIndex, "Ajax Bust\0Substance Boy\0Cornell Box\0"))
+		if (ImGui::Combo("Scene", &sampleSceneIndex, "Hyperion\0Ajax Bust\0Substance Boy\0Cornell Box\0"))
 		{
-			loadScene(currentSceneIndex);
+			loadSampleScene(sampleSceneIndex);
 			initRenderer();
 		}
 
@@ -275,14 +273,14 @@ void MainLoop(void* arg)
 		scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
 		glm::mat4x4 tmpMat = scene->meshInstances[0].transform;
 
-		if (ImGui::CollapsingHeader("Transforms"))
+		/*if (ImGui::CollapsingHeader("Transforms"))
 			EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
 
 		if (memcmp(&tmpMat, &scene->meshInstances[0].transform, sizeof(float) * 16))
 		{
 			scene->meshInstances[0].transform = tmpMat;
 			scene->rebuildInstancesData();
-		}
+		}*/
 
         ImGui::End();
     }
@@ -301,7 +299,37 @@ int main(int argc, char** argv)
 {
 	srand((unsigned int)time(0));
 
-	loadScene(currentSceneIndex);
+	std::string scene_file;
+
+	for (int i = 1; i < argc; ++i)
+	{
+		const std::string arg(argv[i]);
+		if (arg == "-s" || arg == "--scene")
+		{
+			scene_file = argv[++i];
+		}
+		else if (arg[0] == '-')
+		{
+			printf("Unknown option %s \n'", arg);
+			exit(0);
+		}
+	}
+
+	if (!scene_file.empty())
+	{
+		scene = new Scene();
+
+		if (!LoadSceneFromFile(scene_file, scene, renderOptions))
+			exit(0);
+
+		scene->renderOptions = renderOptions;
+		std::cout << "Scene Loaded\n\n";
+	}
+	else
+	{
+		sampleSceneIndex = 0;
+		loadSampleScene(sampleSceneIndex);
+	}
 
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -341,7 +369,7 @@ int main(int argc, char** argv)
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
 #ifndef __EMSCRIPTEN__
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
     //glThreadContext = SDL_GL_CreateContext(loopdata.mWindow);
