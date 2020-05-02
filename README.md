@@ -48,7 +48,6 @@ Additional Screenshots
 --------
 ![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
 --------
-Scene by [Nika Zautashvili](https:/nikvili.artstation.com/projects/xggaR)
 ![Staircase](./screenshots/staircase.png)
 --------
 ![Substance Boy](./screenshots/MeetMat_Maps.png)
