@@ -12,6 +12,7 @@
 
 #include <time.h>
 #include <math.h>
+#include <string>
 
 #include "Scene.h"
 #include "TiledRenderer.h"
@@ -35,6 +36,7 @@ bool keyPressed = false;
 Scene *scene = nullptr;
 Renderer *renderer = nullptr;
 int sampleSceneIndex = -1;
+int selectedInstance = 0;
 double lastTime = SDL_GetTicks(); //glfwGetTime();
 bool done = false;
 
@@ -66,17 +68,14 @@ void loadSampleScene(int index)
 				break;
 		case 2: loadBoyTestScene(scene, renderOptions);
 				break;
-		case 3:	loadCornellTestScene(scene, renderOptions);
+		case 3:	LoadSceneFromFile("assets/cornell_box.scene", scene, renderOptions);
 				break;
+		case 4:	LoadSceneFromFile("assets/teapot.scene", scene, renderOptions);
+			break;
 	}
 
+	selectedInstance = 0;
     scene->renderOptions = renderOptions;
-	if (!scene)
-	{
-		std::cout << "Unable to load scene\n";
-		exit(0);
-	}
-	std::cout << "Scene Loaded\n\n";
 }
 
 bool initRenderer()
@@ -139,7 +138,7 @@ void update(float secondsElapsed)
 
 void EditTransform(const float* view, const float* projection, float* matrix)
 {
-	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::ROTATE);
+	static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
 	static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
 	if (ImGui::IsKeyPressed(90))
 		mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
@@ -195,10 +194,19 @@ void EditTransform(const float* view, const float* projection, float* matrix)
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
 	//float bounds[] = { 0.5,0.5,0.5, -0.5, -0.5 ,-0.5 };
-	RadeonRays::bbox a = scene->meshes[scene->meshInstances[1].meshID]->bvh->Bounds();
+	RadeonRays::bbox a = scene->meshes[scene->meshInstances[selectedInstance].meshID]->bvh->Bounds();
 	float bounds[] = { a.pmin.x, a.pmin.y,a.pmin.z, a.pmax.x,a.pmax.y,a.pmax.z };
 	ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
 }
+
+/*bool ListBox(const char* label, int* current_item, const std::vector<std::string>& items, int items_count, int height_in_items = -1)
+{
+	std::vector<const char*> strings;
+	for (int i = 0; i < items.size(); ++i)
+		strings.push_back(items[i].c_str());
+
+	return ImGui::ListBox(label, current_item, strings.data(), (void*)&items, items_count, height_in_items);
+}*/
 
 void MainLoop(void* arg)
 {
@@ -219,14 +227,14 @@ void MainLoop(void* arg)
         }
     }
 
-    ImGui_ImplSDL2_ProcessEvent(&event);
+    //ImGui_ImplSDL2_ProcessEvent(&event);
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
     ImGui::NewFrame();
 	ImGuizmo::SetOrthographic(false);
 	ImGuizmo::BeginFrame();
     {
-        ImGui::Begin("GLSL PathTracer"); // Create a window called "Hello, world!" and append into it.
+        ImGui::Begin("Settings");
 
         //ImGui::Text("Average: %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -236,7 +244,7 @@ void MainLoop(void* arg)
 		ImGui::BulletText("MMB + drag to rotate");
 		ImGui::BulletText("SHIFT + MMB + drag to pan");
 
-		if (ImGui::Combo("Scene", &sampleSceneIndex, "Hyperion\0Ajax Bust\0Substance Boy\0Cornell Box\0"))
+		if (ImGui::Combo("Scene", &sampleSceneIndex, "Hyperion\0Ajax Bust\0Substance Boy\0Cornell Box\0Teapot\0"))
 		{
 			loadSampleScene(sampleSceneIndex);
 			initRenderer();
@@ -259,7 +267,6 @@ void MainLoop(void* arg)
 			optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
 			scene->camera->aperture = aperture / 1000.0f;
 			optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01, 50.0);
-			
 		}
 
 		scene->camera->isMoving = false;
@@ -270,19 +277,56 @@ void MainLoop(void* arg)
 			scene->camera->isMoving = true;
 		}
 
-		float viewMatrix[16], projectionMatrix[16];
-		auto io = ImGui::GetIO();
-		scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
-		glm::mat4x4 tmpMat = scene->meshInstances[0].transform;
-
-		/*if (ImGui::CollapsingHeader("Transforms"))
-			EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
-
-		if (memcmp(&tmpMat, &scene->meshInstances[0].transform, sizeof(float) * 16))
+		if (ImGui::CollapsingHeader("Objects"))
 		{
-			scene->meshInstances[0].transform = tmpMat;
-			scene->rebuildInstancesData();
-		}*/
+			bool objectPropChanged = false;
+
+			std::vector<std::string> listbox_items;
+			for (int i = 0; i < scene->meshInstances.size(); i++)
+				listbox_items.push_back("Instance" + std::to_string(i));
+
+			// Object Selection
+
+			ImGui::ListBoxHeader("Instances");
+			for (int i = 0; i < scene->meshInstances.size(); i++)
+			{
+				bool is_selected = selectedInstance == i;
+				if (ImGui::Selectable(listbox_items[i].c_str(), is_selected))
+					selectedInstance = i;
+			}
+			ImGui::ListBoxFooter();
+
+			ImGui::Separator();
+			ImGui::Text("Materials");
+			// Material Properties
+			glm::vec3* albedo = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
+			glm::vec3* emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
+			objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
+			objectPropChanged |= ImGui::ColorEdit3("Emission", (float*)emission, 0);
+			objectPropChanged |= ImGui::SliderFloat("Metallic", &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.001, 1.0);
+			objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001, 1.0);
+
+			// Transforms Properties
+			ImGui::Separator();
+			ImGui::Text("Transforms");
+			{
+				float viewMatrix[16], projectionMatrix[16];
+				auto io = ImGui::GetIO();
+				scene->camera->computeViewProjectionMatrix(viewMatrix, projectionMatrix, io.DisplaySize.x / io.DisplaySize.y);
+				glm::mat4x4 tmpMat = scene->meshInstances[selectedInstance].transform;
+
+				EditTransform(viewMatrix, projectionMatrix, (float*)&tmpMat);
+
+				if (memcmp(&tmpMat, &scene->meshInstances[selectedInstance].transform, sizeof(float) * 16))
+				{
+					scene->meshInstances[selectedInstance].transform = tmpMat;
+					objectPropChanged = true;
+				}
+			}
+
+			if (objectPropChanged)
+				scene->rebuildInstancesData();
+		}
 
         ImGui::End();
     }

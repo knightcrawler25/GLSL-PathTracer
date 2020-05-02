@@ -14,7 +14,7 @@ namespace GLSLPT
 		renderOptions.numTilesX = 5;
 		renderOptions.hdrMultiplier = 1.0f;
 		renderOptions.useEnvMap = false;
-		scene->addCamera(glm::vec3(0.3f, 0.11f, 0.0f), glm::vec3(0.2f, 0.095f, 0.0f), 35.0f);
+		scene->addCamera(glm::vec3(0.3f, 0.11f, 0.0f), glm::vec3(0.2f, 0.095f, 0.0f), 60.0f);
 		scene->camera->aperture = 1e-6f; // 0.000001f;
 		scene->camera->focalDist = 0.262f;
 

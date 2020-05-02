@@ -14,7 +14,7 @@ namespace GLSLPT
 		renderOptions.numTilesX = 5;
 		renderOptions.hdrMultiplier = 5.0f;
 		renderOptions.useEnvMap = true;
-		scene->addCamera(glm::vec3(0.0f, 0.125f, -0.45f), glm::vec3(0.0f, 0.125f, 0.0f), 35.0f);
+		scene->addCamera(glm::vec3(0.0f, 0.125f, -0.45f), glm::vec3(0.0f, 0.125f, 0.0f), 60.0f);
 
 		int mesh_id = scene->addMesh("./assets/ajax/ajax.obj");
 

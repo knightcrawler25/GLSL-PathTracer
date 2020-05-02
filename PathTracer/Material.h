@@ -18,7 +18,7 @@ namespace GLSLPT
 		{
 			albedo = glm::vec3(1.0f, 1.0f, 1.0f);
 			materialType = DISNEY;
-			emission = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
+			emission = glm::vec3(0.0f, 0.0f, 0.0f);
 			metallic = 0.0f;
 			roughness = 0.5f;
 			ior = 1.45f;
@@ -31,7 +31,8 @@ namespace GLSLPT
 
 		glm::vec3 albedo;
 		float materialType;
-		glm::vec4 emission;
+		glm::vec3 emission;
+		float unused;
 		float metallic;
 		float roughness;
 		float ior;

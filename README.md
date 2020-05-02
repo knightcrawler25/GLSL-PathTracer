@@ -3,59 +3,59 @@ GLSL-PathTracer
 ==========
 A physically based Path Tracer that runs in a GLSL Fragment shader.
 
+![Stormtrooper](./screenshots/stormtrooper.png)
+
+![Hyperion](./screenshots/hyperion.png)
+
 ![Panther](./screenshots/panther.png)
 Recreation of a scene from [Greyscalegorilla](https://twitter.com/GSG3D). Render time: 2 minutes on a GTX 750 Ti. 3 bounces
 
 ![Crown](./screenshots/crown.png)
---------
-![Ajax](./screenshots/ajax_materials.png)
---------
-![Dining Room](./screenshots/DiningRoom.png)
-
-![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
-[Rank 3 Police Unit](https://sketchfab.com/models/d7698f6a7acf49c68ff0a50c5a1b1d52) scene by [Nika Zautashvili](https://nikvili.artstation.com/projects/xggaR)
 
 Features
 --------
 - Unidirectional PathTracer
-- RadeonRays for building the BVHs
-- UE4 Material Model
-- Texture Mapping (Albedo, Metallic, Roughness, Normal maps). All Texture maps are packed into 3D textures
+- RadeonRays for building BVHs (Traversal is performed in a shader)
+- Metallic-Roughness Material Model
+- Texture Mapping (Albedo, Metallic, Roughness, Normal maps)
 - Spherical and Rectangular Area Lights
 - IBL with importance sampling
-- Progressive Renderer
-- Tiled Renderer (Reduces GPU usage and timeout when depth/scene complexity is high)
+- Progressive + Tiled Rendering (Reduces GPU usage and timeout when depth/scene complexity is high)
 
 Build Instructions
 --------
 Please see INSTALL-WIN.txt for the build instructions
 
+Sample Scenes
+--------
+A couple of sample scenes are provided in the repository. Additional scenes can be downloaded from here:
+https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
+
 TODO
 --------
-- ~~Actually use the normal maps (Right now they are just loaded and sent to the GPU but not used)~~
-- ~~Move renderer configuration to scene file~~
-- ~~IBL~~
-- ~~Emissive geometry~~
 - ~~IBL importance sampling~~
+- ~~Emissive geometry~~
 - ~~Two-level BVH for instances and transforms~~
-- Support to render out animation sequences
-- Displacement mapping
-- Emissive mesh sampling
-- Sun Sky Model
-- Nested dielectrics
-- Fix issues with normal map (Microfacet-based normal mapping?)
+- Support for different texture sizes
+- Performance improvements
+- Support for rendering out animation sequences
 
 Additional Screenshots
 --------
-![Dragon](./screenshots/dragon.png)
+![Ajax](./screenshots/ajax_materials.png)
 --------
+![Dining Room](./screenshots/DiningRoom.png)
+--------
+![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
+--------
+Scene by [Nika Zautashvili](https:/nikvili.artstation.com/projects/xggaR)
 ![Staircase](./screenshots/staircase.png)
 --------
 ![Substance Boy](./screenshots/MeetMat_Maps.png)
 --------
 ![City](./screenshots/city.png)
 --------
-![Substance Boy Glass](./screenshots/GlassMat2.png)
+![Dragon](./screenshots/dragon.png)
 
 References/Credits
 --------

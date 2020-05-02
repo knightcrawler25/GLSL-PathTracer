@@ -14,7 +14,7 @@ namespace GLSLPT
 		renderOptions.numTilesX = 5;
 		renderOptions.hdrMultiplier = 1.0f;
 		renderOptions.useEnvMap = true;
-		scene->addCamera(glm::vec3(0.276f, 0.275f, -0.75f), glm::vec3(0.276f, 0.275f, 0), 39.0f);
+		scene->addCamera(glm::vec3(0.276f, 0.275f, -0.75f), glm::vec3(0.276f, 0.275f, 0), 65.0f);
 
 		int ceiling_mesh_id = scene->addMesh("./assets/cornell_box/cbox_ceiling.obj");
 		int floor_mesh_id = scene->addMesh("./assets/cornell_box/cbox_floor.obj");

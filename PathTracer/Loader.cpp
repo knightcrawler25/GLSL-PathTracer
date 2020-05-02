@@ -237,6 +237,9 @@ namespace GLSLPT
             if (strstr(line, "mesh"))
             {
                 std::string filename;
+                glm::vec3 pos;
+                glm::vec3 scale;
+                glm::mat4 xform;
                 int material_id = 0; // Default Material ID
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -265,13 +268,15 @@ namespace GLSLPT
                             Log("Could not find material %s\n", matName);
                         }
                     }
+
+                    sscanf(line, " position %f %f %f", &xform[3][0], &xform[3][1], &xform[3][2]);
+                    sscanf(line, " scale %f %f %f", &xform[0][0], &xform[1][1], &xform[2][2]);
                 }
                 if (!filename.empty())
                 {
                     int mesh_id = scene->addMesh(filename);
                     if (mesh_id != -1)
                     {
-                        glm::mat4 xform;
                         MeshInstance instance1(mesh_id, xform, material_id);
                         scene->addMeshInstance(instance1);
                     }

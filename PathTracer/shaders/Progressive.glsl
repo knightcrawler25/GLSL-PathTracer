@@ -35,8 +35,8 @@ void main(void)
 
 	float scale = tan(camera.fov * 0.5);
 	vec2 d = (2.0 * TexCoords - 1.0) + jitter;
-	d.x *= screenResolution.x / screenResolution.y * scale;
-	d.y *= scale;
+	d.y *= screenResolution.y / screenResolution.x * scale;
+	d.x *= scale;
 	vec3 rayDir = normalize(d.x * camera.right + d.y * camera.up + camera.forward);
 
 	vec3 focalPoint = camera.focalDist * rayDir;
