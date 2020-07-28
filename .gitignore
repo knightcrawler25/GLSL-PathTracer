@@ -1,9 +1,4 @@
 # Don't track content of these folders
 
 .vs/
-bin/*
-!bin/assets
-#bin/assets/*
-#!bin/assets/*.scene
-PathTracer/Release/
-PathTracer/Debug/
+build/*

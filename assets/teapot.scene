@@ -1,0 +1,46 @@
+Renderer
+{
+	resolution 1280 720
+	maxDepth 2
+	tileWidth 320
+	tileHeight 180
+	envMap ./assets/HDR/sunset.hdr
+	hdrMultiplier 5.0
+}
+Camera
+{
+	position 20 12 0
+	lookAt -0.953633 2.17253 -0.0972613
+	fov 60
+}
+
+material checker
+{
+	albedoTexture ./assets/teapot/checker.png
+	roughness 0.5
+}
+
+material white
+{
+	color 1.0 1.0 1.0
+	metallic 0.1
+	roughness 0.01
+}
+
+mesh
+{
+	file ./assets/teapot/Mesh000.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/teapot/Mesh001.obj
+	material white
+}
+
+mesh
+{
+	file ./assets/teapot/Mesh050.obj
+	material checker
+}

@@ -21,8 +21,7 @@ THE SOFTWARE.
 ********************************************************************/
 
 /* 
-	Code is not the original code from RadeonRays. It is modfied slightly for this project 
-	Please refer to https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK for the original code
+	Modified version of code from https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK 
 */
 
 #pragma once

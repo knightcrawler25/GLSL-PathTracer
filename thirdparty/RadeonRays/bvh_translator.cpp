@@ -21,8 +21,7 @@ THE SOFTWARE.
 ********************************************************************/
 
 /*
-	Please see https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK for the original code
-	Code is modfied for this project
+	Modified version of code from https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK
 */
 
 #include "bvh_translator.h"

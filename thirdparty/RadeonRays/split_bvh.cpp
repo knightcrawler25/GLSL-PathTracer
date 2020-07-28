@@ -1,6 +1,10 @@
 #include "split_bvh.h"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+
+
+using namespace std;
 
 namespace RadeonRays
 {

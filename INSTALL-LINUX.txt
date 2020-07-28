@@ -1,0 +1,19 @@
+Instructions for building:
+
+  * apt-get install libsdl2-dev
+
+  * git clone https://github.com/knightcrawler25/GLSL-PathTracer.git
+
+  * cd GLSL-PathTracer
+
+  * mkdir build
+
+  * cmake ..
+
+  * make
+
+  * cd build
+
+  * To run the program: ./PathTracer
+
+  * Additional samples can be downloaded from: https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
