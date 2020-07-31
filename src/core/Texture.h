@@ -30,7 +30,6 @@
 #pragma once
 
 #include <vector>
-#include <glm/glm.hpp>
 #include "split_bvh.h"
 
 namespace GLSLPT

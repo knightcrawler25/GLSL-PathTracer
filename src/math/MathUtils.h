@@ -27,31 +27,22 @@
  * SOFTWARE.
  */
 
-#define PI        3.14159265358979323
-#define TWO_PI    6.28318530717958648
-#define INFINITY  1000000.0
-#define EPS 0.001
+#pragma once
 
-// Global variables
+#define PI 3.14159265358979323846f
 
-mat4 transform;
+#include <Config.h>
+#include <cmath>
+#include <algorithm>
 
-vec2 seed;
-vec3 tempTexCoords;
-struct Ray { vec3 origin; vec3 direction; };
-struct Material { vec4 albedo; vec4 emission; vec4 param; vec4 texIDs; };
-struct Camera { vec3 up; vec3 right; vec3 forward; vec3 position; float fov; float focalDist; float aperture; };
-struct Light { vec3 position; vec3 emission; vec3 u; vec3 v; vec3 radiusAreaType; };
-struct State { vec3 normal; vec3 ffnormal; vec3 fhp; bool isEmitter; int depth; float hitDist; vec2 texCoord; vec3 bary; ivec3 triID; int matID; Material mat; bool specularBounce; };
-struct BsdfSampleRec { vec3 bsdfDir; float pdf; };
-struct LightSampleRec { vec3 surfacePos; vec3 normal; vec3 emission; float pdf; };
-
-uniform Camera camera;
-
-//-----------------------------------------------------------------------
-float rand()
-//-----------------------------------------------------------------------
+namespace GLSLPT
 {
-    seed -= randomVector.xy;
-    return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453);
+    struct Math
+    {
+    public:
+        
+        static inline float Degrees(float radians) { return radians * (180.f / PI); };
+        static inline float Radians(float degrees) { return degrees * (PI / 180.f); };
+        static inline float Clamp(float x, float lower, float upper) { return std::min(upper, std::max(x, lower)); };
+    };
 }

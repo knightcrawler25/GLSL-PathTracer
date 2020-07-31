@@ -30,7 +30,7 @@ static void workOnRGBE(RGBE *scan, int len, float *cols);
 static bool decrunch(RGBE *scanline, int len, FILE *file);
 static bool oldDecrunch(RGBE *scanline, int len, FILE *file);
 
-float Luminance(const glm::vec3 &c)
+float Luminance(const Vec3 &c)
 {
     return c.x*0.3f + c.y*0.6f + c.z*0.1f;
 }
@@ -65,8 +65,8 @@ void HDRLoader::buildDistributions(HDRData* res)
     float *pdf1D = new float[height];
     float *cdf1D = new float[height];
 
-    res->marginalDistData    = new glm::vec2[height];
-    res->conditionalDistData = new glm::vec2[width*height];
+    res->marginalDistData    = new Vec2[height];
+    res->conditionalDistData = new Vec2[width*height];
 
     float colWeightSum = 0.0f;
 
@@ -76,7 +76,7 @@ void HDRLoader::buildDistributions(HDRData* res)
 
         for (int i = 0; i < width; ++i)
         {
-            float weight = Luminance(glm::vec3(res->cols[j*width * 3 + i * 3 + 0], res->cols[j*width * 3 + i * 3 + 1], res->cols[j*width * 3 + i * 3 + 2]));
+            float weight = Luminance(Vec3(res->cols[j*width * 3 + i * 3 + 0], res->cols[j*width * 3 + i * 3 + 1], res->cols[j*width * 3 + i * 3 + 2]));
 
             rowWeightSum += weight;
 

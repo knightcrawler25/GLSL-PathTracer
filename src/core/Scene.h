@@ -29,7 +29,6 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
 #include <string>
 #include <vector>
 #include <map>
@@ -54,10 +53,10 @@ namespace GLSLPT
 
     struct Light
     {
-        glm::vec3 position;
-        glm::vec3 emission;
-        glm::vec3 u;
-        glm::vec3 v;
+        Vec3 position;
+        Vec3 emission;
+        Vec3 u;
+        Vec3 v;
         float radius;
         float area;
         float type;
@@ -82,7 +81,7 @@ namespace GLSLPT
         int AddMeshInstance(const MeshInstance &meshInstance);
         int AddLight(const Light &light);
 
-        void AddCamera(glm::vec3 eye, glm::vec3 lookat, float fov);
+        void AddCamera(Vec3 eye, Vec3 lookat, float fov);
         void AddHDR(const std::string &filename);
 
         void CreateAccelerationStructures();
@@ -96,9 +95,9 @@ namespace GLSLPT
 
         // Scene Mesh Data 
         std::vector<Indices>   vertIndices;
-        std::vector<glm::vec4> verticesUVX; // Vertex Data + x coord of uv 
-        std::vector<glm::vec4> normalsUVY;  // Normal Data + y coord of uv
-        std::vector<glm::mat4> transforms;
+        std::vector<Vec4> verticesUVX; // Vertex Data + x coord of uv 
+        std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
+        std::vector<Mat4> transforms;
         int indicesTexWidth;
         int triDataTexWidth;
 

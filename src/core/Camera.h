@@ -28,14 +28,17 @@
  */
 
 #pragma once
-#include <glm/glm.hpp>
+
+#include <Vec3.h>
+#include <MathUtils.h>
+#include <float.h>
 
 namespace GLSLPT
 {
     class Camera
     {
     public:
-        Camera(glm::vec3 eye, glm::vec3 lookat, float fov);
+        Camera(Vec3 eye, Vec3 lookat, float fov);
         Camera(const Camera& other);
         Camera& operator = (const Camera& other);
 
@@ -45,10 +48,10 @@ namespace GLSLPT
         void ComputeViewProjectionMatrix(float* view, float* projection, float ratio);
         void SetFov(float val);
 
-        glm::vec3 position;
-        glm::vec3 up;
-        glm::vec3 right;
-        glm::vec3 forward;
+        Vec3 position;
+        Vec3 up;
+        Vec3 right;
+        Vec3 forward;
 
         float focalDist;
         float aperture;
@@ -58,8 +61,8 @@ namespace GLSLPT
     private:
         void UpdateCamera();
 
-        glm::vec3 worldUp;
-        glm::vec3 pivot;
+        Vec3 worldUp;
+        Vec3 pivot;
 
         float pitch;
         float radius;

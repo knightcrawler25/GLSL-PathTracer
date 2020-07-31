@@ -106,9 +106,9 @@ namespace RadeonRays
             float overlap;
         };
 
-        void BuildNode(SplitRequest const& req, bbox const* bounds, glm::vec3 const* centroids, int* primindices);
+        void BuildNode(SplitRequest const& req, bbox const* bounds, Vec3 const* centroids, int* primindices);
 
-        SahSplit FindSahSplit(SplitRequest const& req, bbox const* bounds, glm::vec3 const* centroids, int* primindices) const;
+        SahSplit FindSahSplit(SplitRequest const& req, bbox const* bounds, Vec3 const* centroids, int* primindices) const;
 
         // Enum for node type
         enum NodeType

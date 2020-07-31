@@ -31,8 +31,8 @@
 
 #include "Quad.h"
 #include "Program.h"
+#include <Vec2.h>
 
-#include <glm/glm.hpp>
 #include <vector>
 
 namespace GLSLPT
@@ -47,10 +47,10 @@ namespace GLSLPT
             tileWidth = 100;
             tileHeight = 100;
             useEnvMap = false;
-            resolution = glm::vec2(1280, 720);
+            resolution = iVec2(1280, 720);
             hdrMultiplier = 1.0f;
         }
-        glm::ivec2 resolution;
+        iVec2 resolution;
         int maxDepth;
         int tileWidth;
         int tileHeight;
@@ -66,7 +66,7 @@ namespace GLSLPT
         Scene *scene;
         Quad* quad;
 
-        glm::ivec2 screenSize;
+        iVec2 screenSize;
         std::string shadersDirectory;
 
         GLuint BVHTex;
@@ -90,7 +90,7 @@ namespace GLSLPT
         Renderer(Scene *scene, const std::string& shadersDirectory);
         virtual ~Renderer();
 
-        const glm::ivec2 GetScreenSize() const { return screenSize; }
+        const iVec2 GetScreenSize() const { return screenSize; }
 
         virtual void Init();
         virtual void Finish();

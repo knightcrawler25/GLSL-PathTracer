@@ -105,7 +105,7 @@ void LoadScene(std::string sceneName)
 bool InitRenderer()
 {
     delete renderer;
-    renderer = new TiledRenderer(scene, "shaders/");
+    renderer = new TiledRenderer(scene, "./shaders/");
     renderer->Init();
     return true;
 }
@@ -233,7 +233,7 @@ void MainLoop(void* arg)
         {
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
-                scene->renderOptions.resolution = glm::ivec2(event.window.data1, event.window.data2);
+                scene->renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
                 InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
             }
 
@@ -285,13 +285,13 @@ void MainLoop(void* arg)
         
         if (ImGui::CollapsingHeader("Camera"))
         {
-            float fov = glm::degrees(scene->camera->fov);
+            float fov = Math::Degrees(scene->camera->fov);
             float aperture = scene->camera->aperture * 1000.0f;
             optionsChanged |= ImGui::SliderFloat("Fov", &fov, 10, 90);
             scene->camera->SetFov(fov);
             optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
             scene->camera->aperture = aperture / 1000.0f;
-            optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01, 50.0);
+            optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
         }
 
         scene->camera->isMoving = false;
@@ -328,13 +328,13 @@ void MainLoop(void* arg)
             ImGui::Text("Materials");
 
             // Material Properties
-            glm::vec3* albedo    = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
-            glm::vec3* emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
+            Vec3 *albedo   = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
+            Vec3 *emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
 
             objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
             //objectPropChanged |= ImGui::ColorEdit3("Emission", (float*)emission, 0);
-            objectPropChanged |= ImGui::SliderFloat("Metallic", &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.001, 1.0);
-            objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001, 1.0);
+            objectPropChanged |= ImGui::SliderFloat("Metallic", &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.001f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001f, 1.0f);
 
             // Transforms Properties
             ImGui::Separator();
@@ -345,7 +345,7 @@ void MainLoop(void* arg)
 
                 auto io = ImGui::GetIO();
                 scene->camera->ComputeViewProjectionMatrix(viewMatrix, projMatrix, io.DisplaySize.x / io.DisplaySize.y);
-                glm::mat4x4 xform = scene->meshInstances[selectedInstance].transform;
+                Mat4 xform = scene->meshInstances[selectedInstance].transform;
 
                 EditTransform(viewMatrix, projMatrix, (float*)&xform);
 

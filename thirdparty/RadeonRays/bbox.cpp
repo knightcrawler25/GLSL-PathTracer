@@ -24,31 +24,31 @@ THE SOFTWARE.
 
 namespace RadeonRays
 {
-	glm::vec3 bbox::center()  const { return 0.5f * (pmax + pmin); }
-	glm::vec3 bbox::extents() const { return pmax - pmin; }
+	Vec3 bbox::center()  const { return (pmax + pmin) * 0.5f; }
+	Vec3 bbox::extents() const { return pmax - pmin; }
 
 	float bbox::surface_area() const
 	{
-		glm::vec3 ext = extents();
+		Vec3 ext = extents();
 		return 2.f * (ext.x * ext.y + ext.x * ext.z + ext.y * ext.z);
 	}
 
 	// Grow the bounding box by a point
-	void bbox::grow(glm::vec3 const& p)
+	void bbox::grow(Vec3 const& p)
 	{
-		pmin = glm::min(pmin, p);
-		pmax = glm::max(pmax, p);
+		pmin = Vec3::Min(pmin, p);
+		pmax = Vec3::Max(pmax, p);
 	}
 	// Grow the bounding box by a box
 	void bbox::grow(bbox const& b)
 	{
-		pmin = glm::min(pmin, b.pmin);
-		pmax = glm::max(pmax, b.pmax);
+		pmin = Vec3::Min(pmin, b.pmin);
+		pmax = Vec3::Max(pmax, b.pmax);
 	}
 
-	bool bbox::contains(glm::vec3 const& p) const
+	bool bbox::contains(Vec3 const& p) const
 	{
-		glm::vec3 radius = 0.5f * extents();
+		Vec3 radius = extents() * 0.5f;
 		return std::abs(center().x - p.x) <= radius.x &&
 			fabs(center().y - p.y) <= radius.y &&
 			fabs(center().z - p.z) <= radius.z;
@@ -57,30 +57,30 @@ namespace RadeonRays
 	bbox bboxunion(bbox const& box1, bbox const& box2)
 	{
 		bbox res;
-		res.pmin = glm::min(box1.pmin, box2.pmin);
-		res.pmax = glm::max(box1.pmax, box2.pmax);
+		res.pmin = Vec3::Min(box1.pmin, box2.pmin);
+		res.pmax = Vec3::Max(box1.pmax, box2.pmax);
 		return res;
 	}
 
 	bbox intersection(bbox const& box1, bbox const& box2)
 	{
-		return bbox(glm::max(box1.pmin, box2.pmin), glm::min(box1.pmax, box2.pmax));
+		return bbox(Vec3::Max(box1.pmin, box2.pmin), Vec3::Min(box1.pmax, box2.pmax));
 	}
 
 	void intersection(bbox const& box1, bbox const& box2, bbox& box)
 	{
-		box.pmin = glm::max(box1.pmin, box2.pmin);
-		box.pmax = glm::min(box1.pmax, box2.pmax);
+		box.pmin = Vec3::Max(box1.pmin, box2.pmin);
+		box.pmax = Vec3::Min(box1.pmax, box2.pmax);
 	}
 
 	#define BBOX_INTERSECTION_EPS 0.f
 
 	bool intersects(bbox const& box1, bbox const& box2)
 	{
-		glm::vec3 b1c = box1.center();
-		glm::vec3 b1r = 0.5f * box1.extents();
-		glm::vec3 b2c = box2.center();
-		glm::vec3 b2r = 0.5f * box2.extents();
+		Vec3 b1c = box1.center();
+		Vec3 b1r = box1.extents() * 0.5f;
+		Vec3 b2c = box2.center();
+		Vec3 b2r = box2.extents() * 0.5f;
 
 		return (fabs(b2c.x - b1c.x) - (b1r.x + b2r.x)) <= BBOX_INTERSECTION_EPS &&
 			(fabs(b2c.y - b1c.y) - (b1r.y + b2r.y)) <= BBOX_INTERSECTION_EPS &&

@@ -30,7 +30,7 @@
 #pragma once
 
 #include <vector>
-#include <glm/glm.hpp>
+#include <Vec3.h>
 
 namespace GLSLPT
 {
@@ -45,8 +45,8 @@ namespace GLSLPT
     public:
         Material()
         {
-            albedo   = glm::vec3(1.0f, 1.0f, 1.0f);
-            emission = glm::vec3(0.0f, 0.0f, 0.0f);
+            albedo   = Vec3(1.0f, 1.0f, 1.0f);
+            emission = Vec3(0.0f, 0.0f, 0.0f);
 
             materialType = MICROFACET;
             unused       = 0;
@@ -62,9 +62,9 @@ namespace GLSLPT
             unused3                 =  0.0f;
         };
 
-        glm::vec3 albedo;
+        Vec3 albedo;
         float materialType;
-        glm::vec3 emission;
+        Vec3 emission;
 
         float unused;
 

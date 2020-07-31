@@ -28,8 +28,13 @@ THE SOFTWARE.
 #include <algorithm>
 #include <limits>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <Config.h>
+#include <Mat4.h>
+#include <Vec2.h>
+#include <Vec3.h>
+#include <Vec4.h>
+
+using namespace GLSLPT;
 
 namespace RadeonRays
 {
@@ -37,35 +42,35 @@ namespace RadeonRays
     {
     public:
         bbox()
-            : pmin(glm::vec3(std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max(),
-            std::numeric_limits<float>::max()))
-            , pmax(glm::vec3(-std::numeric_limits<float>::max(),
-            -std::numeric_limits<float>::max(),
-            -std::numeric_limits<float>::max()))
+            : pmin(Vec3(std::numeric_limits<float>::max(),
+                        std::numeric_limits<float>::max(),
+                        std::numeric_limits<float>::max()))
+            , pmax(Vec3(-std::numeric_limits<float>::max(),
+                        -std::numeric_limits<float>::max(),
+                        -std::numeric_limits<float>::max()))
         {
         }
 
-        bbox(glm::vec3 const& p)
+        bbox(Vec3 const& p)
             : pmin(p)
             , pmax(p)
         {
         }
 
-        bbox(glm::vec3 const& p1, glm::vec3 const& p2)
-            : pmin(glm::min(p1, p2))
-            , pmax(glm::max(p1, p2))
+        bbox(Vec3 const& p1, Vec3 const& p2)
+            : pmin(Vec3::Min(p1, p2))
+            , pmax(Vec3::Max(p1, p2))
         {
         }
 
-		glm::vec3 center()  const;
-		glm::vec3 extents() const;
+		Vec3 center()  const;
+		Vec3 extents() const;
 
-        bool contains(glm::vec3 const& p) const;
+        bool contains(Vec3 const& p) const;
 
 		inline int maxdim() const
 		{
-			glm::vec3 ext = extents();
+			Vec3 ext = extents();
 
 			if (ext.x >= ext.y && ext.x >= ext.z)
 				return 0;
@@ -80,15 +85,15 @@ namespace RadeonRays
 		float surface_area() const;
 
         // TODO: this is non-portable, optimization trial for fast intersection test
-        glm::vec3 const& operator [] (int i) const { return *(&pmin + i); }
+        Vec3 const& operator [] (int i) const { return *(&pmin + i); }
 
         // Grow the bounding box by a point
-		void grow(glm::vec3 const& p);
+		void grow(Vec3 const& p);
         // Grow the bounding box by a box
 		void grow(bbox const& b);
 
-        glm::vec3 pmin;
-        glm::vec3 pmax;
+        Vec3 pmin;
+        Vec3 pmax;
     };
 
 	bbox bboxunion(bbox const& box1, bbox const& box2);

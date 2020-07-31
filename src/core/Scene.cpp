@@ -34,7 +34,7 @@
 
 namespace GLSLPT
 {
-    void Scene::AddCamera(glm::vec3 pos, glm::vec3 lookAt, float fov)
+    void Scene::AddCamera(Vec3 pos, Vec3 lookAt, float fov)
     {
         delete camera;
         camera = new Camera(pos, lookAt, fov);
@@ -142,27 +142,27 @@ namespace GLSLPT
         for (int i = 0; i < meshInstances.size(); i++)
         {
             RadeonRays::bbox bbox = meshes[meshInstances[i].meshID]->bvh->Bounds();
-            glm::mat4 matrix = meshInstances[i].transform;
+            Mat4 matrix = meshInstances[i].transform;
 
-            glm::vec3 minBound = bbox.pmin;
-            glm::vec3 maxBound = bbox.pmax;
+            Vec3 minBound = bbox.pmin;
+            Vec3 maxBound = bbox.pmax;
 
-            glm::vec3 right       = glm::vec3(matrix[0][0], matrix[0][1], matrix[0][2]);
-            glm::vec3 up          = glm::vec3(matrix[1][0], matrix[1][1], matrix[1][2]);
-            glm::vec3 forward     = glm::vec3(matrix[2][0], matrix[2][1], matrix[2][2]);
-            glm::vec3 translation = glm::vec3(matrix[3][0], matrix[3][1], matrix[3][2]);
+            Vec3 right       = Vec3(matrix[0][0], matrix[0][1], matrix[0][2]);
+            Vec3 up          = Vec3(matrix[1][0], matrix[1][1], matrix[1][2]);
+            Vec3 forward     = Vec3(matrix[2][0], matrix[2][1], matrix[2][2]);
+            Vec3 translation = Vec3(matrix[3][0], matrix[3][1], matrix[3][2]);
 
-            glm::vec3 xa = right * minBound.x;
-            glm::vec3 xb = right * maxBound.x;
+            Vec3 xa = right * minBound.x;
+            Vec3 xb = right * maxBound.x;
 
-            glm::vec3 ya = up * minBound.y;
-            glm::vec3 yb = up * maxBound.y;
+            Vec3 ya = up * minBound.y;
+            Vec3 yb = up * maxBound.y;
 
-            glm::vec3 za = forward * minBound.z;
-            glm::vec3 zb = forward * maxBound.z;
+            Vec3 za = forward * minBound.z;
+            Vec3 zb = forward * maxBound.z;
 
-            minBound = glm::min(xa, xb) + glm::min(ya, yb) + glm::min(za, zb) + translation;
-            maxBound = glm::max(xa, xb) + glm::max(ya, yb) + glm::max(za, zb) + translation;
+            minBound = Vec3::Min(xa, xb) + Vec3::Min(ya, yb) + Vec3::Min(za, zb) + translation;
+            maxBound = Vec3::Max(xa, xb) + Vec3::Max(ya, yb) + Vec3::Max(za, zb) + translation;
 
             RadeonRays::bbox bound;
             bound.pmin = minBound;

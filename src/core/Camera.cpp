@@ -94,20 +94,15 @@ namespace GLSLPT
         tmp[0] = eye[0] - at[0];
         tmp[1] = eye[1] - at[1];
         tmp[2] = eye[2] - at[2];
-        //Z.normalize(eye - at);
+
         Normalize(tmp, Z);
         Normalize(up, Y);
-        //Y.normalize(up);
 
         Cross(Y, Z, tmp);
-        //tmp.cross(Y, Z);
         Normalize(tmp, X);
-        //X.normalize(tmp);
 
         Cross(Z, X, tmp);
-        //tmp.cross(Z, X);
         Normalize(tmp, Y);
-        //Y.normalize(tmp);
 
         m16[0] = X[0];
         m16[1] = Y[0];
@@ -127,19 +122,19 @@ namespace GLSLPT
         m16[15] = 1.0f;
     }
 
-    Camera::Camera(glm::vec3 eye, glm::vec3 lookat, float fov)
+    Camera::Camera(Vec3 eye, Vec3 lookat, float fov)
     {
         position = eye;
         pivot = lookat;
-        worldUp = glm::vec3(0, 1, 0);
+        worldUp = Vec3(0, 1, 0);
 
-        glm::vec3 dir = glm::normalize(pivot - position);
-        pitch = glm::degrees(asin(dir.y));
-        yaw = glm::degrees(atan2(dir.z, dir.x));
+        Vec3 dir = Vec3::Normalize(pivot - position);
+        pitch = Math::Degrees(asin(dir.y));
+        yaw = Math::Degrees(atan2(dir.z, dir.x));
 
-        radius = glm::distance(eye, lookat);
+        radius = Vec3::Distance(eye, lookat);
 
-        this->fov = glm::radians(fov);
+        this->fov = Math::Radians(fov);
         focalDist = 0.1f;
         aperture = 0.0;
         UpdateCamera();
@@ -167,7 +162,7 @@ namespace GLSLPT
 
     void Camera::Strafe(float dx, float dy)
     {
-        glm::vec3 translation = -dx * right + dy * up;
+        Vec3 translation =  right * -dx + up * dy;
         pivot = pivot + translation;
         UpdateCamera();
     }
@@ -180,28 +175,28 @@ namespace GLSLPT
 
     void Camera::SetFov(float val)
     {
-        fov = glm::radians(val);
+        fov = Math::Radians(val);
     }
 
     void Camera::UpdateCamera()
     {
-        glm::vec3 forward_temp;
-        forward_temp.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        forward_temp.y = sin(glm::radians(pitch));
-        forward_temp.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        Vec3 forward_temp;
+        forward_temp.x = cos(Math::Radians(yaw)) * cos(Math::Radians(pitch));
+        forward_temp.y = sin(Math::Radians(pitch));
+        forward_temp.z = sin(Math::Radians(yaw)) * cos(Math::Radians(pitch));
 
-        forward = glm::normalize(forward_temp);
-        position = pivot + -forward * radius;
+        forward = Vec3::Normalize(forward_temp);
+        position = pivot + (forward * -1.0f) * radius;
 
-        right = glm::normalize(glm::cross(forward, worldUp));
-        up = glm::normalize(glm::cross(right, forward));
+        right = Vec3::Normalize(Vec3::Cross(forward, worldUp));
+        up = Vec3::Normalize(Vec3::Cross(right, forward));
     }
 
     void Camera::ComputeViewProjectionMatrix(float* view, float* projection, float ratio)
     {
-        glm::vec3 at = position + forward;
+        Vec3 at = position + forward;
         LookAt(&position.x, &at.x, &up.x, view);
         const float fov_v = (1.f / ratio) * tanf(fov / 2.f);
-        Perspective(glm::degrees(fov_v), ratio, 0.1f, 1000.f, projection);
+        Perspective(Math::Degrees(fov_v), ratio, 0.1f, 1000.f, projection);
     }
 }

@@ -58,8 +58,8 @@ namespace RadeonRays
 		void Process(const Bvh *topLevelBvh, const std::vector<GLSLPT::Mesh*> &meshes, const std::vector<GLSLPT::MeshInstance> &instances);
 		int topLevelIndexPackedXY = 0;
 		int topLevelIndex = 0;
-		std::vector<glm::vec3> bboxmin;
-		std::vector<glm::vec3> bboxmax;
+		std::vector<Vec3> bboxmin;
+		std::vector<Vec3> bboxmax;
 		std::vector<Node> nodes;
 		int nodeTexWidth;
 

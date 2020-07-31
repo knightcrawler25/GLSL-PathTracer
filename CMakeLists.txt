@@ -40,7 +40,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/core
   ${CMAKE_SOURCE_DIR}/src/loaders
   ${CMAKE_SOURCE_DIR}/src/tests
-  ${CMAKE_SOURCE_DIR}/thirdparty/glm
+  ${CMAKE_SOURCE_DIR}/src/math
   ${CMAKE_SOURCE_DIR}/thirdparty/imgui
   ${CMAKE_SOURCE_DIR}/thirdparty/glew/include
   ${CMAKE_SOURCE_DIR}/thirdparty/stb

@@ -97,7 +97,7 @@ namespace RadeonRays
     {
         // Prim bounds
         bbox bounds;
-        glm::vec3 center;
+        Vec3 center;
         int idx;
     };
 

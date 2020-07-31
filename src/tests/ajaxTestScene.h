@@ -29,9 +29,6 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/transform.hpp>
 #include "Scene.h"
 
 namespace GLSLPT
@@ -43,36 +40,36 @@ namespace GLSLPT
         renderOptions.tileWidth = 128;
         renderOptions.hdrMultiplier = 5.0f;
         renderOptions.useEnvMap = true;
-        scene->AddCamera(glm::vec3(0.0f, 0.125f, -0.45f), glm::vec3(0.0f, 0.125f, 0.0f), 60.0f);
+        scene->AddCamera(Vec3(0.0f, 0.125f, -0.45f), Vec3(0.0f, 0.125f, 0.0f), 60.0f);
 
         int mesh_id = scene->AddMesh("./assets/ajax/ajax.obj");
 
         Material black;
-        black.albedo = glm::vec3(0.1f, 0.1f, 0.1f);
+        black.albedo = Vec3(0.1f, 0.1f, 0.1f);
         black.roughness = 0.01f;
         black.metallic = 1.0f;
 
         Material red_plastic;
-        red_plastic.albedo = glm::vec3(1.0, 0.0, 0.0);
-        red_plastic.roughness = 0.01;
-        red_plastic.metallic = 0.0;
+        red_plastic.albedo = Vec3(1.0f, 0.0f, 0.0f);
+        red_plastic.roughness = 0.01f;
+        red_plastic.metallic = 0.0f;
 
         Material gold;
-        gold.albedo = glm::vec3(1.0, 0.71, 0.29);
-        gold.roughness = 0.2;
-        gold.metallic = 1.0;
+        gold.albedo = Vec3(1.0f, 0.71f, 0.29f);
+        gold.roughness = 0.2f;
+        gold.metallic = 1.0f;
 
         int black_mat_id = scene->AddMaterial(black);
         int red_mat_id = scene->AddMaterial(red_plastic);
         int gold_mat_id = scene->AddMaterial(gold);
 
-        glm::mat4 xform;
-        glm::mat4 xform1;
-        glm::mat4 xform2;
+        Mat4 xform;
+        Mat4 xform1;
+        Mat4 xform2;
 
-        xform = glm::scale(glm::vec3(0.25f));
-        xform1 = glm::scale(glm::vec3(0.25f)) * glm::translate(glm::vec3(0.6f, 0.0f, 0.0f));
-        xform2 = glm::scale(glm::vec3(0.25f)) * glm::translate(glm::vec3(-0.6f, 0.0f, 0.0f));
+        //xform = glm::scale(Vec3(0.25f));
+        //xform1 = glm::scale(Vec3(0.25f)) * glm::translate(Vec3(0.6f, 0.0f, 0.0f));
+        //xform2 = glm::scale(Vec3(0.25f)) * glm::translate(Vec3(-0.6f, 0.0f, 0.0f));
         
         MeshInstance instance("Ajax", mesh_id, xform, black_mat_id);
         //MeshInstance instance1(mesh_id, xform1, gold_mat_id);

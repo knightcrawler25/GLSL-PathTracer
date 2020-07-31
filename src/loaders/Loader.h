@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <string>
+#include <cstring>
 #include "Scene.h"
 
 namespace GLSLPT

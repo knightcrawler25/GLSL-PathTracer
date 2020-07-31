@@ -84,8 +84,8 @@ namespace GLSLPT
                         tx = ty = 0;
                     }
 
-                    verticesUVX.push_back(glm::vec4(vx, vy, vz, tx));
-                    normalsUVY.push_back(glm::vec4(nx, ny, nz, ty));
+                    verticesUVX.push_back(Vec4(vx, vy, vz, tx));
+                    normalsUVY.push_back(Vec4(nx, ny, nz, ty));
                 }
     
                 index_offset += fv;
@@ -103,9 +103,9 @@ namespace GLSLPT
         #pragma omp parallel for
         for (int i = 0; i < numTris; ++i)
         {
-            const glm::vec3 v1 = glm::vec3(verticesUVX[i * 3 + 0]);
-            const glm::vec3 v2 = glm::vec3(verticesUVX[i * 3 + 1]);
-            const glm::vec3 v3 = glm::vec3(verticesUVX[i * 3 + 2]);
+            const Vec3 v1 = Vec3(verticesUVX[i * 3 + 0]);
+            const Vec3 v2 = Vec3(verticesUVX[i * 3 + 1]);
+            const Vec3 v3 = Vec3(verticesUVX[i * 3 + 2]);
 
             bounds[i].grow(v1);
             bounds[i].grow(v2);

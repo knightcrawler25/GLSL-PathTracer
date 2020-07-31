@@ -30,7 +30,6 @@
 #pragma once
 
 #include <vector>
-#include <glm/glm.hpp>
 #include "split_bvh.h"
 
 namespace GLSLPT
@@ -47,8 +46,8 @@ namespace GLSLPT
         void BuildBVH();
         bool LoadFromFile(const std::string& filename);
         
-        std::vector<glm::vec4> verticesUVX; // Vertex Data + x coord of uv 
-        std::vector<glm::vec4> normalsUVY;  // Normal Data + y coord of uv
+        std::vector<Vec4> verticesUVX; // Vertex Data + x coord of uv 
+        std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
 
         RadeonRays::Bvh *bvh;
         std::string meshName;
@@ -58,7 +57,7 @@ namespace GLSLPT
     {
 
     public:
-        MeshInstance(std::string name, int meshId, glm::mat4 xform, int matId)
+        MeshInstance(std::string name, int meshId, Mat4 xform, int matId)
             : instanceName(name)
             , meshID(meshId)
             , transform(xform) 
@@ -67,7 +66,7 @@ namespace GLSLPT
         }
         ~MeshInstance() {}
 
-        glm::mat4 transform;
+        Mat4 transform;
         std::string instanceName;
 
         int materialID;

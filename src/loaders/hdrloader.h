@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <Vec2.h>
+#include <Vec3.h>
 /***********************************************************************************
     Created:    17:9:2002
     FileName:     hdrloader.h
@@ -14,6 +14,8 @@
     This is a modified version of the original code. Addeed code to build marginal & conditional densities for IBL importance sampling
 */
 
+using namespace GLSLPT;
+
 class HDRData {
 public:
     HDRData() : width(0), height(0), cols(nullptr), marginalDistData(nullptr), conditionalDistData(nullptr) {}
@@ -21,8 +23,8 @@ public:
     int width, height;
     // each pixel takes 3 float32, each component can be of any value...
     float *cols;
-    glm::vec2 *marginalDistData;    // y component holds the pdf
-    glm::vec2 *conditionalDistData; // y component holds the pdf
+    Vec2 *marginalDistData;    // y component holds the pdf
+    Vec2 *conditionalDistData; // y component holds the pdf
 };
 
 class HDRLoader {

@@ -65,7 +65,7 @@ namespace RadeonRays
         return &m_nodes[m_nodecnt++];
     }
 
-    void Bvh::BuildNode(SplitRequest const& req, bbox const* bounds, glm::vec3 const* centroids, int* primindices)
+    void Bvh::BuildNode(SplitRequest const& req, bbox const* bounds, Vec3 const* centroids, int* primindices)
     {
         m_height = std::max(m_height, req.level);
 
@@ -242,7 +242,7 @@ namespace RadeonRays
         if (req.ptr) *req.ptr = node;
     }
 
-    Bvh::SahSplit Bvh::FindSahSplit(SplitRequest const& req, bbox const* bounds, glm::vec3 const* centroids, int* primindices) const
+    Bvh::SahSplit Bvh::FindSahSplit(SplitRequest const& req, bbox const* bounds, Vec3 const* centroids, int* primindices) const
     {
         // SAH implementation
         // calc centroids histogram
@@ -259,8 +259,8 @@ namespace RadeonRays
         // put NAN sentinel as split border
         // PerformObjectSplit simply splits in half
         // in this case
-        glm::vec3 centroid_extents = req.centroid_bounds.extents();
-        if (glm::dot(centroid_extents, centroid_extents) == 0.f)
+        Vec3 centroid_extents = req.centroid_bounds.extents();
+        if (Vec3::Dot(centroid_extents, centroid_extents) == 0.f)
         {
             return split;
         }
@@ -281,7 +281,7 @@ namespace RadeonRays
         // Precompute inverse parent area
         float invarea = 1.f / req.bounds.surface_area();
         // Precompute min point
-        glm::vec3 rootmin = req.centroid_bounds.pmin;
+        Vec3 rootmin = req.centroid_bounds.pmin;
 
         // Evaluate all dimensions
         for (int axis = 0; axis < 3; ++axis)
@@ -362,7 +362,7 @@ namespace RadeonRays
         InitNodeAllocator(2 * numbounds - 1);
 
         // Cache some stuff to have faster partitioning
-        std::vector<glm::vec3> centroids(numbounds);
+        std::vector<Vec3> centroids(numbounds);
         m_indices.resize(numbounds);
         std::iota(m_indices.begin(), m_indices.end(), 0);
 
@@ -370,7 +370,7 @@ namespace RadeonRays
         bbox centroid_bounds;
         for (size_t i = 0; i < static_cast<size_t>(numbounds); ++i)
         {
-            glm::vec3 c = bounds[i].center();
+            Vec3 c = bounds[i].center();
             centroid_bounds.grow(c);
             centroids[i] = c;
         }

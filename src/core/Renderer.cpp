@@ -158,7 +158,7 @@ namespace GLSLPT
         //Create texture for Materials
         glGenTextures(1, &materialsTex);
         glBindTexture(GL_TEXTURE_2D, materialsTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(glm::vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(Vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -166,7 +166,7 @@ namespace GLSLPT
         //Create texture for Transforms
         glGenTextures(1, &transformsTex);
         glBindTexture(GL_TEXTURE_2D, transformsTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(glm::mat4) / sizeof(glm::vec4)) * scene->transforms.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Mat4) / sizeof(Vec4)) * scene->transforms.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -177,7 +177,7 @@ namespace GLSLPT
             //Create texture for lights
             glGenTextures(1, &lightsTex);
             glBindTexture(GL_TEXTURE_2D, lightsTex);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, (sizeof(Light) / sizeof(glm::vec3)) * scene->lights.size(), 1, 0, GL_RGB, GL_FLOAT, &scene->lights[0]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, (sizeof(Light) / sizeof(Vec3)) * scene->lights.size(), 1, 0, GL_RGB, GL_FLOAT, &scene->lights[0]);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glBindTexture(GL_TEXTURE_2D, 0);
@@ -227,10 +227,10 @@ namespace GLSLPT
         if (scene->instancesModified)
         {
             glBindTexture(GL_TEXTURE_2D, transformsTex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (sizeof(glm::mat4) / sizeof(glm::vec4)) * scene->transforms.size(), 1, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, (sizeof(Mat4) / sizeof(Vec4)) * scene->transforms.size(), 1, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
 
             glBindTexture(GL_TEXTURE_2D, materialsTex);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(glm::vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(Vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
 
             int yPos = scene->bvhTranslator.topLevelIndexPackedXY & 0x00000FFF;
             int index = yPos * scene->bvhTranslator.nodeTexWidth;

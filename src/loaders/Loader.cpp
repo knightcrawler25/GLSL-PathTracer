@@ -34,8 +34,6 @@ freely, subject to the following restrictions:
 
 namespace GLSLPT
 {
-    static const float _PI = 3.14159265358979323846f;
-
     static const int kMaxLineLength = 2048;
     int(*Log)(const char* szFormat, ...) = printf;
 
@@ -137,7 +135,7 @@ namespace GLSLPT
             if (strstr(line, "light"))
             {
                 Light light;
-                glm::vec3 v1, v2;
+                Vec3 v1, v2;
                 char light_type[20] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
@@ -160,12 +158,12 @@ namespace GLSLPT
                     light.type = LightType::QuadLight;
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
-                    light.area = glm::length(glm::cross(light.u, light.v));
+                    light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
                 }
                 else if (strcmp(light_type, "Sphere") == 0)
                 {
                     light.type = LightType::SphereLight;
-                    light.area = 4.0f * _PI * light.radius * light.radius;
+                    light.area = 4.0f * PI * light.radius * light.radius;
                 }
 
                 scene->AddLight(light);
@@ -176,8 +174,8 @@ namespace GLSLPT
 
             if (strstr(line, "Camera"))
             {
-                glm::vec3 position;
-                glm::vec3 lookAt;
+                Vec3 position;
+                Vec3 lookAt;
                 float fov;
                 float aperture = 0, focalDist = 1;
 
@@ -236,9 +234,9 @@ namespace GLSLPT
             if (strstr(line, "mesh"))
             {
                 std::string filename;
-                glm::vec3 pos;
-                glm::vec3 scale;
-                glm::mat4 xform;
+                Vec3 pos;
+                Vec3 scale;
+                Mat4 xform;
                 int material_id = 0; // Default Material ID
                 char meshName[200] = "None";
 
@@ -302,7 +300,7 @@ namespace GLSLPT
         fclose(file);
 
         if (!cameraAdded)
-            scene->AddCamera(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -10.0f), 35.0f);
+            scene->AddCamera(Vec3(0.0f, 0.0f, 10.0f), Vec3(0.0f, 0.0f, -10.0f), 35.0f);
 
         scene->CreateAccelerationStructures();
 
