@@ -104,8 +104,8 @@ namespace GLSLPT
                     sscanf(line, " ior %f", &material.ior);
                     //sscanf(line, " transmittance %f", &material.transmittance);
 
-                    sscanf(line, " albedoTexture %s", &albedoTexName);
-                    sscanf(line, " metallicRoughnessTexture %s", &metallicRoughnessTexName);
+                    sscanf(line, " albedoTexture %s", albedoTexName);
+                    sscanf(line, " metallicRoughnessTexture %s", metallicRoughnessTexName);
                     sscanf(line, " normalTexture %s", normalTexName);
                 }
 
@@ -212,7 +212,7 @@ namespace GLSLPT
                     if (strchr(line, '}'))
                         break;
 
-                    sscanf(line, " envMap %s", &envMap);
+                    sscanf(line, " envMap %s", envMap);
                     sscanf(line, " resolution %d %d", &renderOptions.resolution.x, &renderOptions.resolution.y);
                     sscanf(line, " hdrMultiplier %f", &renderOptions.hdrMultiplier);
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
