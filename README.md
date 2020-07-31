@@ -24,7 +24,7 @@ Features
 
 Build Instructions
 --------
-Please see INSTALL-WIN.txt for the build instructions
+Please see INSTALL-WIN.txt for the build instructions for Windows and INSTALL-LINUX.txt for Linux
 
 Sample Scenes
 --------
