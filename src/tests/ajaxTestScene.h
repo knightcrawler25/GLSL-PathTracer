@@ -60,26 +60,26 @@ namespace GLSLPT
         gold.metallic = 1.0f;
 
         int black_mat_id = scene->AddMaterial(black);
-        int red_mat_id = scene->AddMaterial(red_plastic);
-        int gold_mat_id = scene->AddMaterial(gold);
+        int red_mat_id   = scene->AddMaterial(red_plastic);
+        int gold_mat_id  = scene->AddMaterial(gold);
 
         Mat4 xform;
         Mat4 xform1;
         Mat4 xform2;
 
-        //xform = glm::scale(Vec3(0.25f));
-        //xform1 = glm::scale(Vec3(0.25f)) * glm::translate(Vec3(0.6f, 0.0f, 0.0f));
-        //xform2 = glm::scale(Vec3(0.25f)) * glm::translate(Vec3(-0.6f, 0.0f, 0.0f));
+        xform  = Mat4::Scale(Vec3(0.25f, 0.25f, 0.25f));
+        xform1 = Mat4::Scale(Vec3(0.25f, 0.25f, 0.25f)) * Mat4::Translate(Vec3(0.2f, 0.0f, 0.0f));
+        xform2 = Mat4::Scale(Vec3(0.25f, 0.25f, 0.25f)) * Mat4::Translate(Vec3(-0.2f, 0.0f, 0.0f));
         
-        MeshInstance instance("Ajax", mesh_id, xform, black_mat_id);
-        //MeshInstance instance1(mesh_id, xform1, gold_mat_id);
-        //MeshInstance instance2(mesh_id, xform2, red_mat_id);
+        MeshInstance instance("Ajax Black", mesh_id, xform,  black_mat_id);
+        MeshInstance instance1("Ajax Gold", mesh_id, xform1, gold_mat_id);
+        MeshInstance instance2("Ajax Red",  mesh_id, xform2, red_mat_id);
 
         scene->AddMeshInstance(instance);
-        //scene->addMeshInstance(instance1);
-        //scene->addMeshInstance(instance2);
+        scene->AddMeshInstance(instance1);
+        scene->AddMeshInstance(instance2);
 
-        scene->AddHDR("./assets/HDR/vankleef.hdr");
+        scene->AddHDR("./assets/HDR/sunset.hdr");
 
         scene->CreateAccelerationStructures();
 

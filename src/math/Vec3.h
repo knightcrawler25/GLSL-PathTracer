@@ -44,10 +44,10 @@ namespace GLSLPT
         Vec3 operator*(const Vec3& b) const;
         Vec3 operator+(const Vec3& b) const;
         Vec3 operator-(const Vec3& b) const;
+        Vec3 operator*(float b) const;
+
         float operator[](int i) const;
         float& operator[](int i);
-
-        Vec3 operator*(float b);
 
         static Vec3 Min(const Vec3& a, const Vec3& b);
         static Vec3 Max(const Vec3& a, const Vec3& b);
@@ -95,7 +95,7 @@ namespace GLSLPT
         return Vec3(x - b.x, y - b.y, z - b.z);
     };
 
-    inline Vec3 Vec3::operator*(float b)
+    inline Vec3 Vec3::operator*(float b) const
     {
         return Vec3(x * b, y * b, z * b);
     };

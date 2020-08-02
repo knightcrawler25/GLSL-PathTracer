@@ -60,7 +60,7 @@ namespace GLSLPT
         int headAlbedo = scene->AddTexture("./assets/Figurine/textures/01_Head_Base_Color.png");
         int bodyAlbedo = scene->AddTexture("./assets/Figurine/textures/02_Body_Base_Color.png");
         int baseAlbedo = scene->AddTexture("./assets/Figurine/textures/03_Base_Base_Color.png");
-        int bgAlbedo = scene->AddTexture("./assets/Figurine/textures/grid.jpg");
+        int bgAlbedo   = scene->AddTexture("./assets/Figurine/textures/grid.jpg");
 
         int headMatRgh = scene->AddTexture("./assets/Figurine/textures/01_Head_MetallicRoughness.png");
         int bodyMatRgh = scene->AddTexture("./assets/Figurine/textures/02_Body_MetallicRoughness.png");
@@ -85,12 +85,12 @@ namespace GLSLPT
         red_plastic.roughness = 0.01f;
         red_plastic.metallic = 0.0f;
 
-        int head_mat_id = scene->AddMaterial(head);
-        int body_mat_id = scene->AddMaterial(body);
-        int base_mat_id = scene->AddMaterial(base);
+        int head_mat_id  = scene->AddMaterial(head);
+        int body_mat_id  = scene->AddMaterial(body);
+        int base_mat_id  = scene->AddMaterial(base);
         int white_mat_id = scene->AddMaterial(white);
-        int gold_mat_id = scene->AddMaterial(gold);
-        int red_mat_id = scene->AddMaterial(red_plastic);
+        int gold_mat_id  = scene->AddMaterial(gold);
+        int red_mat_id   = scene->AddMaterial(red_plastic);
 
         Light light;
         light.type = LightType::QuadLight;
@@ -111,9 +111,9 @@ namespace GLSLPT
         int light1_id = scene->AddLight(light);
         int light2_id = scene->AddLight(light2);
 
-        Mat4 xform_base;// = glm::translate(Vec3(0, 0.0075, 0));
-        Mat4 xform_body;// = glm::translate(Vec3(0, 0.049, 0));
-        Mat4 xform_head;// = glm::translate(Vec3(0.017, 0.107, 0));
+        Mat4 xform_base = Mat4::Translate(Vec3(0, 0.0075, 0));
+        Mat4 xform_body = Mat4::Translate(Vec3(0, 0.049, 0));
+        Mat4 xform_head = Mat4::Translate(Vec3(0.017, 0.107, 0));
 
         Mat4 xform1;
         Mat4 xform2;
@@ -121,15 +121,15 @@ namespace GLSLPT
         Mat4 xform4;
         Mat4 xform5;
 
-        /*xform2 = glm::translate(Vec3(0, 0, -0.05));
-        xform3 = glm::translate(Vec3(0, 0,  0.05));
-        xform4 = glm::translate(Vec3(-0.1, 0.0, -0.15));
-        //xform4 *= glm::rotate(90.0f, Vec3(0.0, 0, 1));
-        xform5 = glm::translate(Vec3(-0.1, 0, 0.15));*/
+        xform2 = Mat4::Translate(Vec3(0, 0, -0.05));
+        xform3 = Mat4::Translate(Vec3(0, 0,  0.05));
+        xform4 = Mat4::Translate(Vec3(-0.1, 0.0, -0.15));
+        //xform4 Mat4::Rotate(90.0f, Vec3(0.0, 0, 1));
+        xform5 = Mat4::Translate(Vec3(-0.1, 0, 0.15));
 
         MeshInstance instance1("background.obj",  mesh_id4, xform1, white_mat_id);
 
-        /*MeshInstance instance2("head1.obj", mesh_id1, xform_head * xform2, head_mat_id);
+        MeshInstance instance2("head1.obj", mesh_id1, xform_head * xform2, head_mat_id);
         MeshInstance instance3("body1.obj", mesh_id2, xform_body * xform2, body_mat_id);
         MeshInstance instance4("base1.obj", mesh_id3, xform_base * xform2, base_mat_id);
         
@@ -143,9 +143,9 @@ namespace GLSLPT
 
         MeshInstance instance11("head4.obj", mesh_id1, xform_head * xform5, head_mat_id);
         MeshInstance instance12("body4.obj", mesh_id2, xform_body * xform5, body_mat_id);
-        MeshInstance instance13("base4.obj", mesh_id3, xform_base * xform5, base_mat_id);*/
+        MeshInstance instance13("base4.obj", mesh_id3, xform_base * xform5, base_mat_id);
 
-        /*scene->AddMeshInstance(instance1);
+        scene->AddMeshInstance(instance1);
         scene->AddMeshInstance(instance2);
         scene->AddMeshInstance(instance3);
         scene->AddMeshInstance(instance4);
@@ -157,7 +157,7 @@ namespace GLSLPT
         scene->AddMeshInstance(instance10);
         scene->AddMeshInstance(instance11);
         scene->AddMeshInstance(instance12);
-        scene->AddMeshInstance(instance13);*/
+        scene->AddMeshInstance(instance13);
 
         scene->CreateAccelerationStructures();
 

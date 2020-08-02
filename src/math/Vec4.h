@@ -37,6 +37,8 @@ namespace GLSLPT
         Vec4();
         Vec4(float x, float y, float z, float w);
 
+        float operator[](int i) const;
+
         float x, y, z, w;
     };
 
@@ -51,5 +53,17 @@ namespace GLSLPT
         this->y = y;
         this->z = z;
         this->w = w;
+    };
+
+    inline float Vec4::operator[](int i) const
+    {
+        if (i == 0)
+            return x;
+        else if (i == 1)
+            return y;
+        else if (i == 2)
+            return z;
+        else
+            return w;
     };
 }

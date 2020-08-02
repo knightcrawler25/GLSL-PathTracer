@@ -4,14 +4,14 @@ Renderer
 	maxDepth 2
 	tileWidth 200
 	tileHeight 200
-	#envMap ./assets/HDR/sunset.hdr
+	envMap ./assets/HDR/sunset.hdr
 	hdrMultiplier 2.0
 }
 
 Camera
 {
-	position 27.6 27.5 -75
-	lookAt 27.6 27.5 10
+	position .276 .275 -.75
+	lookAt .276 .275 .10
 	fov 40
 }
 
@@ -34,56 +34,63 @@ mesh
 {
 	file ./assets/cornell_box/cbox_ceiling.obj
 	material white
-	position 27.8 54.88 27.955
+	position .278 .5488 .27955
+	scale 0.01 0.01 0.01
 }
 
 mesh
 {
 	file ./assets/cornell_box/cbox_floor.obj
 	material white
-	position 27.56 0 27.96
+	position .2756 0 .2796
+	scale 0.01 0.01 0.01
 }
 
 mesh
 {
 	file ./assets/cornell_box/cbox_back.obj
 	material white
-	position 27.64 27.44 55.92
+	position .2764 .2744 .5592
+	scale 0.01 0.01 0.01
 }
 
 mesh
 {
 	file ./assets/cornell_box/cbox_smallbox.obj
 	material white
-	position 18.55 8.25 16.9
+	position .1855 .0825 .169
+	scale 0.01 0.01 0.01
 }
 
 mesh
 {
 	file ./assets/cornell_box/cbox_largebox.obj
 	material white
-	position 36.85 16.5 35.125
+	position .3685 .165 .35125
+	scale 0.01 0.01 0.01
 }
 
 mesh
 {
 	file ./assets/cornell_box/cbox_greenwall.obj
 	material green
-	position 0 27.44 27.96
+	position 0 .2744 .2796
+	scale 0.01 0.01 0.01
 }
 
 mesh
 {
 	file ./assets/cornell_box/cbox_redwall.obj
 	material red
-	position 55.36 27.44 27.96
+	position .5536 .2744 .2796
+	scale 0.01 0.01 0.01
 }
 
 light
 {
 	type Quad
-	position  34.299999 54.779997 22.700010
-	v1 34.299999 54.779997 33.200008
-	v2 21.300001 54.779997 22.700010
+	position  .34299999 .54779997 .22700010
+	v1 .34299999 .54779997 .33200008
+	v2 .21300001 .54779997 .22700010
 	emission 17 12 4
 }

@@ -98,6 +98,7 @@ void LoadScene(std::string sceneName)
     delete scene;
     scene = new Scene();
     LoadSceneFromFile(sceneName, scene, renderOptions);
+    //loadCornellTestScene(scene, renderOptions);
     selectedInstance = 0;
     scene->renderOptions = renderOptions;
 }
