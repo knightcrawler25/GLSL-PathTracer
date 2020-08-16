@@ -56,7 +56,7 @@ float map(float value, float low1, float high1, float low2, float high2)
 
 void main(void)
 {
-    seed = gl_FragCoord.xy;
+    seed = gl_FragCoord.xy/screenResolution.xy;
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();
