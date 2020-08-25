@@ -60,6 +60,7 @@ namespace GLSLPT
         std::vector<std::string> albedoTex;
         std::vector<std::string> metallicRoughnessTex;
         std::vector<std::string> normalTex;
+        std::string path = filename.substr(0, filename.find_last_of("/\\")) + "/";
 
         int materialCount = 0;
         char line[kMaxLineLength];
@@ -111,15 +112,15 @@ namespace GLSLPT
 
                 // Albedo Texture
                 if (strcmp(albedoTexName, "None") != 0)
-                    material.albedoTexID = scene->AddTexture(albedoTexName);
+                    material.albedoTexID = scene->AddTexture(path + albedoTexName);
              
                 // MetallicRoughness Texture
                 if (strcmp(metallicRoughnessTexName, "None") != 0)
-                    material.metallicRoughnessTexID = scene->AddTexture(metallicRoughnessTexName);
+                    material.metallicRoughnessTexID = scene->AddTexture(path + metallicRoughnessTexName);
     
                 // Normal Map Texture
                 if (strcmp(normalTexName, "None") != 0)
-                    material.normalmapTexID = scene->AddTexture(normalTexName);
+                    material.normalmapTexID = scene->AddTexture(path + normalTexName);
 
                 // add material to map
                 if (materialMap.find(name) == materialMap.end()) // New material
@@ -222,7 +223,7 @@ namespace GLSLPT
 
                 if (strcmp(envMap, "None") != 0)
                 {
-                    scene->AddHDR(envMap);
+                    scene->AddHDR(path + envMap);
                     renderOptions.useEnvMap = true;
                 }
             }
@@ -253,8 +254,7 @@ namespace GLSLPT
 
                     if (sscanf(line, " file %s", file) == 1)
                     {
-                        //meshPath = std::string("./assets/") + path;
-                        filename = file;
+                        filename = path + file;
                     }
 
                     if (sscanf(line, " material %s", matName) == 1)

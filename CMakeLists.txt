@@ -125,12 +125,13 @@ set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOL
 set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
 endif()
 
-add_custom_command(TARGET ${EXE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
-)
-add_custom_command(TARGET ${EXE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/src/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
-)
+#add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
+#)
+#add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/src/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
+#)
+
 if(WIN32)
 add_custom_command(TARGET ${EXE_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${SDL2_LIBDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}

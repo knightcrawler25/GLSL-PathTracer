@@ -81,14 +81,14 @@ material marb2
 mesh
 {
 	name Glass Ball
-	file ./assets/hyperion/glass.obj
+	file hyperion/glass.obj
 	material glass
 	position -0.57 1.87 6.55
 }
 
 #mesh
 {
-	file ./assets/dragon/dragon.obj
+	file dragon/dragon.obj
 	material black
 	position 2.791 0.839 -0.59
 	scale 0.1 0.1 0.1
@@ -97,7 +97,7 @@ mesh
 mesh
 {
 	name Chrome Ball
-	file ./assets/hyperion/chrome.obj
+	file hyperion/chrome.obj
 	material silver
 	position 0.4 1.86 -6.59
 }
@@ -105,7 +105,7 @@ mesh
 mesh
 {
 	name Platform
-	file ./assets/hyperion/plate.obj
+	file hyperion/plate.obj
 	material red
 	position 0 0.36 0
 }
@@ -113,14 +113,14 @@ mesh
 mesh
 {
 	name Floor
-	file ./assets/hyperion/floor.obj
+	file hyperion/floor.obj
 	material red
 }
 
 mesh
 {
 	name Orange Ball
-	file ./assets/hyperion/orange.obj
+	file hyperion/orange.obj
 	material orange
 	position 1.646 1.6861 3.5662
 }
@@ -128,7 +128,7 @@ mesh
 mesh
 {
 	name Ring 1
-	file ./assets/hyperion/ring1.obj
+	file hyperion/ring1.obj
 	material ring_silver
 	position -0.308737 0.805763 -1.42968
 }
@@ -136,7 +136,7 @@ mesh
 mesh
 {
 	name Ring 2
-	file ./assets/hyperion/ring2.obj
+	file hyperion/ring2.obj
 	material ring_silver
 	position -0.6706 0.808472 0.626798
 }
@@ -144,7 +144,7 @@ mesh
 mesh
 {
 	name Ring 3
-	file ./assets/hyperion/ring3.obj
+	file hyperion/ring3.obj
 	material ring_silver
 	position -1.44541 0.808472 1.72607 
 }
@@ -152,7 +152,7 @@ mesh
 mesh
 {
 	name Marble 1
-	file ./assets/hyperion/marb1.obj
+	file hyperion/marb1.obj
 	material marb1
 	position -3.78 0.88 -0.84
 }
@@ -160,7 +160,7 @@ mesh
 mesh
 {
 	name Marble 2
-	file ./assets/hyperion/marb2.obj
+	file hyperion/marb2.obj
 	material marb2
 	position -3.746 0.969453 0.974294 
 }
@@ -168,7 +168,7 @@ mesh
 mesh
 {
 	name Ping Pong
-	file ./assets/hyperion/pingpong.obj
+	file hyperion/pingpong.obj
 	material ping
 	position -3.14 1.51 -4.12
 }

@@ -65,6 +65,9 @@ int selectedInstance   = 0;
 double lastTime        = SDL_GetTicks(); 
 bool done = false;
 
+std::string shadersDir = "../src/shaders/";
+std::string assetsDir = "../assets/";
+
 RenderOptions renderOptions;
 
 struct LoopData
@@ -77,7 +80,7 @@ void GetSceneFiles()
 {
     tinydir_dir dir;
     int i;
-    tinydir_open_sorted(&dir, "./assets");
+    tinydir_open_sorted(&dir, assetsDir.c_str());
 
     for (i = 0; i < dir.n_files; i++)
     {
@@ -86,7 +89,7 @@ void GetSceneFiles()
 
         if (std::string(file.extension) == "scene")
         {
-            sceneFiles.push_back("./assets/" + std::string(file.name));
+            sceneFiles.push_back(assetsDir + std::string(file.name));
         }
     }
 
@@ -106,7 +109,7 @@ void LoadScene(std::string sceneName)
 bool InitRenderer()
 {
     delete renderer;
-    renderer = new TiledRenderer(scene, "./shaders/");
+    renderer = new TiledRenderer(scene, shadersDir);
     renderer->Init();
     return true;
 }

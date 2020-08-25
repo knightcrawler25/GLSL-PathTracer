@@ -4,7 +4,7 @@ Renderer
 	maxDepth 2
 	tileWidth 320
 	tileHeight 180
-	envMap ./assets/HDR/sunset.hdr
+	envMap HDR/sunset.hdr
 	hdrMultiplier 5.0
 }
 Camera
@@ -16,7 +16,7 @@ Camera
 
 material checker
 {
-	albedoTexture ./assets/teapot/checker.png
+	albedoTexture teapot/checker.png
 	roughness 0.5
 }
 
@@ -29,18 +29,18 @@ material white
 
 mesh
 {
-	file ./assets/teapot/Mesh000.obj
+	file teapot/Mesh000.obj
 	material white
 }
 
 mesh
 {
-	file ./assets/teapot/Mesh001.obj
+	file teapot/Mesh001.obj
 	material white
 }
 
 mesh
 {
-	file ./assets/teapot/Mesh050.obj
+	file teapot/Mesh050.obj
 	material checker
 }

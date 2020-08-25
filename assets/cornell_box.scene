@@ -4,7 +4,7 @@ Renderer
 	maxDepth 2
 	tileWidth 200
 	tileHeight 200
-	envMap ./assets/HDR/sunset.hdr
+	envMap HDR/sunset.hdr
 	hdrMultiplier 2.0
 }
 
@@ -32,7 +32,7 @@ material green
 
 mesh
 {
-	file ./assets/cornell_box/cbox_ceiling.obj
+	file cornell_box/cbox_ceiling.obj
 	material white
 	position .278 .5488 .27955
 	scale 0.01 0.01 0.01
@@ -40,7 +40,7 @@ mesh
 
 mesh
 {
-	file ./assets/cornell_box/cbox_floor.obj
+	file cornell_box/cbox_floor.obj
 	material white
 	position .2756 0 .2796
 	scale 0.01 0.01 0.01
@@ -48,7 +48,7 @@ mesh
 
 mesh
 {
-	file ./assets/cornell_box/cbox_back.obj
+	file cornell_box/cbox_back.obj
 	material white
 	position .2764 .2744 .5592
 	scale 0.01 0.01 0.01
@@ -56,7 +56,7 @@ mesh
 
 mesh
 {
-	file ./assets/cornell_box/cbox_smallbox.obj
+	file cornell_box/cbox_smallbox.obj
 	material white
 	position .1855 .0825 .169
 	scale 0.01 0.01 0.01
@@ -64,7 +64,7 @@ mesh
 
 mesh
 {
-	file ./assets/cornell_box/cbox_largebox.obj
+	file cornell_box/cbox_largebox.obj
 	material white
 	position .3685 .165 .35125
 	scale 0.01 0.01 0.01
@@ -72,7 +72,7 @@ mesh
 
 mesh
 {
-	file ./assets/cornell_box/cbox_greenwall.obj
+	file cornell_box/cbox_greenwall.obj
 	material green
 	position 0 .2744 .2796
 	scale 0.01 0.01 0.01
@@ -80,7 +80,7 @@ mesh
 
 mesh
 {
-	file ./assets/cornell_box/cbox_redwall.obj
+	file cornell_box/cbox_redwall.obj
 	material red
 	position .5536 .2744 .2796
 	scale 0.01 0.01 0.01
