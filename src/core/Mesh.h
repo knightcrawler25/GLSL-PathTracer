@@ -39,7 +39,8 @@ namespace GLSLPT
     public:
         Mesh()
         { 
-            bvh = new RadeonRays::SplitBvh(2.0f, 64, 0, 0.001f, 2.5f); 
+            //bvh = new RadeonRays::SplitBvh(2.0f, 64, 0, 0.001f, 2.5f); 
+            bvh = new RadeonRays::Bvh(2.0f, 64, false);
         }
         ~Mesh() { delete bvh; }
 
@@ -50,7 +51,7 @@ namespace GLSLPT
         std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
 
         RadeonRays::Bvh *bvh;
-        std::string meshName;
+        std::string name;
     };
 
     class MeshInstance
@@ -58,7 +59,7 @@ namespace GLSLPT
 
     public:
         MeshInstance(std::string name, int meshId, Mat4 xform, int matId)
-            : instanceName(name)
+            : name(name)
             , meshID(meshId)
             , transform(xform) 
             , materialID(matId) 
@@ -67,7 +68,7 @@ namespace GLSLPT
         ~MeshInstance() {}
 
         Mat4 transform;
-        std::string instanceName;
+        std::string name;
 
         int materialID;
         int meshID;

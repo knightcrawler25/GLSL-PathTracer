@@ -42,58 +42,45 @@ namespace GLSLPT
 
     int Scene::AddMesh(const std::string& filename)
     {
-        // Check if mesh was already loaded
         int id = -1;
-        std::map<std::string, int>::iterator it = meshMap.find(filename);
+        // Check if mesh was already loaded
+        for (int i = 0; i < meshes.size(); i++)
+            if (meshes[i]->name == filename)
+                return i;
+            
+        id = meshes.size();
 
-        if (it == meshMap.end()) // New Mesh
+        Mesh* mesh = new Mesh;
+
+        if (mesh->LoadFromFile(filename))
         {
-            id = meshes.size();
-
-            Mesh *mesh = new Mesh;
-
-            if (mesh->LoadFromFile(filename))
-            {
-                meshes.push_back(mesh);
-                meshMap[filename] = id;
-                printf("Model %s loaded\n", filename.c_str());
-            }
-            else
-                id = -1;
+            meshes.push_back(mesh);
+            printf("Model %s loaded\n", filename.c_str());
         }
-        else // Existing Mesh
-        {
-            id = meshMap[filename];
-        }
-
+        else
+            id = -1;
         return id;
     }
 
     int Scene::AddTexture(const std::string& filename)
     {
-        // Check if texture was already loaded
-        std::map<std::string, int>::iterator it = textureMap.find(filename);
         int id = -1;
+        // Check if texture was already loaded
+        for (int i = 0; i < textures.size(); i++)
+            if (textures[i]->name == filename)
+                return i;
 
-        if (it == textureMap.end()) // New Texture
+        id = textures.size();
+
+        Texture* texture = new Texture;
+
+        if (texture->LoadTexture(filename))
         {
-            id = textures.size();
-
-            Texture *texture = new Texture;
-
-            if (texture->LoadTexture(filename))
-            {
-                textures.push_back(texture);
-                textureMap[filename] = id;
-                printf("Texture %s loaded\n", filename.c_str());
-            }
-            else
-                id = -1;
+            textures.push_back(texture);
+            printf("Texture %s loaded\n", filename.c_str());
         }
-        else // Existing Mesh
-        {
-            id = meshMap[filename];
-        }
+        else
+            id = -1;
 
         return id;
     }
@@ -180,7 +167,7 @@ namespace GLSLPT
         #pragma omp parallel for
         for (int i = 0; i < meshes.size(); i++)
         {
-            printf("Building BVH for %s\n", meshes[i]->meshName.c_str());
+            printf("Building BVH for %s\n", meshes[i]->name.c_str());
             meshes[i]->BuildBVH();
         }
     }

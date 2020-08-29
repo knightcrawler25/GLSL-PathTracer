@@ -313,7 +313,7 @@ void MainLoop(void* arg)
             std::vector<std::string> listboxItems;
             for (int i = 0; i < scene->meshInstances.size(); i++)
             {
-                listboxItems.push_back(scene->meshInstances[i].instanceName);
+                listboxItems.push_back(scene->meshInstances[i].name);
             }
 
             // Object Selection

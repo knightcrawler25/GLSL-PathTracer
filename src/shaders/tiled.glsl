@@ -28,6 +28,7 @@
  */
 
 #version 300 es
+#define TILED
 
 precision highp float;
 precision highp int;
@@ -56,25 +57,29 @@ float map(float value, float low1, float high1, float low2, float high2)
 
 void main(void)
 {
-    seed = gl_FragCoord.xy/screenResolution.xy;
-
-    float r1 = 2.0 * rand();
-    float r2 = 2.0 * rand();
-
-    vec2 coords = TexCoords;
+    vec2 coordsTile = TexCoords;
+    vec2 coordsFS;
 
     float xoffset = -1.0 + 2.0 * invNumTilesX * float(tileX);
     float yoffset = -1.0 + 2.0 * invNumTilesY * float(tileY);
 
-    coords.x = map(coords.x, 0.0, 1.0, xoffset, xoffset + 2.0 * invNumTilesX);
-    coords.y = map(coords.y, 0.0, 1.0, yoffset, yoffset + 2.0 * invNumTilesY);
+    coordsTile.x = map(coordsTile.x, 0.0, 1.0, xoffset, xoffset + 2.0 * invNumTilesX);
+    coordsTile.y = map(coordsTile.y, 0.0, 1.0, yoffset, yoffset + 2.0 * invNumTilesY);
+
+    coordsFS.x = map(TexCoords.x, 0.0, 1.0, invNumTilesX * float(tileX), invNumTilesX * float(tileX) + invNumTilesX);
+    coordsFS.y = map(TexCoords.y, 0.0, 1.0, invNumTilesY * float(tileY), invNumTilesY * float(tileY) + invNumTilesY);
+
+    seed = coordsFS;
+
+    float r1 = 2.0 * rand();
+    float r2 = 2.0 * rand();
 
     vec2 jitter;
     jitter.x = r1 < 1.0 ? sqrt(r1) - 1.0 : 1.0 - sqrt(2.0 - r1);
     jitter.y = r2 < 1.0 ? sqrt(r2) - 1.0 : 1.0 - sqrt(2.0 - r2);
 
     jitter /= (screenResolution * 0.5);
-    vec2 d = coords + jitter;
+    vec2 d = coordsTile + jitter;
 
     float scale = tan(camera.fov * 0.5);
     d.y *= screenResolution.y / screenResolution.x * scale;
@@ -89,10 +94,7 @@ void main(void)
 
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
-    coords.x = map(TexCoords.x, 0.0, 1.0, invNumTilesX * float(tileX), invNumTilesX * float(tileX) + invNumTilesX);
-    coords.y = map(TexCoords.y, 0.0, 1.0, invNumTilesY * float(tileY), invNumTilesY * float(tileY) + invNumTilesY);
-
-    vec3 accumColor = texture(accumTexture, coords).xyz;
+    vec3 accumColor = texture(accumTexture, coordsFS).xyz;
 
     if (isCameraMoving)
         accumColor = vec3(0.);

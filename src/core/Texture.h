@@ -45,5 +45,6 @@ namespace GLSLPT
         int width;
         int height;
         unsigned char* texData;
+        std::string name;
     };
 }

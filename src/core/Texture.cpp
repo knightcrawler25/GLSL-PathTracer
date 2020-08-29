@@ -37,6 +37,8 @@ namespace GLSLPT
 {
     bool Texture::LoadTexture(const std::string &filename)
     {
+        name = filename;
+
         texData = stbi_load(filename.c_str(), &width, &height, NULL, 3);
 
         if (texData != nullptr)

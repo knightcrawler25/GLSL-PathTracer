@@ -66,6 +66,7 @@ namespace GLSLPT
         int maxDepth;
         int currentBuffer;
         int sampleCounter;
+        float pixelRatio;
 
     public:
         TiledRenderer(Scene *scene, const std::string& shadersDirectory);

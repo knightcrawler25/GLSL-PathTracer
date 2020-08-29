@@ -73,11 +73,12 @@ namespace GLSLPT
 
         Renderer::Init();
 
-        sampleCounter = 1;
+        sampleCounter = 0;
         currentBuffer = 0;
 
         numTilesX = ceil((float)screenSize.x / tileWidth);
         numTilesY = ceil((float)screenSize.y / tileHeight);
+        pixelRatio = 0.25f;
 
         tileX = -1;
         tileY = numTilesY - 1;
@@ -118,7 +119,7 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &pathTraceTextureLowRes);
         glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x / 4, screenSize.y / 4, 0, GL_RGBA, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x * pixelRatio, screenSize.y * pixelRatio, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -285,7 +286,7 @@ namespace GLSLPT
             if (scene->instancesModified)
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-                glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
+                glViewport(0, 0, screenSize.x * pixelRatio, screenSize.y * pixelRatio);
                 quad->Draw(pathTraceShaderLowRes);
                 scene->instancesModified = false;
             }
@@ -318,7 +319,7 @@ namespace GLSLPT
         else
         {
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-            glViewport(0, 0, screenSize.x / 4, screenSize.y / 4);
+            glViewport(0, 0, screenSize.x * pixelRatio, screenSize.y * pixelRatio);
             quad->Draw(pathTraceShaderLowRes);
         }
     }
@@ -363,7 +364,7 @@ namespace GLSLPT
             r1 = r2 = r3 = 0;
             tileX = -1;
             tileY = numTilesY - 1;
-            sampleCounter = 1;
+            sampleCounter = 0;
 
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
             glViewport(0, 0, screenSize.x, screenSize.y);
@@ -420,7 +421,7 @@ namespace GLSLPT
         glUniform3f(glGetUniformLocation(shaderObject, "randomVector"), r1, r2, r3);
         glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
-        glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->camera->isMoving || scene->instancesModified ? 2 : scene->renderOptions.maxDepth);
+        glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
         glUniform1i(glGetUniformLocation(shaderObject, "tileX"), tileX);
         glUniform1i(glGetUniformLocation(shaderObject, "tileY"), tileY);
         pathTraceShader->StopUsing();
@@ -441,7 +442,7 @@ namespace GLSLPT
 
         outputShader->Use();
         shaderObject = outputShader->getObject();
-        glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), scene->camera->isMoving ? 1.0f : 1.0f / sampleCounter);
+        glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), scene->camera->isMoving || sampleCounter <= 0? 1.0f : 1.0f / sampleCounter);
         outputShader->StopUsing();
     }
 }

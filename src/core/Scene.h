@@ -116,7 +116,7 @@ namespace GLSLPT
         Camera *camera;
 
         //Bvh
-        RadeonRays::BvhTranslator bvhTranslator; // For flattening the bvh
+        RadeonRays::BvhTranslator bvhTranslator; // Produces a flat bvh array for GPU consumption
         RadeonRays::bbox sceneBounds;
 
         //Texture Data
@@ -126,8 +126,6 @@ namespace GLSLPT
         int texHeight; // TODO: allow textures of different sizes
 
     private:
-        std::map<std::string, int> meshMap;
-        std::map<std::string, int> textureMap;
         RadeonRays::Bvh *sceneBvh;
         void createBLAS();
         void createTLAS();
