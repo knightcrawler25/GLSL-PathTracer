@@ -272,6 +272,7 @@ void MainLoop(void* arg)
         if (ImGui::Combo("Scene", &sampleSceneIndex, scenes.data(), scenes.size()))
         {
             LoadScene(sceneFiles[sampleSceneIndex]);
+            SDL_RestoreWindow(loopdata.mWindow);
             SDL_SetWindowSize(loopdata.mWindow, renderOptions.resolution.x, renderOptions.resolution.y);
             InitRenderer();
         }
