@@ -235,7 +235,7 @@ void MainLoop(void* arg)
         }
         if (event.type == SDL_WINDOWEVENT)
         {
-            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
             {
                 scene->renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
                 InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
