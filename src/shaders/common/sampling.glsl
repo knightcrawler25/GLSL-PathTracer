@@ -37,6 +37,17 @@ float SchlickFresnel(float u)
 }
 
 //-----------------------------------------------------------------------
+float GTR1(float NDotH, float a)
+//-----------------------------------------------------------------------
+{
+    if (a >= 1.0) 
+        return (1.0 / PI);
+    float a2 = a * a;
+    float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
+    return (a2 - 1.0) / (PI * log(a2) * t);
+}
+
+//-----------------------------------------------------------------------
 float GTR2(float NDotH, float a)
 //-----------------------------------------------------------------------
 {
@@ -46,12 +57,32 @@ float GTR2(float NDotH, float a)
 }
 
 //-----------------------------------------------------------------------
+float GTR2_aniso(float NdotH, float HdotX, float HdotY, float ax, float ay)
+//-----------------------------------------------------------------------
+{
+    float a = HdotX / ax;
+    float b = HdotY / ay;
+    float c = a * a + b * b + NdotH * NdotH;
+    return 1.0 / (PI * ax * ay * c * c);
+}
+
+//-----------------------------------------------------------------------
 float SmithG_GGX(float NDotv, float alphaG)
 //-----------------------------------------------------------------------
 {
     float a = alphaG * alphaG;
     float b = NDotv * NDotv;
     return 1.0 / (NDotv + sqrt(a + b - a * b));
+}
+
+//-----------------------------------------------------------------------
+float SmithG_GGX_aniso(float NdotV, float VdotX, float VdotY, float ax, float ay)
+//-----------------------------------------------------------------------
+{
+    float a = VdotX * ax;
+    float b = VdotY * ay;
+    float c = NdotV;
+    return 1.0 / (NdotV + sqrt(a*a + b*b + c*c));
 }
 
 //-----------------------------------------------------------------------

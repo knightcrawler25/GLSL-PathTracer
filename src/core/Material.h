@@ -34,48 +34,52 @@
 
 namespace GLSLPT
 {
-    enum MaterialType
-    {
-        MICROFACET,
-        SMOOTH_GLASS
-    };
-
     class Material
     {
     public:
         Material()
         {
             albedo   = Vec3(1.0f, 1.0f, 1.0f);
-            emission = Vec3(0.0f, 0.0f, 0.0f);
+            specular = 0.5f;
 
-            materialType = MICROFACET;
-            unused       = 0;
+            emission    = Vec3(0.0f, 0.0f, 0.0f);
+            anisotropic = 0.0f;
 
-            metallic    = 0.0f;
-            roughness   = 0.5f;
-            ior         = 1.45f;
-            unused2     = 0.0f;
+            metallic     = 0.0f;
+            roughness    = 0.5f;
+            subsurface   = 0.0f;
+            specularTint = 0.0f;
+            
+            sheen          = 0.0f;
+            sheenTint      = 0.0f;
+            clearcoat      = 0.0f;
+            clearcoatGloss = 0.0f;
 
             albedoTexID             = -1.0f;
             metallicRoughnessTexID  = -1.0f;
             normalmapTexID          = -1.0f;
-            unused3                 =  0.0f;
+            ior                     = 1.45f;
         };
 
         Vec3 albedo;
-        float materialType;
-        Vec3 emission;
+        float specular;
 
-        float unused;
+        Vec3 emission;
+        float anisotropic;
 
         float metallic;
         float roughness;
-        float ior;
-        float unused2;
+        float subsurface;
+        float specularTint;
+        
+        float sheen;
+        float sheenTint;
+        float clearcoat;
+        float clearcoatGloss;
 
         float albedoTexID;
         float metallicRoughnessTexID;
         float normalmapTexID;
-        float unused3;
+        float ior;
     };
 }

@@ -56,20 +56,45 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     int index = state.matID;
     Material mat;
 
-    mat.albedo = texelFetch(materialsTex, ivec2(index * 4 + 0, 0), 0);
-    mat.emission = texelFetch(materialsTex, ivec2(index * 4 + 1, 0), 0);
-    mat.param = texelFetch(materialsTex, ivec2(index * 4 + 2, 0), 0);
-    mat.texIDs = texelFetch(materialsTex, ivec2(index * 4 + 3, 0), 0);
+    vec4 param1 = texelFetch(materialsTex, ivec2(index * 5 + 0, 0), 0);
+    vec4 param2 = texelFetch(materialsTex, ivec2(index * 5 + 1, 0), 0);
+    vec4 param3 = texelFetch(materialsTex, ivec2(index * 5 + 2, 0), 0);
+    vec4 param4 = texelFetch(materialsTex, ivec2(index * 5 + 3, 0), 0);
+    mat.texIDs  = texelFetch(materialsTex, ivec2(index * 5 + 4, 0), 0);
+
+    mat.albedo         = param1.xyz;
+    mat.specular       = param1.w;
+
+    mat.emission       = param2.xyz;
+    mat.anisotropic    = param2.w;
+
+    mat.metallic       = param3.x;
+    mat.roughness      = param3.y;
+    mat.subsurface     = param3.z;
+    mat.specularTint   = param3.w;
+
+    mat.sheen          = param4.x;
+    mat.sheenTint      = param4.y;
+    mat.clearcoat      = param4.z;
+    mat.clearcoatGloss = param4.w;
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
 
+    // Albedo Map
     if (int(mat.texIDs.x) >= 0)
-        mat.albedo.xyz *= pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
+        mat.albedo *= pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
 
+    // Metallic Roughness Map
     if (int(mat.texIDs.y) >= 0)
-        mat.param.xy = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
+    {
+        vec2 matRgh;
+        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
+        mat.metallic = matRgh.x;
+        mat.roughness = matRgh.y;
+    }
 
+    // Normal Map
     if (int(mat.texIDs.z) >= 0)
     {
         vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
@@ -110,8 +135,8 @@ vec3 DirectLight(in Ray r, in State state)
 
         if (!inShadow)
         {
-            float bsdfPdf = UE4Pdf(r, state, lightDir);
-            vec3 f = UE4Eval(r, state, lightDir);
+            float bsdfPdf = DisneyPdf(r, state, lightDir);
+            vec3 f = DisneyEval(r, state, lightDir);
 
             float misWeight = powerHeuristic(lightPdf, bsdfPdf);
             if (misWeight > 0.0)
@@ -151,8 +176,8 @@ vec3 DirectLight(in Ray r, in State state)
 
         if (!inShadow)
         {
-            float bsdfPdf = UE4Pdf(r, state, lightDir);
-            vec3 f = UE4Eval(r, state, lightDir);
+            float bsdfPdf = DisneyPdf(r, state, lightDir);
+            vec3 f = DisneyEval(r, state, lightDir);
             float lightPdf = lightDistSq / (light.radiusAreaType.y * abs(dot(lightSampleRec.normal, lightDir)));
 
             L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
@@ -198,7 +223,7 @@ vec3 PathTrace(Ray r)
         GetNormalsAndTexCoord(state, r);
         GetMaterialsAndTextures(state, r);
 
-        radiance += state.mat.emission.xyz * throughput;
+        radiance += state.mat.emission * throughput;
 
         if (state.isEmitter)
         {
@@ -206,20 +231,20 @@ vec3 PathTrace(Ray r)
             break;
         }
 
-        if (state.mat.albedo.w == 0.0) // UE4 Brdf
+        //if (state.mat.albedo.w == 0.0) // Disney Brdf
         {
             state.specularBounce = false;
             radiance += DirectLight(r, state) * throughput;
 
-            bsdfSampleRec.bsdfDir = UE4Sample(r, state);
-            bsdfSampleRec.pdf = UE4Pdf(r, state, bsdfSampleRec.bsdfDir);
+            bsdfSampleRec.bsdfDir = DisneySample(r, state);
+            bsdfSampleRec.pdf = DisneyPdf(r, state, bsdfSampleRec.bsdfDir);
 
             if (bsdfSampleRec.pdf > 0.0)
-                throughput *= UE4Eval(r, state, bsdfSampleRec.bsdfDir) * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
+                throughput *= DisneyEval(r, state, bsdfSampleRec.bsdfDir) * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
             else
                 break;
         }
-        else // Glass
+        /*else // Glass
         {
             state.specularBounce = true;
 
@@ -227,7 +252,7 @@ vec3 PathTrace(Ray r)
             bsdfSampleRec.pdf = GlassPdf(r, state);
 
             throughput *= GlassEval(r, state); // Pdf will always be 1.0
-        }
+        }*/
 
         r.direction = bsdfSampleRec.bsdfDir;
         r.origin = state.fhp + r.direction * EPS;

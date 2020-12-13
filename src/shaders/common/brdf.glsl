@@ -28,33 +28,36 @@
  */
 
 //-----------------------------------------------------------------------
-float UE4Pdf(in Ray ray, inout State state, in vec3 bsdfDir)
+float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
 {
     vec3 n = state.ffnormal;
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
 
-    float specularAlpha = max(0.001, state.mat.param.y);
+    float specularAlpha = max(0.001, state.mat.roughness);
+    float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
-    float diffuseRatio = 0.5 * (1.0 - state.mat.param.x);
+    float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
     vec3 halfVec = normalize(L + V);
 
     float cosTheta = abs(dot(halfVec, n));
     float pdfGTR2 = GTR2(cosTheta, specularAlpha) * cosTheta;
+    float pdfGTR1 = GTR1(cosTheta, clearcoatAlpha) * cosTheta;
 
     // calculate diffuse and specular pdfs and mix ratio
-    float pdfSpec = pdfGTR2 / (4.0 * abs(dot(L, halfVec)));
+    float ratio = 1.0 / (1.0 + state.mat.clearcoat);
+    float pdfSpec = mix(pdfGTR1, pdfGTR2, ratio) / (4.0 * abs(dot(L, halfVec)));
     float pdfDiff = abs(dot(L, n)) * (1.0 / PI);
 
-    // weight pdfs according to ratios
+    // weigh pdfs according to ratios
     return diffuseRatio * pdfDiff + specularRatio * pdfSpec;
 }
 
 //-----------------------------------------------------------------------
-vec3 UE4Sample(in Ray ray, inout State state)
+vec3 DisneySample(in Ray ray, inout State state)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
@@ -63,12 +66,12 @@ vec3 UE4Sample(in Ray ray, inout State state)
     vec3 dir;
 
     float probability = rand();
-    float diffuseRatio = 0.5 * (1.0 - state.mat.param.x);
+    float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
 
     float r1 = rand();
     float r2 = rand();
 
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     vec3 TangentX = normalize(cross(UpVector, N));
     vec3 TangentY = cross(N, TangentX);
 
@@ -79,7 +82,7 @@ vec3 UE4Sample(in Ray ray, inout State state)
     }
     else
     {
-        float a = max(0.001, state.mat.param.y);
+        float a = max(0.001, state.mat.roughness);
 
         float phi = r1 * 2.0 * PI;
 
@@ -97,7 +100,7 @@ vec3 UE4Sample(in Ray ray, inout State state)
 }
 
 //-----------------------------------------------------------------------
-vec3 UE4Eval(in Ray ray, inout State state, in vec3 bsdfDir)
+vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
@@ -114,16 +117,58 @@ vec3 UE4Eval(in Ray ray, inout State state, in vec3 bsdfDir)
     float NDotH = dot(N, H);
     float LDotH = dot(L, H);
 
-    // specular    
-    float specular = 0.5;
-    vec3 specularCol = mix(vec3(1.0) * 0.08 * specular, state.mat.albedo.xyz, state.mat.param.x);
-    float a = max(0.001, state.mat.param.y);
+    vec3 Cdlin = state.mat.albedo;
+    float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
+
+    vec3 Ctint = Cdlum > 0.0 ? Cdlin / Cdlum : vec3(1.0f); // normalize lum. to isolate hue+sat
+    vec3 Cspec0 = mix(state.mat.specular * 0.08 * mix(vec3(1.0), Ctint, state.mat.specularTint), Cdlin, state.mat.metallic);
+    vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
+
+    // Diffuse fresnel - go from 1 at normal incidence to .5 at grazing
+    // and mix in diffuse retro-reflection based on roughness
+    float FL = SchlickFresnel(NDotL);
+    float FV = SchlickFresnel(NDotV);
+    float Fd90 = 0.5 + 2.0 * LDotH * LDotH * state.mat.roughness;
+    float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+
+    // Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
+    // 1.25 scale is used to (roughly) preserve albedo
+    // Fss90 used to "flatten" retroreflection based on roughness
+    float Fss90 = LDotH * LDotH * state.mat.roughness;
+    float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+    float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
+
+    // specular
+    float a = max(0.001f, state.mat.roughness);
     float Ds = GTR2(NDotH, a);
     float FH = SchlickFresnel(LDotH);
-    vec3 Fs = mix(specularCol, vec3(1.0), FH);
-    float roughg = (state.mat.param.y*0.5 + 0.5);
-    roughg = roughg * roughg;
+    vec3 Fs = mix(Cspec0, vec3(1.0), FH);
+    float roughg = (state.mat.roughness * 0.5 + 0.5);
+    roughg *= roughg;
     float Gs = SmithG_GGX(NDotL, roughg) * SmithG_GGX(NDotV, roughg);
 
-    return (state.mat.albedo.xyz / PI) * (1.0 - state.mat.param.x) + Gs * Fs*Ds;
+    // specular
+    /*vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 X = normalize(cross(UpVector, N));
+    vec3 Y = cross(N, X);
+
+    float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
+    float ax = max(0.001, (state.mat.roughness * state.mat.roughness) / aspect);
+    float ay = max(0.001, (state.mat.roughness * state.mat.roughness) * aspect);
+    float Ds = GTR2_aniso(NDotH, dot(H, X), dot(H, Y), ax, ay);
+    float FH = SchlickFresnel(LDotH);
+    vec3 Fs = mix(Cspec0, vec3(1.0), FH);
+    float Gs;
+    Gs  = SmithG_GGX_aniso(NDotL, dot(L, X), dot(L, Y), ax, ay);
+    Gs *= SmithG_GGX_aniso(NDotV, dot(V, X), dot(V, Y), ax, ay);*/
+
+    // sheen
+    vec3 Fsheen = FH * state.mat.sheen * Csheen;
+
+    // clearcoat (ior = 1.5 -> F0 = 0.04)
+    float Dr = GTR1(NDotH, mix(0.1, 0.001, state.mat.clearcoatGloss));
+    float Fr = mix(0.04, 1.0, FH);
+    float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
+
+    return ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic) + Gs * Fs * Ds + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
 }

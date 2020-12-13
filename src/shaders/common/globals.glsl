@@ -39,7 +39,7 @@ mat4 transform;
 vec2 seed;
 vec3 tempTexCoords;
 struct Ray { vec3 origin; vec3 direction; };
-struct Material { vec4 albedo; vec4 emission; vec4 param; vec4 texIDs; };
+struct Material { vec3 albedo; float specular; vec3 emission; float anisotropic; float metallic; float roughness; float subsurface; float specularTint; float sheen; float sheenTint; float clearcoat; float clearcoatGloss; vec4 texIDs; };
 struct Camera { vec3 up; vec3 right; vec3 forward; vec3 position; float fov; float focalDist; float aperture; };
 struct Light { vec3 position; vec3 emission; vec3 u; vec3 v; vec3 radiusAreaType; };
 struct State { vec3 normal; vec3 ffnormal; vec3 fhp; bool isEmitter; int depth; float hitDist; vec2 texCoord; vec3 bary; ivec3 triID; int matID; Material mat; bool specularBounce; };

@@ -38,7 +38,7 @@ float GlassPdf(Ray ray, inout State state)
 vec3 GlassSample(in Ray ray, inout State state)
 //-----------------------------------------------------------------------
 {
-    float n1 = 1.0;
+    /*float n1 = 1.0;
     float n2 = state.mat.param.z;
     float R0 = (n1 - n2) / (n1 + n2);
     R0 *= R0;
@@ -66,12 +66,15 @@ vec3 GlassSample(in Ray ray, inout State state)
         dir = transDir;
     }
     //state.mat.albedo.xyz = transmittance;
-    return dir;
+    return dir;*/
+
+    return vec3(1.0);
 }
 
 //-----------------------------------------------------------------------
 vec3 GlassEval(in Ray ray, inout State state)
 //-----------------------------------------------------------------------
 {
-    return state.mat.albedo.xyz;
+    return vec3(1.0);
+    //return state.mat.albedo.xyz;
 }
