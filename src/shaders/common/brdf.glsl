@@ -31,26 +31,35 @@
 float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
 {
-    vec3 n = state.ffnormal;
+    vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
+    vec3 H = normalize(L + V);
+    vec3 halfVec = normalize(L + V);
 
-    float specularAlpha = max(0.001, state.mat.roughness);
+    float NDotH = dot(N, H);
+
     float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
-    vec3 halfVec = normalize(L + V);
+    float cosTheta = abs(dot(halfVec, N));
 
-    float cosTheta = abs(dot(halfVec, n));
-    float pdfGTR2 = GTR2(cosTheta, specularAlpha) * cosTheta;
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 X = normalize(cross(UpVector, N));
+    vec3 Y = cross(N, X);
+
+    float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
+    float ax = max(0.001, (state.mat.roughness * state.mat.roughness) / aspect);
+    float ay = max(0.001, (state.mat.roughness * state.mat.roughness) * aspect);
+    float pdfGTR2 = GTR2_aniso(NDotH, dot(H, X), dot(H, Y), ax, ay) * cosTheta;
     float pdfGTR1 = GTR1(cosTheta, clearcoatAlpha) * cosTheta;
 
     // calculate diffuse and specular pdfs and mix ratio
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
     float pdfSpec = mix(pdfGTR1, pdfGTR2, ratio) / (4.0 * abs(dot(L, halfVec)));
-    float pdfDiff = abs(dot(L, n)) * (1.0 / PI);
+    float pdfDiff = abs(dot(L, N)) * (1.0 / PI);
 
     // weigh pdfs according to ratios
     return diffuseRatio * pdfDiff + specularRatio * pdfSpec;
@@ -139,16 +148,16 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
 
     // specular
-    float a = max(0.001f, state.mat.roughness);
+    /*float a = max(0.001f, state.mat.roughness);
     float Ds = GTR2(NDotH, a);
     float FH = SchlickFresnel(LDotH);
     vec3 Fs = mix(Cspec0, vec3(1.0), FH);
     float roughg = (state.mat.roughness * 0.5 + 0.5);
     roughg *= roughg;
-    float Gs = SmithG_GGX(NDotL, roughg) * SmithG_GGX(NDotV, roughg);
+    float Gs = SmithG_GGX(NDotL, roughg) * SmithG_GGX(NDotV, roughg);*/
 
     // specular
-    /*vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     vec3 X = normalize(cross(UpVector, N));
     vec3 Y = cross(N, X);
 
@@ -158,9 +167,8 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     float Ds = GTR2_aniso(NDotH, dot(H, X), dot(H, Y), ax, ay);
     float FH = SchlickFresnel(LDotH);
     vec3 Fs = mix(Cspec0, vec3(1.0), FH);
-    float Gs;
-    Gs  = SmithG_GGX_aniso(NDotL, dot(L, X), dot(L, Y), ax, ay);
-    Gs *= SmithG_GGX_aniso(NDotV, dot(V, X), dot(V, Y), ax, ay);*/
+    float Gs = SmithG_GGX_aniso(NDotL, dot(L, X), dot(L, Y), ax, ay);
+    Gs *= SmithG_GGX_aniso(NDotV, dot(V, X), dot(V, Y), ax, ay);
 
     // sheen
     vec3 Fsheen = FH * state.mat.sheen * Csheen;
