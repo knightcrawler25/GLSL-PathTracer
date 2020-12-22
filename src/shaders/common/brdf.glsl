@@ -35,7 +35,6 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
     vec3 H = normalize(L + V);
-    vec3 halfVec = normalize(L + V);
 
     float NDotH = dot(N, H);
 
@@ -44,7 +43,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
-    float cosTheta = abs(dot(halfVec, N));
+    float cosTheta = abs(dot(H, N));
 
     vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
     vec3 X = normalize(cross(UpVector, N));
@@ -58,7 +57,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 
     // calculate diffuse and specular pdfs and mix ratio
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
-    float pdfSpec = mix(pdfGTR1, pdfGTR2, ratio) / (4.0 * abs(dot(L, halfVec)));
+    float pdfSpec = mix(pdfGTR1, pdfGTR2, ratio) / (4.0 * abs(dot(L, H)));
     float pdfDiff = abs(dot(L, N)) * (1.0 / PI);
 
     // weigh pdfs according to ratios
@@ -100,10 +99,10 @@ vec3 DisneySample(in Ray ray, inout State state)
         float sinPhi = sin(phi);
         float cosPhi = cos(phi);
 
-        vec3 halfVec = vec3(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta);
-        halfVec = TangentX * halfVec.x + TangentY * halfVec.y + N * halfVec.z;
+        vec3 H = vec3(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta);
+        H = TangentX * H.x + TangentY * H.y + N * H.z;
 
-        dir = 2.0*dot(V, halfVec)*halfVec - V;
+        dir = 2.0*dot(V, H)*H - V;
     }
     return dir;
 }
