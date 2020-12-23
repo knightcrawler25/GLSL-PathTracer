@@ -36,8 +36,12 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H = normalize(L + V);
 
+    //if (dot(N, L) < 0.0)
+    //    return 1.0;
+
     float NDotH = dot(N, H);
 
+    float specularAlpha = mix(0.1, 0.001, state.mat.roughness);
     float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
@@ -47,15 +51,19 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float ax = max(0.001, (state.mat.roughness * state.mat.roughness) / aspect);
     float ay = max(0.001, (state.mat.roughness * state.mat.roughness) * aspect);
 
-    // calculate diffuse and specular pdfs and mix ratio
-    float pdfGTR2 = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay) * NDotH;
+    // PDFs for brdf
+    float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay) * NDotH;
     float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
-    float pdfSpec = mix(pdfGTR1, pdfGTR2, ratio) / (4.0 * abs(dot(L, H)));
+    float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * abs(dot(L, H)));
     float pdfDiff = abs(dot(L, N)) * (1.0 / PI);
+    float brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
 
-    // weigh pdfs according to ratios
-    return diffuseRatio * pdfDiff + specularRatio * pdfSpec;
+    // PDFs for bsdf
+    float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+    float bsdfPdf = pdfGTR2 / (4.0 * abs(dot(L, H)));
+
+    return brdfPdf;//mix(brdfPdf, bsdfPdf, state.mat.transmission);
 }
 
 //-----------------------------------------------------------------------
@@ -67,32 +75,47 @@ vec3 DisneySample(in Ray ray, inout State state)
 
     vec3 dir;
 
-    float probability = rand();
-    float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
-
     float r1 = rand();
     float r2 = rand();
+    //float bsdfProb = rand();
 
-    if (probability < diffuseRatio) // sample diffuse
+    // BSDF
+    /*if (bsdfProb < state.mat.transmission)
     {
-        dir = CosineSampleHemisphere(r1, r2);
-        dir = state.tangent * dir.x + state.bitangent * dir.y + N * dir.z;
-    }
-    else
-    {
-        float a = max(0.001, state.mat.roughness);
+        float n1 = 1.0;
+        float n2 = state.mat.ior;
 
-        float phi = r1 * 2.0 * PI;
+        float theta = abs(dot(-V, N));
+        float eta = dot(state.normal, state.ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
+        float cos2t = 1.0 - eta * eta * (1.0 - theta * theta);
 
-        float cosTheta = sqrt((1.0 - r2) / (1.0 + (a*a - 1.0) *r2));
-        float sinTheta = clamp(sqrt(1.0 - (cosTheta * cosTheta)), 0.0, 1.0);
-        float sinPhi = sin(phi);
-        float cosPhi = cos(phi);
-
-        vec3 H = vec3(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta);
+        vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-        dir = 2.0*dot(V, H)*H - V;
+        float F = Fresnel(theta, n1, n2);
+
+        if (cos2t < 0.0 || rand() < F)
+            dir = normalize(reflect(-V, H));
+        else
+            dir = normalize(refract(-V, H, eta));
+    }
+    else*/
+    {
+        float probability = rand();
+        float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
+
+        if (probability < diffuseRatio) 
+        {
+            vec3 H = CosineSampleHemisphere(r1, r2);
+            H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
+            dir = H;
+        }
+        else
+        {
+            vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
+            H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
+            dir = reflect(-V, H);
+        }
     }
     return dir;
 }

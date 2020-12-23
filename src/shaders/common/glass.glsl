@@ -27,6 +27,7 @@
  * SOFTWARE.
  */
 
+/*
 //-----------------------------------------------------------------------
 float GlassPdf(Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
@@ -76,10 +77,6 @@ vec3 GlassSample(in Ray ray, inout State state)
     float r1 = rand();
     float r2 = rand();
 
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 TangentX = normalize(cross(UpVector, N));
-    vec3 TangentY = cross(N, TangentX);
-
     float a = max(0.001, state.mat.roughness);
 
     float phi = r1 * 2.0 * PI;
@@ -90,7 +87,7 @@ vec3 GlassSample(in Ray ray, inout State state)
     float cosPhi = cos(phi);
 
     vec3 H = vec3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
-    H = TangentX * H.x + TangentY * H.y + N * H.z;
+    //H = TangentX * H.x + TangentY * H.y + N * H.z;
 
     float n1 = 1.0;
     float n2 = 1.45;
@@ -152,3 +149,4 @@ vec3 GlassEval(in Ray ray, inout State state, in vec3 bsdfDir)
     else
         return state.mat.albedo * F * D * G;
 }
+*/

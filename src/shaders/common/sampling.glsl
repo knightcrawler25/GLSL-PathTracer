@@ -27,6 +27,22 @@
  * SOFTWARE.
  */
 
+//----------------------------------------------------------------------
+vec3 ImportanceSampleGGX(float rgh, float r1, float r2)
+//----------------------------------------------------------------------
+{
+    float a = max(0.001, rgh);
+
+    float phi = r1 * 2.0 * PI;
+
+    float cosTheta = sqrt((1.0 - r2) / (1.0 + (a * a - 1.0) * r2));
+    float sinTheta = clamp(sqrt(1.0 - (cosTheta * cosTheta)), 0.0, 1.0);
+    float sinPhi = sin(phi);
+    float cosPhi = cos(phi);
+
+    return vec3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
+}
+
 //-----------------------------------------------------------------------
 float SchlickFresnel(float u)
 //-----------------------------------------------------------------------

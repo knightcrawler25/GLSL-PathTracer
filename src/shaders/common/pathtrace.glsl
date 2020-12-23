@@ -31,8 +31,8 @@
 void Onb(in vec3 N, inout vec3 T, inout vec3 B)
 //-----------------------------------------------------------------------
 {
-    vec3 U = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
-    T = normalize(cross(U, N));
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
+    T = normalize(cross(UpVector, N));
     B = cross(N, T);
 }
 
@@ -115,6 +115,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
         vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
         nrm = normalize(nrm * 2.0 - 1.0);
 
+        // Orthonormal Basis
         vec3 T, B;
         Onb(state.ffnormal, T, B);
 
