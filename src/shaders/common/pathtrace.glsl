@@ -122,6 +122,8 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
         nrm = T * nrm.x + B * nrm.y + state.ffnormal * nrm.z;
         state.normal = normalize(nrm);
         state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
+
+        Onb(state.ffnormal, state.tangent, state.bitangent);
     }
 
     state.mat = mat;
@@ -144,17 +146,20 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
-        Ray shadowRay = Ray(surfacePos, lightDir);
-        bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
-
-        if (!inShadow)
+        if (dot(lightDir, state.normal) > 0.0)
         {
-            float bsdfPdf = DisneyPdf(r, state, lightDir);
-            vec3 f = DisneyEval(r, state, lightDir);
+            Ray shadowRay = Ray(surfacePos, lightDir);
+            bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
 
-            float misWeight = powerHeuristic(lightPdf, bsdfPdf);
-            if (misWeight > 0.0)
-                L += misWeight * f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
+            if (!inShadow)
+            {
+                float bsdfPdf = DisneyPdf(r, state, lightDir);
+                vec3 f = DisneyEval(r, state, lightDir);
+
+                float misWeight = powerHeuristic(lightPdf, bsdfPdf);
+                if (misWeight > 0.0)
+                    L += misWeight * f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
+            }
         }
     }
 
@@ -196,12 +201,11 @@ vec3 DirectLight(in Ray r, in State state)
 
             L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
         }
+        
     }
 
     return L;
 }
-
-//#define WHITEBG
 
 //-----------------------------------------------------------------------
 vec3 PathTrace(Ray r)
@@ -221,23 +225,18 @@ vec3 PathTrace(Ray r)
 
         if (t == INFINITY)
         {
-#ifndef WHITEBG
             if (useEnvMap)
             {
                 float misWeight = 1.0f;
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), acos(r.direction.y) * (1.0 / PI));
 
-                if (depth > 0)
+                if (depth > 0 || state.specularBounce)
                 {
                     lightPdf = EnvPdf(r);
                     misWeight = powerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
                 radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }
-#else
-            radiance += vec3(1.0) * throughput;
-#endif
-            break;
         }
 
         GetNormalsAndTexCoord(state, r);

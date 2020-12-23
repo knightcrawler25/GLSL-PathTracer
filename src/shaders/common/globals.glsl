@@ -30,7 +30,7 @@
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
 #define INFINITY  1000000.0
-#define EPS 0.001
+#define EPS 0.00001
 
 mat4 transform;
 
@@ -84,14 +84,18 @@ struct Light
 
 struct State 
 { 
+    int depth;
+    float hitDist;
+    vec3 fhp;
+
     vec3 normal; 
     vec3 ffnormal; 
     vec3 tangent; 
     vec3 bitangent;
-    vec3 fhp; 
+    
     bool isEmitter;
-    int depth; 
-    float hitDist; 
+    bool specularBounce;
+
     vec2 texCoord; 
     vec3 bary; 
     ivec3 triID; 

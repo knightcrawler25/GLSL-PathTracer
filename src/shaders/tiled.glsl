@@ -46,8 +46,7 @@ in vec2 TexCoords;
 #include common/sampling.glsl
 #include common/anyhit.glsl
 #include common/closest_hit.glsl
-#include common/brdf.glsl
-#include common/glass.glsl
+#include common/disney.glsl
 #include common/pathtrace.glsl
 
 float map(float value, float low1, float high1, float low2, float high2)
