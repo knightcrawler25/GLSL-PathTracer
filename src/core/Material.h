@@ -55,10 +55,15 @@ namespace GLSLPT
             clearcoat      = 0.0f;
             clearcoatGloss = 0.0f;
 
+            transmission  = 0.0f;
+            ior           = 1.45f;
+            unused1       = 0.0f;
+            unused2       = 0.0f;
+
             albedoTexID             = -1.0f;
             metallicRoughnessTexID  = -1.0f;
             normalmapTexID          = -1.0f;
-            ior                     = 1.45f;
+            unused3                 =  0.0f;
         };
 
         Vec3 albedo;
@@ -77,9 +82,14 @@ namespace GLSLPT
         float clearcoat;
         float clearcoatGloss;
 
+        float transmission;
+        float ior;
+        float unused1;
+        float unused2;
+
         float albedoTexID;
         float metallicRoughnessTexID;
         float normalmapTexID;
-        float ior;
+        float unused3;
     };
 }

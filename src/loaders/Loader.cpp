@@ -110,6 +110,7 @@ namespace GLSLPT
                     sscanf(line, " sheenTint %f", &material.sheenTint);
                     sscanf(line, " clearcoat %f", &material.clearcoat);
                     sscanf(line, " clearcoatGloss %f", &material.clearcoatGloss);
+                    sscanf(line, " transmission %f", &material.transmission);
                     sscanf(line, " ior %f", &material.ior);
                     //sscanf(line, " transmittance %f", &material.transmittance);
 

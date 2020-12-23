@@ -37,6 +37,15 @@ float SchlickFresnel(float u)
 }
 
 //-----------------------------------------------------------------------
+float Fresnel(float theta, float n1, float n2)
+//-----------------------------------------------------------------------
+{
+    float R0 = (n1 - n2) / (n1 + n2);
+    R0 *= R0;
+    return R0 + (1.0 - R0) * SchlickFresnel(theta);
+}
+
+//-----------------------------------------------------------------------
 float GTR1(float NDotH, float a)
 //-----------------------------------------------------------------------
 {
@@ -192,7 +201,7 @@ vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, i
 {
     vec3 Le;
 
-    if (state.depth == 0 || state.specularBounce)
+    if (state.depth == 0)
         Le = lightSampleRec.emission;
     else
         Le = powerHeuristic(bsdfSampleRec.pdf, lightSampleRec.pdf) * lightSampleRec.emission;

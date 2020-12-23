@@ -43,19 +43,13 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
-    float cosTheta = abs(dot(H, N));
-
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 X = normalize(cross(UpVector, N));
-    vec3 Y = cross(N, X);
-
     float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
     float ax = max(0.001, (state.mat.roughness * state.mat.roughness) / aspect);
     float ay = max(0.001, (state.mat.roughness * state.mat.roughness) * aspect);
-    float pdfGTR2 = GTR2_aniso(NDotH, dot(H, X), dot(H, Y), ax, ay) * cosTheta;
-    float pdfGTR1 = GTR1(cosTheta, clearcoatAlpha) * cosTheta;
 
     // calculate diffuse and specular pdfs and mix ratio
+    float pdfGTR2 = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay) * NDotH;
+    float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
     float pdfSpec = mix(pdfGTR1, pdfGTR2, ratio) / (4.0 * abs(dot(L, H)));
     float pdfDiff = abs(dot(L, N)) * (1.0 / PI);
@@ -79,14 +73,10 @@ vec3 DisneySample(in Ray ray, inout State state)
     float r1 = rand();
     float r2 = rand();
 
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 TangentX = normalize(cross(UpVector, N));
-    vec3 TangentY = cross(N, TangentX);
-
     if (probability < diffuseRatio) // sample diffuse
     {
         dir = CosineSampleHemisphere(r1, r2);
-        dir = TangentX * dir.x + TangentY * dir.y + N * dir.z;
+        dir = state.tangent * dir.x + state.bitangent * dir.y + N * dir.z;
     }
     else
     {
@@ -100,7 +90,7 @@ vec3 DisneySample(in Ray ray, inout State state)
         float cosPhi = cos(phi);
 
         vec3 H = vec3(sinTheta*cosPhi, sinTheta*sinPhi, cosTheta);
-        H = TangentX * H.x + TangentY * H.y + N * H.z;
+        H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
         dir = 2.0*dot(V, H)*H - V;
     }
@@ -147,7 +137,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
 
     // specular
-    /*float a = max(0.001f, state.mat.roughness);
+    /*float a = max(0.001, state.mat.roughness);
     float Ds = GTR2(NDotH, a);
     float FH = SchlickFresnel(LDotH);
     vec3 Fs = mix(Cspec0, vec3(1.0), FH);
@@ -156,18 +146,14 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     float Gs = SmithG_GGX(NDotL, roughg) * SmithG_GGX(NDotV, roughg);*/
 
     // specular
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 X = normalize(cross(UpVector, N));
-    vec3 Y = cross(N, X);
-
     float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
     float ax = max(0.001, (state.mat.roughness * state.mat.roughness) / aspect);
     float ay = max(0.001, (state.mat.roughness * state.mat.roughness) * aspect);
-    float Ds = GTR2_aniso(NDotH, dot(H, X), dot(H, Y), ax, ay);
+    float Ds = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay);
     float FH = SchlickFresnel(LDotH);
     vec3 Fs = mix(Cspec0, vec3(1.0), FH);
-    float Gs = SmithG_GGX_aniso(NDotL, dot(L, X), dot(L, Y), ax, ay);
-    Gs *= SmithG_GGX_aniso(NDotV, dot(V, X), dot(V, Y), ax, ay);
+    float Gs = SmithG_GGX_aniso(NDotL, dot(L, state.tangent), dot(L, state.bitangent), ax, ay);
+    Gs *= SmithG_GGX_aniso(NDotV, dot(V, state.tangent), dot(V, state.bitangent), ax, ay);
 
     // sheen
     vec3 Fsheen = FH * state.mat.sheen * Csheen;
