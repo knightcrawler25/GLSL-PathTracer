@@ -23,8 +23,8 @@ material checker
 material white
 {
 	color 1.0 1.0 1.0
-	metallic 0.1
-	roughness 0.01
+	roughness 0.0
+	clearcoat 1.0
 }
 
 mesh

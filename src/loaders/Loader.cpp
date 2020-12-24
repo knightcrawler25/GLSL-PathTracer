@@ -99,20 +99,18 @@ namespace GLSLPT
                     sscanf(line, " name %s", name);
                     sscanf(line, " color %f %f %f", &material.albedo.x, &material.albedo.y, &material.albedo.z);
                     sscanf(line, " emission %f %f %f", &material.emission.x, &material.emission.y, &material.emission.z);
-                    //sscanf(line, " materialType %f", &material.materialType);
                     sscanf(line, " metallic %f", &material.metallic);
                     sscanf(line, " roughness %f", &material.roughness);
                     sscanf(line, " subsurface %f", &material.subsurface);
                     sscanf(line, " specular %f", &material.specular);
                     sscanf(line, " specularTint %f", &material.specularTint);
-                    sscanf(line, " specular %f", &material.specular);
+                    sscanf(line, " anisotropic %f", &material.anisotropic);
                     sscanf(line, " sheen %f", &material.sheen);
                     sscanf(line, " sheenTint %f", &material.sheenTint);
                     sscanf(line, " clearcoat %f", &material.clearcoat);
                     sscanf(line, " clearcoatGloss %f", &material.clearcoatGloss);
                     sscanf(line, " transmission %f", &material.transmission);
                     sscanf(line, " ior %f", &material.ior);
-                    //sscanf(line, " transmittance %f", &material.transmittance);
 
                     sscanf(line, " albedoTexture %s", albedoTexName);
                     sscanf(line, " metallicRoughnessTexture %s", metallicRoughnessTexName);

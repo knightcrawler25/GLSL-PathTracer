@@ -42,7 +42,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float NDotH = abs(dot(N, H));
 
     // TODO: Fix importance sampling for microfacet transmission
-    if (dot(N, L) <= 0.0 && state.mat.transmission > 0.0)
+    if (dot(N, L) <= 0.0)
         return 1.0;
 
     float specularAlpha = max(0.001, state.mat.roughness);
@@ -136,10 +136,10 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
 
+    vec3 H = normalize(L + V);
+
     float NDotL = abs(dot(N, L));
     float NDotV = abs(dot(N, V));
-
-    vec3 H = normalize(L + V);
 
     float NDotH = abs(dot(N, H));
     float LDotH = abs(dot(L, H));
@@ -162,7 +162,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         }
     }
 
-    if (state.mat.transmission < 1.0)
+    if (state.mat.transmission < 1.0 && dot(N, L) > 0.0 && dot(N, V) > 0.0)
     {
         vec3 Cdlin = state.mat.albedo;
         float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.

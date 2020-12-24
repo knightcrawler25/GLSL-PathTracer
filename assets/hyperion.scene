@@ -24,12 +24,15 @@ material orange
 {
 	color 1.0 0.186 0.0
 	roughness 0.001
+	clearcoat 1.0
+	clearcoatGloss 1.0
 }
 
 material glass
 {
 	color 1.0 1.0 1.0
-	materialType 1.0
+	transmission 1.0
+	roughness 0.0
 	ior 1.45
 }
 
@@ -63,19 +66,24 @@ material off_white
 material ping
 {	
 	color 0.93 0.89 0.85
-	roughness 0.2
+	roughness 1.0
+	subsurface 1.0
 }
 
 material marb1
 {
 	color 0.026 0.147 0.075
-	roughness 0.077
+	roughness 0.01
+	clearcoat 1.0
+	clearcoatGloss 1.0
 }
 
 material marb2
 {
 	color 0.099 0.24 0.134
-	roughness 0.077
+	roughness 0.01
+	clearcoat 1.0
+	clearcoatGloss 1.0
 }
 
 mesh

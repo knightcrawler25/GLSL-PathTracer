@@ -1,0 +1,184 @@
+Renderer
+{
+	resolution 1280 720
+	maxDepth 4
+	tileWidth 256
+	tileHeight 144
+}
+
+Camera
+{
+	position -15.0 15.0 0.0
+	lookAt 0 0 0
+	fov 60
+}
+
+material orange
+{
+	color 1.0 0.186 0.0
+	roughness 0.001
+	specular 0.5
+	clearcoat 1.0
+	clearcoatGloss 0.93
+}
+
+material glass
+{
+	color 1.0 1.0 1.0
+	transmission 1.0
+	ior 1.45
+	roughness 0.05
+}
+
+material silver
+{
+	color 0.9 0.9 0.9
+	specular 0.5
+	roughness 0.2
+	metallic 1.0 
+	anisotropic 1.0
+}
+
+material ring_silver
+{
+	color 1.0 1.0 1.0
+	roughness 0.01 
+	specular 0.5
+	metallic 1.0 
+}
+
+material off_white
+{
+	color 1.0 0.94 0.8
+	roughness 1.0
+	specular 0.5
+}
+
+material ping
+{
+	color 0.93 0.89 0.85
+	roughness 1.0
+	subsurface 1.0
+	specular 0.5
+	
+	#color 0.93 0.89 0.85
+	#specular 0.6
+	#roughness 0.2
+	#subsurface 0.4
+}
+
+material marb1
+{
+	color 0.026 0.147 0.075
+	roughness 0.077
+	specular 0.5
+	subsurface 1.0
+	clearcoat 1.0
+	clearcoatGloss 0.93
+}
+
+material marb2
+{
+	color 0.099 0.24 0.134
+	roughness 0.077
+	specular 0.5
+	subsurface 1.0
+	clearcoat 1.0
+	clearcoatGloss 0.93
+}
+
+mesh
+{
+	name Glass Ball
+	file hyperion/glass.obj
+	material glass
+	position -0.57 1.87 6.55
+}
+
+
+mesh
+{
+	name Chrome Ball
+	file hyperion/chrome.obj
+	material silver
+	position 0.4 1.86 -6.59
+}
+
+mesh
+{
+	name Platform
+	file hyperion/plate.obj
+	material off_white
+	position 0 0.36 0
+}
+
+mesh
+{
+	name Floor
+	file hyperion/floor.obj
+	material off_white
+}
+
+mesh
+{
+	name Orange Ball
+	file hyperion/orange.obj
+	material orange
+	position 1.646 1.6861 3.5662
+}
+
+mesh
+{
+	name Ring 1
+	file hyperion/ring1.obj
+	material ring_silver
+	position -0.308737 0.805763 -1.42968
+}
+
+mesh
+{
+	name Ring 2
+	file hyperion/ring2.obj
+	material ring_silver
+	position -0.6706 0.808472 0.626798
+}
+
+mesh
+{
+	name Ring 3
+	file hyperion/ring3.obj
+	material ring_silver
+	position -1.44541 0.808472 1.72607 
+}
+
+mesh
+{
+	name Marble 1
+	file hyperion/marb1.obj
+	material marb1
+	position -3.78 0.88 -0.84
+}
+
+mesh
+{
+	name Marble 2
+	file hyperion/marb2.obj
+	material marb2
+	position -3.746 0.969453 0.974294 
+}
+
+mesh
+{
+	name Ping Pong
+	file hyperion/pingpong.obj
+	material ping
+	position -3.14 1.51 -4.12
+}
+
+light
+{
+	emission 80.0 80.0 80.0
+	position 0 390.0 -439.0
+	radius 60.0
+	type Sphere
+}

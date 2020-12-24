@@ -237,6 +237,7 @@ vec3 PathTrace(Ray r)
                 }
                 radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }
+            return radiance;
         }
 
         GetNormalsAndTexCoord(state, r);

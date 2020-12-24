@@ -1,11 +1,11 @@
 Renderer
 {
 	resolution 800 800
-	maxDepth 2
+	maxDepth 4
 	tileWidth 200
 	tileHeight 200
 	#envMap HDR/sunset.hdr
-	hdrMultiplier 2.0
+	#hdrMultiplier 2.0
 }
 
 Camera
@@ -17,37 +17,45 @@ Camera
 
 material ceiling_white
 {
-	color 0.725 0.71 0.68
+	color 0.8 0.8 0.8
 }
 
 material back_wall_white
 {
-	color 0.725 0.71 0.68
+	color 0.8 0.8 0.8
 }
 
 material floor_white
 {
-	color 0.725 0.71 0.68
+	color 0.8 0.8 0.8
 }
 
 material small_box_white
 {
-	color 0.725 0.71 0.68
+	color 0.8 0.8 0.8
 }
 
 material large_box_white
 {
-	color 0.725 0.71 0.68
+	color 0.8 0.8 0.8
 }
 
 material red
 {
-	color 0.63 0.065 0.05
+	color 0.93 0.065 0.05
 }
 
 material green
 {
-	color 0.14 0.45 0.091
+	color 0.14 0.95 0.091
+}
+
+material glass
+{
+	color 1.0 1.0 1.0
+	transmission 1.0
+	roughness 0.03
+	ior 1.5
 }
 
 mesh
@@ -76,10 +84,10 @@ mesh
 
 mesh
 {
-	file cornell_box/cbox_smallbox.obj
-	material small_box_white
-	position .1855 .0825 .169
-	scale 0.01 0.01 0.01
+	file cornell_box/glass_sphere.obj
+	material glass
+	position .1855 0.097 .169
+	scale 0.08 0.08 0.08
 }
 
 mesh
@@ -112,5 +120,5 @@ light
 	position  .34299999 .54779997 .22700010
 	v1 .34299999 .54779997 .33200008
 	v2 .21300001 .54779997 .22700010
-	emission 17 12 4
+	emission 15 15 15
 }
