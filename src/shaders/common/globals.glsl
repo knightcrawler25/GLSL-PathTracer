@@ -59,7 +59,8 @@ struct Material
     float clearcoatGloss; 
     float transmission; 
     float ior; 
-    vec4 texIDs;
+    vec3 extinction;
+    vec3 texIDs;
 };
 
 struct Camera 

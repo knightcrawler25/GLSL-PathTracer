@@ -72,7 +72,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     vec4 param3 = texelFetch(materialsTex, ivec2(index * 6 + 2, 0), 0);
     vec4 param4 = texelFetch(materialsTex, ivec2(index * 6 + 3, 0), 0);
     vec4 param5 = texelFetch(materialsTex, ivec2(index * 6 + 4, 0), 0);
-    mat.texIDs  = texelFetch(materialsTex, ivec2(index * 6 + 5, 0), 0);
+    vec4 param6 = texelFetch(materialsTex, ivec2(index * 6 + 5, 0), 0);
 
     mat.albedo         = param1.xyz;
     mat.specular       = param1.w;
@@ -92,6 +92,9 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
     mat.transmission   = param5.x;
     mat.ior            = param5.y;
+
+    mat.extinction     = vec3(param5.zw, param6.x);
+    mat.texIDs         = vec3(param6.yzw);
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;

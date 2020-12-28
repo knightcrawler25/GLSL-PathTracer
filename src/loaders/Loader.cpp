@@ -111,7 +111,7 @@ namespace GLSLPT
                     sscanf(line, " clearcoatGloss %f", &material.clearcoatGloss);
                     sscanf(line, " transmission %f", &material.transmission);
                     sscanf(line, " ior %f", &material.ior);
-
+                    sscanf(line, " extinction %f %f %f", &material.extinction.x, &material.extinction.y, &material.extinction.z);
                     sscanf(line, " albedoTexture %s", albedoTexName);
                     sscanf(line, " metallicRoughnessTexture %s", metallicRoughnessTexName);
                     sscanf(line, " normalTexture %s", normalTexName);

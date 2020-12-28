@@ -150,8 +150,14 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     // TODO: Fix bsdf for microfacet transmission
     if (state.mat.transmission > 0.0)
     {
+        vec3 transmittance = vec3(1.0);
+        vec3 extinction = log(state.mat.extinction);
+
+        if (dot(state.normal, state.ffnormal) < 0.0)
+            transmittance = exp(extinction * state.hitDist);
+
         if (dot(N, L) <= 0.0)
-            bsdf = state.mat.albedo / abs(NDotL);
+            bsdf = state.mat.albedo * transmittance / abs(NDotL);
         else
         {
             float a = max(0.001, state.mat.roughness);

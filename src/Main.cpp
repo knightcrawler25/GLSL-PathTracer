@@ -336,9 +336,9 @@ void MainLoop(void* arg)
             // Material Properties
             Vec3 *albedo   = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
             Vec3 *emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
+            Vec3 *extinction = &scene->materials[scene->meshInstances[selectedInstance].materialID].extinction;
 
             objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
-            //objectPropChanged |= ImGui::ColorEdit3("Emission", (float*)emission, 0);
             objectPropChanged |= ImGui::SliderFloat("Metallic",  &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.001f, 1.0f);
@@ -351,6 +351,7 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("ClearcoatGloss", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatGloss, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Transmission", &scene->materials[scene->meshInstances[selectedInstance].materialID].transmission, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.0f, 2.0f);
+            objectPropChanged |= ImGui::ColorEdit3("Extinction", (float*)extinction, 0);
 
             // Transforms Properties
             ImGui::Separator();

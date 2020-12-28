@@ -57,13 +57,11 @@ namespace GLSLPT
 
             transmission  = 0.0f;
             ior           = 1.45f;
-            unused1       = 0.0f;
-            unused2       = 0.0f;
+            extinction    = Vec3(0.0f, 0.0f, 0.0f);
 
             albedoTexID             = -1.0f;
             metallicRoughnessTexID  = -1.0f;
             normalmapTexID          = -1.0f;
-            unused3                 =  0.0f;
         };
 
         Vec3 albedo;
@@ -84,12 +82,10 @@ namespace GLSLPT
 
         float transmission;
         float ior;
-        float unused1;
-        float unused2;
+        Vec3 extinction;
 
         float albedoTexID;
         float metallicRoughnessTexID;
         float normalmapTexID;
-        float unused3;
     };
 }
