@@ -57,7 +57,7 @@ namespace GLSLPT
 
             transmission  = 0.0f;
             ior           = 1.45f;
-            extinction    = Vec3(0.0f, 0.0f, 0.0f);
+            extinction    = Vec3(1.0f, 1.0f, 1.0f);
 
             albedoTexID             = -1.0f;
             metallicRoughnessTexID  = -1.0f;
