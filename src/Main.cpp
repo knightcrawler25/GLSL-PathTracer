@@ -297,6 +297,7 @@ void MainLoop(void* arg)
             optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
             scene->camera->aperture = aperture / 1000.0f;
             optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
+            ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
         }
 
         scene->camera->isMoving = false;

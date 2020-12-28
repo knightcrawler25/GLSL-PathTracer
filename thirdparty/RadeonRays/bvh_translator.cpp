@@ -36,26 +36,24 @@ namespace RadeonRays
 	{
 		RadeonRays::bbox bbox = node->bounds;
 
-		bboxmin[curNode] = bbox.pmin;
-		bboxmax[curNode] = bbox.pmax;
-		nodes[curNode].leaf = 0;
+		nodes[curNode].bboxmin = bbox.pmin;
+		nodes[curNode].bboxmax = bbox.pmax;
+		nodes[curNode].LRLeaf.z = 0;
 
 		int index = curNode;
 
 		if (node->type == RadeonRays::Bvh::NodeType::kLeaf)
 		{
-			nodes[curNode].leftIndex = curTriIndex + node->startidx;
-			nodes[curNode].rightIndex = node->numprims;
-			nodes[curNode].leaf = 1;
+			nodes[curNode].LRLeaf.x = curTriIndex + node->startidx;
+			nodes[curNode].LRLeaf.y = node->numprims;
+			nodes[curNode].LRLeaf.z = 1;
 		}
 		else
 		{
 			curNode++;
-			nodes[index].leftIndex = ProcessBLASNodes(node->lc);
-			nodes[index].leftIndex = ((nodes[index].leftIndex % nodeTexWidth) << 12) | (nodes[index].leftIndex / nodeTexWidth);
+			nodes[index].LRLeaf.x = ProcessBLASNodes(node->lc);
 			curNode++;
-			nodes[index].rightIndex = ProcessBLASNodes(node->rc);
-			nodes[index].rightIndex = ((nodes[index].rightIndex % nodeTexWidth) << 12) | (nodes[index].rightIndex / nodeTexWidth);
+			nodes[index].LRLeaf.y = ProcessBLASNodes(node->rc);
 		}
 		return index;
 	}
@@ -64,9 +62,9 @@ namespace RadeonRays
 	{
 		RadeonRays::bbox bbox = node->bounds;
 
-		bboxmin[curNode] = bbox.pmin;
-		bboxmax[curNode] = bbox.pmax;
-		nodes[curNode].leaf = 0;
+		nodes[curNode].bboxmin = bbox.pmin;
+		nodes[curNode].bboxmax = bbox.pmax;
+		nodes[curNode].LRLeaf.z = 0;
 
 		int index = curNode;
 
@@ -76,18 +74,16 @@ namespace RadeonRays
 			int meshIndex = meshInstances[instanceIndex].meshID;
 			int materialID = meshInstances[instanceIndex].materialID;
 
-			nodes[curNode].leftIndex = (bvhRootStartIndices[meshIndex] % nodeTexWidth) << 12 | (bvhRootStartIndices[meshIndex] / nodeTexWidth);
-			nodes[curNode].rightIndex = materialID;
-			nodes[curNode].leaf = -instanceIndex - 1;
+			nodes[curNode].LRLeaf.x = bvhRootStartIndices[meshIndex];
+			nodes[curNode].LRLeaf.y = materialID;
+			nodes[curNode].LRLeaf.z = -instanceIndex - 1;
 		}
 		else
 		{
 			curNode++;
-			nodes[index].leftIndex = ProcessTLASNodes(node->lc);
-			nodes[index].leftIndex = ((nodes[index].leftIndex % nodeTexWidth) << 12) | (nodes[index].leftIndex / nodeTexWidth);
+			nodes[index].LRLeaf.x = ProcessTLASNodes(node->lc);
 			curNode++;
-			nodes[index].rightIndex = ProcessTLASNodes(node->rc);
-			nodes[index].rightIndex = ((nodes[index].rightIndex % nodeTexWidth) << 12) | (nodes[index].rightIndex / nodeTexWidth);
+			nodes[index].LRLeaf.y = ProcessTLASNodes(node->rc);
 		}
 		return index;
 	}
@@ -102,12 +98,7 @@ namespace RadeonRays
 
 		// reserve space for top level nodes
 		nodeCnt += 2 * meshInstances.size();
-		nodeTexWidth = (int)(sqrt(nodeCnt) + 1);
-
-		// Resize to power of 2
-		bboxmin.resize(nodeTexWidth * nodeTexWidth);
-		bboxmax.resize(nodeTexWidth * nodeTexWidth);
-		nodes.resize(nodeTexWidth * nodeTexWidth);
+		nodes.resize(nodeCnt);
 
 		int bvhRootIndex = 0;
 		curTriIndex = 0;
@@ -128,7 +119,6 @@ namespace RadeonRays
 	void BvhTranslator::ProcessTLAS()
 	{
 		curNode = topLevelIndex;
-		topLevelIndexPackedXY = ((topLevelIndex % nodeTexWidth) << 12) | (topLevelIndex / nodeTexWidth);
 		ProcessTLASNodes(TLBvh->m_root);
 	}
 

@@ -62,8 +62,8 @@ bool AnyHit(Ray r, float maxDist)
             continue;
         }
 
-        ivec2 index = ivec2(n >> 12, n & 0x00000FFF);
-        ivec3 LRLeaf = texelFetch(BVH, index, 0).xyz;
+        int index = n;
+        ivec3 LRLeaf = ivec3(texelFetch(BVH, index * 3 + 2).xyz);
 
         int leftIndex = int(LRLeaf.x);
         int rightIndex = int(LRLeaf.y);
@@ -73,15 +73,15 @@ bool AnyHit(Ray r, float maxDist)
         {
             for (int i = 0; i < rightIndex; i++) // Loop through indices
             {
-                ivec2 index = ivec2((leftIndex + i) % vertIndicesSize, (leftIndex + i) / vertIndicesSize);
-                ivec3 vert_indices = texelFetch(vertexIndicesTex, index, 0).xyz;
+                int index = leftIndex + i;
+                ivec3 vert_indices = ivec3(texelFetch(vertexIndicesTex, index).xyz);
 
-                vec3 v0 = texelFetch(verticesTex, ivec2(vert_indices.x >> 12, vert_indices.x & 0x00000FFF), 0).xyz;
-                vec3 v1 = texelFetch(verticesTex, ivec2(vert_indices.y >> 12, vert_indices.y & 0x00000FFF), 0).xyz;
-                vec3 v2 = texelFetch(verticesTex, ivec2(vert_indices.z >> 12, vert_indices.z & 0x00000FFF), 0).xyz;
+                vec4 v0 = texelFetch(verticesTex, vert_indices.x);
+                vec4 v1 = texelFetch(verticesTex, vert_indices.y);
+                vec4 v2 = texelFetch(verticesTex, vert_indices.z);
 
-                vec3 e0 = v1 - v0;
-                vec3 e1 = v2 - v0;
+                vec3 e0 = v1.xyz - v0.xyz;
+                vec3 e1 = v2.xyz - v0.xyz;
                 vec3 pv = cross(r_trans.direction, e1);
                 float det = dot(e0, pv);
 
@@ -120,12 +120,8 @@ bool AnyHit(Ray r, float maxDist)
         }
         else
         {
-            ivec2 lc = ivec2(leftIndex >> 12, leftIndex & 0x00000FFF);
-            ivec2 rc = ivec2(rightIndex >> 12, rightIndex & 0x00000FFF);
-
-            leftHit = AABBIntersect(texelFetch(BBoxMin, lc, 0).xyz, texelFetch(BBoxMax, lc, 0).xyz, r_trans);
-            rightHit = AABBIntersect(texelFetch(BBoxMin, rc, 0).xyz, texelFetch(BBoxMax, rc, 0).xyz, r_trans);
-
+            leftHit =  AABBIntersect(texelFetch(BVH, leftIndex  * 3 + 0).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, r_trans);
+            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r_trans);
 
             if (leftHit > 0.0 && rightHit > 0.0)
             {

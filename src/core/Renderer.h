@@ -69,11 +69,13 @@ namespace GLSLPT
         iVec2 screenSize;
         std::string shadersDirectory;
 
+        GLuint BVHBuffer;
         GLuint BVHTex;
-        GLuint BBoxminTex;
-        GLuint BBoxmaxTex;
+        GLuint vertexIndicesBuffer;
         GLuint vertexIndicesTex;
+        GLuint verticesBuffer;
         GLuint verticesTex;
+        GLuint normalsBuffer;
         GLuint normalsTex;
         GLuint materialsTex;
         GLuint transformsTex;

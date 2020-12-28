@@ -38,12 +38,10 @@ uniform float invNumTilesX;
 uniform float invNumTilesY;
 
 uniform sampler2D accumTexture;
-uniform isampler2D BVH;
-uniform sampler2D BBoxMin;
-uniform sampler2D BBoxMax;
-uniform isampler2D vertexIndicesTex;
-uniform sampler2D verticesTex;
-uniform sampler2D normalsTex;
+uniform samplerBuffer BVH;
+uniform isamplerBuffer vertexIndicesTex;
+uniform samplerBuffer verticesTex;
+uniform samplerBuffer normalsTex;
 uniform sampler2D materialsTex;
 uniform sampler2D transformsTex;
 uniform sampler2D lightsTex;
@@ -52,9 +50,9 @@ uniform sampler2DArray textureMapsArrayTex;
 uniform sampler2D hdrTex;
 uniform sampler2D hdrMarginalDistTex;
 uniform sampler2D hdrCondDistTex;
+
 uniform float hdrResolution;
 uniform float hdrMultiplier;
-
 uniform int numOfLights;
 uniform int maxDepth;
 uniform int topBVHIndex;

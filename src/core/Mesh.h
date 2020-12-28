@@ -39,8 +39,8 @@ namespace GLSLPT
     public:
         Mesh()
         { 
-            //bvh = new RadeonRays::SplitBvh(2.0f, 64, 0, 0.001f, 2.5f); 
-            bvh = new RadeonRays::Bvh(2.0f, 64, false);
+            bvh = new RadeonRays::SplitBvh(2.0f, 64, 0, 0.001f, 0); 
+            //bvh = new RadeonRays::Bvh(2.0f, 64, false);
         }
         ~Mesh() { delete bvh; }
 

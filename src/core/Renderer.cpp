@@ -43,8 +43,6 @@ namespace GLSLPT
 
     Renderer::Renderer(Scene *scene, const std::string& shadersDirectory) 
         : BVHTex(0)
-        , BBoxminTex(0)
-        , BBoxmaxTex(0)
         , vertexIndicesTex(0)
         , verticesTex(0)
         , normalsTex(0)
@@ -78,8 +76,6 @@ namespace GLSLPT
         delete quad;
 
         glDeleteTextures(1, &BVHTex);
-        glDeleteTextures(1, &BBoxminTex);
-        glDeleteTextures(1, &BBoxmaxTex);
         glDeleteTextures(1, &vertexIndicesTex);
         glDeleteTextures(1, &verticesTex);
         glDeleteTextures(1, &normalsTex);
@@ -108,52 +104,37 @@ namespace GLSLPT
 
         quad = new Quad();
 
-        //Create texture for BVH Tree
+        //Create Buffer and Texture for BVH Tree
+        glGenBuffers(1, &BVHBuffer);
+        glBindBuffer(GL_TEXTURE_BUFFER, BVHBuffer);
+        glBufferData(GL_TEXTURE_BUFFER, sizeof(RadeonRays::BvhTranslator::Node) * scene->bvhTranslator.nodes.size(), &scene->bvhTranslator.nodes[0], GL_STATIC_DRAW);
         glGenTextures(1, &BVHTex);
-        glBindTexture(GL_TEXTURE_2D, BVHTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth, 0, GL_RGB_INTEGER, GL_INT, &scene->bvhTranslator.nodes[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_BUFFER, BVHTex);
+        glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, BVHBuffer);
 
-        //Create texture for Bounding boxes
-        glGenTextures(1, &BBoxminTex);
-        glBindTexture(GL_TEXTURE_2D, BBoxminTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth, 0, GL_RGB, GL_FLOAT, &scene->bvhTranslator.bboxmin[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        glGenTextures(1, &BBoxmaxTex);
-        glBindTexture(GL_TEXTURE_2D, BBoxmaxTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth, 0, GL_RGB, GL_FLOAT, &scene->bvhTranslator.bboxmax[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        //Create texture for VertexIndices
+        //Create Buffer and Texture for VertexIndices
+        glGenBuffers(1, &vertexIndicesBuffer);
+        glBindBuffer(GL_TEXTURE_BUFFER, vertexIndicesBuffer);
+        glBufferData(GL_TEXTURE_BUFFER, sizeof(Indices) * scene->vertIndices.size(), &scene->vertIndices[0], GL_STATIC_DRAW);
         glGenTextures(1, &vertexIndicesTex);
-        glBindTexture(GL_TEXTURE_2D, vertexIndicesTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32I, scene->indicesTexWidth, scene->indicesTexWidth, 0, GL_RGB_INTEGER, GL_INT, &scene->vertIndices[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_BUFFER, vertexIndicesTex);
+        glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32I, vertexIndicesBuffer);
 
-        //Create texture for Vertices
+        //Create Buffer and Texture for Vertices
+        glGenBuffers(1, &verticesBuffer);
+        glBindBuffer(GL_TEXTURE_BUFFER, verticesBuffer);
+        glBufferData(GL_TEXTURE_BUFFER, sizeof(Vec4) * scene->verticesUVX.size(), &scene->verticesUVX[0], GL_STATIC_DRAW);
         glGenTextures(1, &verticesTex);
-        glBindTexture(GL_TEXTURE_2D, verticesTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, scene->triDataTexWidth, scene->triDataTexWidth, 0, GL_RGBA, GL_FLOAT, &scene->verticesUVX[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        
-        //Create texture for Normals
+        glBindTexture(GL_TEXTURE_BUFFER, verticesTex);
+        glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, verticesBuffer);
+
+        //Create Buffer and Texture for Normals
+        glGenBuffers(1, &normalsBuffer);
+        glBindBuffer(GL_TEXTURE_BUFFER, normalsBuffer);
+        glBufferData(GL_TEXTURE_BUFFER, sizeof(Vec4) * scene->normalsUVY.size(), &scene->normalsUVY[0], GL_STATIC_DRAW);
         glGenTextures(1, &normalsTex);
-        glBindTexture(GL_TEXTURE_2D, normalsTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, scene->triDataTexWidth, scene->triDataTexWidth, 0, GL_RGBA, GL_FLOAT, &scene->normalsUVY[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindTexture(GL_TEXTURE_BUFFER, normalsTex);
+        glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, normalsBuffer);
 
         //Create texture for Materials
         glGenTextures(1, &materialsTex);
@@ -232,17 +213,10 @@ namespace GLSLPT
             glBindTexture(GL_TEXTURE_2D, materialsTex);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(Vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
 
-            int yPos = scene->bvhTranslator.topLevelIndexPackedXY & 0x00000FFF;
-            int index = yPos * scene->bvhTranslator.nodeTexWidth;
+            int index = scene->bvhTranslator.topLevelIndex;
 
-            glBindTexture(GL_TEXTURE_2D, BVHTex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, yPos, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth - yPos, GL_RGB_INTEGER, GL_INT, &scene->bvhTranslator.nodes[index]);
-
-            glBindTexture(GL_TEXTURE_2D, BBoxminTex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, yPos, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth - yPos, GL_RGB, GL_FLOAT, &scene->bvhTranslator.bboxmin[index]);
-
-            glBindTexture(GL_TEXTURE_2D, BBoxmaxTex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, yPos, scene->bvhTranslator.nodeTexWidth, scene->bvhTranslator.nodeTexWidth - yPos, GL_RGB, GL_FLOAT, &scene->bvhTranslator.bboxmax[index]);
+            glBindBuffer(GL_TEXTURE_BUFFER, BVHBuffer);
+            glBufferSubData(GL_TEXTURE_BUFFER, sizeof(RadeonRays::BvhTranslator::Node) * index, sizeof(RadeonRays::BvhTranslator::Node) * (scene->bvhTranslator.nodes.size() - index), &scene->bvhTranslator.nodes[index]);
         }
     }
 }

@@ -222,21 +222,6 @@ namespace GLSLPT
             verticesCnt += meshes[i]->verticesUVX.size();
         }
 
-        // Resize to power of 2
-        indicesTexWidth  = (int)(sqrt(vertIndices.size()) + 1); 
-        triDataTexWidth  = (int)(sqrt(verticesUVX.size())+ 1); 
-
-        vertIndices.resize(indicesTexWidth * indicesTexWidth);
-        verticesUVX.resize(triDataTexWidth * triDataTexWidth);
-        normalsUVY.resize(triDataTexWidth * triDataTexWidth);
-
-        for (int i = 0; i < vertIndices.size(); i++)
-        {
-            vertIndices[i].x = ((vertIndices[i].x % triDataTexWidth) << 12) | (vertIndices[i].x / triDataTexWidth);
-            vertIndices[i].y = ((vertIndices[i].y % triDataTexWidth) << 12) | (vertIndices[i].y / triDataTexWidth);
-            vertIndices[i].z = ((vertIndices[i].z % triDataTexWidth) << 12) | (vertIndices[i].z / triDataTexWidth);
-        }
-
         //Copy transforms
         transforms.resize(meshInstances.size());
         #pragma omp parallel for

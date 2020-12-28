@@ -47,19 +47,16 @@ namespace RadeonRays
 
 		struct Node
 		{
-			int leftIndex;
-			int rightIndex;
-			int leaf;
+			Vec3 bboxmin;
+			Vec3 bboxmax;
+			Vec3 LRLeaf;
 		};
 
 		void ProcessBLAS();
 		void ProcessTLAS();
 		void UpdateTLAS(const Bvh *topLevelBvh, const std::vector<GLSLPT::MeshInstance> &instances);
 		void Process(const Bvh *topLevelBvh, const std::vector<GLSLPT::Mesh*> &meshes, const std::vector<GLSLPT::MeshInstance> &instances);
-		int topLevelIndexPackedXY = 0;
 		int topLevelIndex = 0;
-		std::vector<Vec3> bboxmin;
-		std::vector<Vec3> bboxmax;
 		std::vector<Node> nodes;
 		int nodeTexWidth;
 

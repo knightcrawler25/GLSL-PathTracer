@@ -94,12 +94,10 @@ namespace GLSLPT
         std::vector<Mesh*> meshes;
 
         // Scene Mesh Data 
-        std::vector<Indices>   vertIndices;
+        std::vector<Indices> vertIndices;
         std::vector<Vec4> verticesUVX; // Vertex Data + x coord of uv 
         std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
         std::vector<Mat4> transforms;
-        int indicesTexWidth;
-        int triDataTexWidth;
 
         //Instances
         std::vector<Material> materials;

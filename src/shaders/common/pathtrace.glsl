@@ -40,9 +40,9 @@ void Onb(in vec3 N, inout vec3 T, inout vec3 B)
 void GetNormalsAndTexCoord(inout State state, inout Ray r)
 //-----------------------------------------------------------------------
 {
-    vec4 n1 = texelFetch(normalsTex, ivec2(state.triID.x >> 12, state.triID.x & 0x00000FFF), 0).xyzw;
-    vec4 n2 = texelFetch(normalsTex, ivec2(state.triID.y >> 12, state.triID.y & 0x00000FFF), 0).xyzw;
-    vec4 n3 = texelFetch(normalsTex, ivec2(state.triID.z >> 12, state.triID.z & 0x00000FFF), 0).xyzw;
+    vec4 n1 = texelFetch(normalsTex, state.triID.x);
+    vec4 n2 = texelFetch(normalsTex, state.triID.y);
+    vec4 n3 = texelFetch(normalsTex, state.triID.z);
 
     vec2 t1 = vec2(tempTexCoords.x, n1.w);
     vec2 t2 = vec2(tempTexCoords.y, n2.w);

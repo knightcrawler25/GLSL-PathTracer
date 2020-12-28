@@ -93,7 +93,7 @@ vec3 DisneySample(in Ray ray, inout State state)
         vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-        float theta = abs(dot(-V, N));
+        float theta = abs(dot(N, V));
         float eta = dot(state.normal, state.ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
         float cos2t = 1.0 - eta * eta * (1.0 - theta * theta);
 
@@ -138,11 +138,11 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
 
     vec3 H = normalize(L + V);
 
-    float NDotL = abs(dot(N, L));
-    float NDotV = abs(dot(N, V));
+    float NDotL = dot(N, L);
+    float NDotV = dot(N, V);
 
-    float NDotH = abs(dot(N, H));
-    float LDotH = abs(dot(L, H));
+    float NDotH = dot(N, H);
+    float LDotH = dot(L, H);
 
     vec3 brdf = vec3(0.0);
     vec3 bsdf = vec3(0.0);
@@ -162,7 +162,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         }
     }
 
-    if (state.mat.transmission < 1.0 && dot(N, L) > 0.0 && dot(N, V) > 0.0)
+    if (state.mat.transmission < 1.0 && NDotL > 0.0 && NDotV > 0.0)
     {
         vec3 Cdlin = state.mat.albedo;
         float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
