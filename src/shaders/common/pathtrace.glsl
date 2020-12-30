@@ -142,7 +142,8 @@ vec3 DirectLight(in Ray r, in State state)
     vec3 surfacePos = state.fhp + state.ffnormal * EPS;
 
     // Environment Light
-    if (useEnvMap)
+#ifdef ENVMAP
+#ifndef CONSTANT_BG
     {
         vec3 color;
         vec4 dirPdf = EnvSample(color);
@@ -165,9 +166,11 @@ vec3 DirectLight(in Ray r, in State state)
             }
         }
     }
+#endif
+#endif
 
     // Analytic Lights 
-    if (numOfLights > 0)
+#ifdef LIGHTS
     {
         LightSampleRec lightSampleRec;
         Light light;
@@ -204,8 +207,8 @@ vec3 DirectLight(in Ray r, in State state)
 
             L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
         }
-        
     }
+#endif
 
     return L;
 }
@@ -228,7 +231,10 @@ vec3 PathTrace(Ray r)
 
         if (t == INFINITY)
         {
-            if (useEnvMap)
+#ifdef CONSTANT_BG
+            radiance += bgColor * throughput;
+#else
+#ifdef ENVMAP
             {
                 float misWeight = 1.0f;
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), acos(r.direction.y) * (1.0 / PI));
@@ -240,6 +246,8 @@ vec3 PathTrace(Ray r)
                 }
                 radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }
+#endif
+#endif
             return radiance;
         }
 
@@ -248,12 +256,13 @@ vec3 PathTrace(Ray r)
 
         radiance += state.mat.emission * throughput;
 
+#ifdef LIGHTS
         if (state.isEmitter)
         {
             radiance += EmitterSample(r, state, lightSampleRec, bsdfSampleRec) * throughput;
             break;
         }
-
+#endif
         radiance += DirectLight(r, state) * throughput;
 
         bsdfSampleRec.bsdfDir = DisneySample(r, state);
@@ -263,6 +272,21 @@ vec3 PathTrace(Ray r)
             throughput *= DisneyEval(r, state, bsdfSampleRec.bsdfDir) * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
         else
             break;
+
+#ifdef RR
+        // Russian roulette
+        if (depth >= RR_DEPTH)
+        {
+            float q = max(max(throughput.x, max(throughput.y, throughput.z)), 0.001);
+            if (rand() > q)
+                break;
+
+            throughput *= 1.0 / q;
+        }
+#endif
+
+
+        
         
         r.direction = bsdfSampleRec.bsdfDir;
         r.origin = state.fhp + r.direction * EPS;

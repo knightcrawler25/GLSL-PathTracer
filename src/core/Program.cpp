@@ -56,7 +56,7 @@ namespace GLSLPT
             glDeleteProgram(object);
             object = 0;
             printf("Error %s\n", msg.c_str());
-            throw std::runtime_error(msg);
+            throw std::runtime_error(msg.c_str());
         }
     }
 

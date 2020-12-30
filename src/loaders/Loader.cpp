@@ -213,6 +213,7 @@ namespace GLSLPT
             if (strstr(line, "Renderer"))
             {
                 char envMap[200] = "None";
+                char enableRR[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -226,6 +227,8 @@ namespace GLSLPT
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
                     sscanf(line, " tileWidth %i", &renderOptions.tileWidth);
                     sscanf(line, " tileHeight %i", &renderOptions.tileHeight);
+                    sscanf(line, " enableRR %s", enableRR);
+                    sscanf(line, " RRDepth %i", &renderOptions.RRDepth);
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -233,6 +236,11 @@ namespace GLSLPT
                     scene->AddHDR(path + envMap);
                     renderOptions.useEnvMap = true;
                 }
+
+                if (strcmp(enableRR, "False") == 0)
+                    renderOptions.enableRR = false;
+                else if (strcmp(enableRR, "True") == 0)
+                    renderOptions.enableRR = true;
             }
 
 

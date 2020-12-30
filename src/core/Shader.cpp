@@ -28,20 +28,17 @@
  */
 
 #include "Shader.h"
-#include "ShaderIncludes.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 
 namespace GLSLPT
 {
-    Shader::Shader(const std::string& filePath, GLenum shaderType)
+    Shader::Shader(const ShaderInclude::ShaderSource& sourceObj, GLenum shaderType)
     {
-        std::string source = GLSLPT::ShaderInclude::load(filePath);
-
         object = glCreateShader(shaderType);
-        printf("Compiling Shader %s -> %d\n", filePath.c_str(), int(object));
-        const GLchar *src = (const GLchar *)source.c_str();
+        printf("Compiling Shader %s -> %d\n", sourceObj.path.c_str(), int(object));
+        const GLchar *src = (const GLchar *)sourceObj.src.c_str();
         glShaderSource(object, 1, &src, 0);
         glCompileShader(object);
         GLint success = 0;
@@ -53,7 +50,7 @@ namespace GLSLPT
             glGetShaderiv(object, GL_INFO_LOG_LENGTH, &logSize);
             char *info = new char[logSize + 1];
             glGetShaderInfoLog(object, logSize, NULL, info);
-            msg += filePath;
+            msg += sourceObj.path;
             msg += "\n";
             msg += info;
             delete[] info;

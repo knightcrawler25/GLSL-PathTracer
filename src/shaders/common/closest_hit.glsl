@@ -34,6 +34,7 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
     float t = INFINITY;
     float d;
 
+#ifdef LIGHTS
     // Intersect Emitters
     for (int i = 0; i < numOfLights; i++)
     {
@@ -81,6 +82,7 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
             }
         }
     }
+#endif
 
     int stack[64];
     int ptr = 0;

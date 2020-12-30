@@ -179,6 +179,9 @@ void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
         sampleSphereLight(light, lightSampleRec);
 }
 
+#ifdef ENVMAP
+#ifndef CONSTANT_BG
+
 //-----------------------------------------------------------------------
 float EnvPdf(in Ray r)
 //-----------------------------------------------------------------------
@@ -210,6 +213,9 @@ vec4 EnvSample(inout vec3 color)
 
     return vec4(-sin(theta) * cos(phi), cos(theta), -sin(theta)*sin(phi), (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta)));
 }
+
+#endif
+#endif
 
 //-----------------------------------------------------------------------
 vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, in BsdfSampleRec bsdfSampleRec)

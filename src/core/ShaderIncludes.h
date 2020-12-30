@@ -67,8 +67,15 @@ namespace GLSLPT
     class ShaderInclude
     {
     public:
+
+        struct ShaderSource
+        {
+            std::string src;
+            std::string path;
+        };
+
         // Return the source code of the complete shader
-        static std::string load(std::string path, std::string includeIndentifier = "#include")
+        static ShaderSource load(std::string path, std::string includeIndentifier = "#include")
         {
             includeIndentifier += ' ';
             static bool isRecursiveCall = false;
@@ -79,7 +86,7 @@ namespace GLSLPT
             if (!file.is_open())
             {
                 std::cerr << "ERROR: could not open the shader at: " << path << "\n" << std::endl;
-                return fullSourceCode;
+                return ShaderSource{ fullSourceCode, path };
             }
 
             std::string lineBuffer;
@@ -99,7 +106,7 @@ namespace GLSLPT
                     // By using recursion, the new include file can be extracted
                     // and inserted at this location in the shader source code
                     isRecursiveCall = true;
-                    fullSourceCode += load(lineBuffer);
+                    fullSourceCode += load(lineBuffer).src;
 
                     // Do not add this line to the shader source code, as the include
                     // path would generate a compilation issue in the final source code
@@ -116,8 +123,10 @@ namespace GLSLPT
 
             file.close();
 
-            return fullSourceCode;
+            return ShaderSource{ fullSourceCode, path };;
         }
+
+        
 
     private:
         static void getFilePath(const std::string& fullPath, std::string& pathWithoutFileName)

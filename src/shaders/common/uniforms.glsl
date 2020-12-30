@@ -53,6 +53,7 @@ uniform sampler2D hdrCondDistTex;
 
 uniform float hdrResolution;
 uniform float hdrMultiplier;
+uniform vec3 bgColor;
 uniform int numOfLights;
 uniform int maxDepth;
 uniform int topBVHIndex;

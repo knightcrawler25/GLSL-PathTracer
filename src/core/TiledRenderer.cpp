@@ -87,11 +87,49 @@ namespace GLSLPT
         // Shaders
         //----------------------------------------------------------
 
-        pathTraceShader =       LoadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "tiled.glsl");
-        pathTraceShaderLowRes = LoadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "progressive.glsl");
-        accumShader =           LoadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "accumulation.glsl");
-        tileOutputShader =      LoadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "tileOutput.glsl");
-        outputShader =          LoadShaders(shadersDirectory + "common/vertex.glsl", shadersDirectory + "output.glsl");
+        ShaderInclude::ShaderSource vertexShaderSrcObj          = ShaderInclude::load(shadersDirectory + "common/vertex.glsl");
+        ShaderInclude::ShaderSource pathTraceShaderSrcObj       = ShaderInclude::load(shadersDirectory + "tiled.glsl");
+        ShaderInclude::ShaderSource pathTraceShaderLowResSrcObj = ShaderInclude::load(shadersDirectory + "progressive.glsl");
+        ShaderInclude::ShaderSource accumShaderSrcObj           = ShaderInclude::load(shadersDirectory + "accumulation.glsl");
+        ShaderInclude::ShaderSource tileOutputShaderSrcObj      = ShaderInclude::load(shadersDirectory + "tileOutput.glsl");
+        ShaderInclude::ShaderSource outputShaderSrcObj          = ShaderInclude::load(shadersDirectory + "output.glsl");
+
+        // Add preprocessor defines for conditional compilation
+        std::string defines = "";
+        if (scene->renderOptions.useEnvMap && scene->hdrData != nullptr)
+            defines += "#define ENVMAP\n";
+        if (!scene->lights.empty())
+            defines += "#define LIGHTS\n";
+        if (scene->renderOptions.enableRR)
+        {
+            defines += "#define RR\n";
+            defines += "#define RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
+        }
+        if (scene->renderOptions.useConstantBg)
+            defines += "#define CONSTANT_BG\n";
+
+        if (defines.size() > 0)
+        {
+            size_t idx = pathTraceShaderSrcObj.src.find("#version");
+            if (idx != -1)
+                idx = pathTraceShaderSrcObj.src.find("\n", idx);
+            else
+                idx = 0;
+            pathTraceShaderSrcObj.src.insert(idx + 1, defines);
+
+            idx = pathTraceShaderLowResSrcObj.src.find("#version");
+            if (idx != -1)
+                idx = pathTraceShaderLowResSrcObj.src.find("\n", idx);
+            else
+                idx = 0;
+            pathTraceShaderLowResSrcObj.src.insert(idx + 1, defines);
+        }
+
+        pathTraceShader =       LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);
+        pathTraceShaderLowRes = LoadShaders(vertexShaderSrcObj, pathTraceShaderLowResSrcObj);
+        accumShader =           LoadShaders(vertexShaderSrcObj, accumShaderSrcObj);
+        tileOutputShader =      LoadShaders(vertexShaderSrcObj, tileOutputShaderSrcObj);
+        outputShader =          LoadShaders(vertexShaderSrcObj, outputShaderSrcObj);
 
         printf("Debug sizes : %d %d - %d %d\n", tileWidth, tileHeight, screenSize.x, screenSize.y);
         //----------------------------------------------------------
@@ -414,6 +452,7 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
         glUniform1i(glGetUniformLocation(shaderObject, "tileX"), tileX);
         glUniform1i(glGetUniformLocation(shaderObject, "tileY"), tileY);
+        glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
         pathTraceShader->StopUsing();
 
         pathTraceShaderLowRes->Use();
@@ -428,6 +467,8 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->camera->isMoving || scene->instancesModified ? 2: scene->renderOptions.maxDepth);
+        glUniform3f(glGetUniformLocation(shaderObject, "camera.position"), scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
+        glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
         pathTraceShaderLowRes->StopUsing();
 
         outputShader->Use();

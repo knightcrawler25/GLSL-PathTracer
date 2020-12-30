@@ -32,12 +32,13 @@
 #include "Quad.h"
 #include "Program.h"
 #include <Vec2.h>
+#include <Vec3.h>
 
 #include <vector>
 
 namespace GLSLPT
 {
-    Program *LoadShaders(const std::string &vertShaderFilename, const std::string &fragShaderFilename);
+    Program* LoadShaders(const ShaderInclude::ShaderSource& vertShaderObj, const ShaderInclude::ShaderSource& fragShaderObj);
 
     struct RenderOptions
     {
@@ -49,13 +50,21 @@ namespace GLSLPT
             useEnvMap = false;
             resolution = iVec2(1280, 720);
             hdrMultiplier = 1.0f;
+            enableRR = true;
+            useConstantBg = false;
+            RRDepth = 2;
+            bgColor = Vec3(1.0f, 1.0f, 1.0f);
         }
         iVec2 resolution;
         int maxDepth;
         int tileWidth;
         int tileHeight;
         bool useEnvMap;
+        bool enableRR;
+        bool useConstantBg;
+        int RRDepth;
         float hdrMultiplier;
+        Vec3 bgColor;
     };
 
     class Scene;

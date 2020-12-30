@@ -283,9 +283,22 @@ void MainLoop(void* arg)
 
         if (ImGui::CollapsingHeader("Render Settings"))
         {
+            bool requiresReload = false;
+            Vec3* bgCol = &renderOptions.bgColor;
+
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            optionsChanged |= ImGui::Checkbox("Use envmap", &renderOptions.useEnvMap);
+            requiresReload |= ImGui::Checkbox("Enable HDR", &renderOptions.useEnvMap);
             optionsChanged |= ImGui::SliderFloat("HDR multiplier", &renderOptions.hdrMultiplier, 0.1f, 10.0f);
+            requiresReload |= ImGui::Checkbox("Enable RR", &renderOptions.enableRR);
+            requiresReload |= ImGui::SliderInt("RR Depth", &renderOptions.RRDepth, 1, 10);
+            requiresReload |= ImGui::Checkbox("Enable Constant BG", &renderOptions.useConstantBg);
+            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
+            
+            if (requiresReload)
+            {
+                scene->renderOptions = renderOptions;
+                InitRenderer();
+            }
         }
         
         if (ImGui::CollapsingHeader("Camera"))

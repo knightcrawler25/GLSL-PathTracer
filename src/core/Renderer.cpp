@@ -29,15 +29,16 @@
 
 #include "Config.h"
 #include "Renderer.h"
+#include "ShaderIncludes.h"
 #include "Scene.h"
 
 namespace GLSLPT
 {
-    Program *LoadShaders(const std::string& vertShaderFilename, const std::string& fragShaderFilename)
+    Program *LoadShaders(const ShaderInclude::ShaderSource& vertShaderObj, const ShaderInclude::ShaderSource& fragShaderObj)
     {
         std::vector<Shader> shaders;
-        shaders.push_back(Shader(vertShaderFilename, GL_VERTEX_SHADER));
-        shaders.push_back(Shader(fragShaderFilename, GL_FRAGMENT_SHADER));
+        shaders.push_back(Shader(vertShaderObj, GL_VERTEX_SHADER));
+        shaders.push_back(Shader(fragShaderObj, GL_FRAGMENT_SHADER));
         return new Program(shaders);
     }
 
