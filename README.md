@@ -32,6 +32,7 @@ A couple of sample scenes are provided in the repository. Additional scenes can 
 https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
 
 Gallery
+--------
 ![Mustang_red](./screenshots/Mustang_Red.jpg)
 --------
 ![Hyperion](./screenshots/hyperion.jpg)
