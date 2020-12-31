@@ -30,6 +30,7 @@
 #pragma once
 
 #include "Renderer.h"
+#include "OpenImageDenoise/oidn.hpp"
 
 namespace GLSLPT
 {
@@ -44,17 +45,18 @@ namespace GLSLPT
         GLuint outputFBO;
 
         // Shaders
-        Program *pathTraceShader;
-        Program *pathTraceShaderLowRes;
-        Program *accumShader;
-        Program *tileOutputShader;
-        Program *outputShader;
+        Program* pathTraceShader;
+        Program* pathTraceShaderLowRes;
+        Program* accumShader;
+        Program* outputShader;
+        Program* tonemapShader;
 
         // Textures
         GLuint pathTraceTexture;
         GLuint pathTraceTextureLowRes;
         GLuint accumTexture;
         GLuint tileOutputTexture[2];
+        GLuint denoisedTexture;
 
         int tileX;
         int tileY;
@@ -65,8 +67,14 @@ namespace GLSLPT
 
         int maxDepth;
         int currentBuffer;
+        int frameCounter;
         int sampleCounter;
         float pixelRatio;
+
+        Vec3* denoiserInputFramePtr;
+        Vec3* frameOutputPtr;
+
+        bool denoised;
 
     public:
         TiledRenderer(Scene *scene, const std::string& shadersDirectory);
@@ -80,5 +88,6 @@ namespace GLSLPT
         void Update(float secondsElapsed);
         float GetProgress() const;
         int GetSampleCount() const;
+        void GetOutputBuffer(unsigned char**, int &w, int &h);
     };
 }

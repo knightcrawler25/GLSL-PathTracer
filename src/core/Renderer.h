@@ -54,6 +54,8 @@ namespace GLSLPT
             useConstantBg = false;
             RRDepth = 2;
             bgColor = Vec3(1.0f, 1.0f, 1.0f);
+            denoiserFrameCnt = 20;
+            enableDenoiser = true;
         }
         iVec2 resolution;
         int maxDepth;
@@ -61,8 +63,10 @@ namespace GLSLPT
         int tileHeight;
         bool useEnvMap;
         bool enableRR;
+        bool enableDenoiser;
         bool useConstantBg;
         int RRDepth;
+        int denoiserFrameCnt;
         float hdrMultiplier;
         Vec3 bgColor;
     };
@@ -109,8 +113,8 @@ namespace GLSLPT
         virtual void Render() = 0;
         virtual void Present() const = 0;
         virtual void Update(float secondsElapsed);
-        // range is [0..1]
         virtual float GetProgress() const = 0;
         virtual int GetSampleCount() const = 0;
+        virtual void GetOutputBuffer(unsigned char**, int &w, int &h) = 0;
     };
 }

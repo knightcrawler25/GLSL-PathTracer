@@ -19,7 +19,7 @@ file(GLOB_RECURSE SRC_FILES
     ${CMAKE_SOURCE_DIR}/src/*.cpp
 )
 
-file(GLOB EXT_FILES
+file(GLOB_RECURSE EXT_FILES
     ${CMAKE_SOURCE_DIR}/thirdparty/stb/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.h
     ${CMAKE_SOURCE_DIR}/thirdparty/imgui/*.cpp
@@ -28,6 +28,9 @@ file(GLOB EXT_FILES
     ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays/*.h 
     ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays/*.cpp     
     ${CMAKE_SOURCE_DIR}/thirdparty/gl3w/GL/*.c
+	${CMAKE_SOURCE_DIR}/thirdparty/oidn/*.h
+	${CMAKE_SOURCE_DIR}/thirdparty/oidn/*.hpp
+	${CMAKE_SOURCE_DIR}/thirdparty/tinydir/*.h
 )
 
 set(SRCS ${SRC_FILES} ${EXT_FILES} ${SHADERS})
@@ -35,6 +38,8 @@ set(SRCS ${SRC_FILES} ${EXT_FILES} ${SHADERS})
 set(SDL2_LIBRARIES "SDL2" "SDL2main")
 set(SDL2_INCLUDE_DIRS  ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/include)
 set(SDL2_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/lib/x64)
+set(OIDN_LIBRARIES "OpenImageDenoise")
+set(OIDN_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/oidn/lib)
 
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/core
@@ -48,11 +53,13 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/thirdparty/imguizmo
   ${CMAKE_SOURCE_DIR}/thirdparty/RadeonRays
   ${CMAKE_SOURCE_DIR}/thirdparty/tinydir
+  ${CMAKE_SOURCE_DIR}/thirdparty/oidn/include
   ${SDL2_INCLUDE_DIRS}
 )
 
 link_directories(
   ${SDL2_LIBDIR}
+  ${OIDN_LIBDIR}
 )
 find_package(OpenGL)
 
@@ -87,9 +94,9 @@ SET(EXE_NAME "PathTracer")
 ADD_EXECUTABLE(${EXE_NAME} ${SRCS})
 
 if(WIN32)
-TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES})
+TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${OIDN_LIBRARIES})
 else()
-TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} dl)
+TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${OIDN_LIBRARIES} dl)
 endif()
 
 #--------------------------------------------------------------------
@@ -135,5 +142,7 @@ endif()
 if(WIN32)
 add_custom_command(TARGET ${EXE_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${SDL2_LIBDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/OpenImageDenoise.dll ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/tbb.dll ${CMAKE_CURRENT_BINARY_DIR}
 )
 endif()

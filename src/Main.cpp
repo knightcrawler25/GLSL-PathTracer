@@ -50,6 +50,11 @@
 #include "ImGuizmo.h"
 #include "tinydir.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_image_write.h"
+
 using namespace std;
 using namespace GLSLPT;
 
@@ -112,6 +117,16 @@ bool InitRenderer()
     renderer = new TiledRenderer(scene, shadersDir);
     renderer->Init();
     return true;
+}
+
+void SaveFrame(const std::string filename)
+{
+    unsigned char* data = nullptr;
+    int w, h;
+    renderer->GetOutputBuffer(&data, w, h);
+    stbi_flip_vertically_on_write(true);
+    stbi_write_bmp(filename.c_str(), w, h, 3, data);
+    delete data;
 }
 
 void Render()
@@ -263,6 +278,11 @@ void MainLoop(void* arg)
         ImGui::BulletText("MMB + drag to pan");
         ImGui::BulletText("RMB + drag to zoom in/out");
 
+        if (ImGui::Button("Save Screenshot"))
+        {
+            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".jpg");
+        }
+
         std::vector<const char*> scenes;
         for (int i = 0; i < sceneFiles.size(); ++i)
         {
@@ -293,12 +313,17 @@ void MainLoop(void* arg)
             requiresReload |= ImGui::SliderInt("RR Depth", &renderOptions.RRDepth, 1, 10);
             requiresReload |= ImGui::Checkbox("Enable Constant BG", &renderOptions.useConstantBg);
             optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
+            ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
+            ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
             
             if (requiresReload)
             {
                 scene->renderOptions = renderOptions;
                 InitRenderer();
             }
+
+            scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
+            scene->renderOptions.denoiserFrameCnt = renderOptions.denoiserFrameCnt;
         }
         
         if (ImGui::CollapsingHeader("Camera"))

@@ -3,11 +3,11 @@ GLSL-PathTracer
 ==========
 A physically based path tracer that runs in a GLSL fragment shader.
 
-![Mustang](./screenshots/Mustang.png)
+![Mustang](./screenshots/Mustang.jpg)
 
-![Panther](./screenshots/panther.png)
+![Stormtrooper](./screenshots/stormtrooper.jpg)
 
-![Stormtrooper](./screenshots/stormtrooper.png)
+![Panther](./screenshots/panther.jpg)
 
 ![Crown](./screenshots/crown.png)
 
@@ -16,6 +16,7 @@ Features
 - Unidirectional path tracer
 - RadeonRays for building BVHs (Traversal is performed in a shader)
 - Disney BSDF
+- OpenImageDenoise
 - Texture Mapping (Albedo, Metallic-Roughness, Normal)
 - Spherical and Rectangular Area Lights
 - IBL with importance sampling
@@ -31,12 +32,13 @@ A couple of sample scenes are provided in the repository. Additional scenes can 
 https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
 
 Gallery
+![Mustang_red](./screenshots/Mustang_Red.jpg)
 --------
-![Hyperion](./screenshots/hyperion.png)
+![Hyperion](./screenshots/hyperion.jpg)
 --------
 ![Ajax](./screenshots/ajax_materials.png)
 --------
-![Dining Room](./screenshots/DiningRoom.png)
+![Dining Room](./screenshots/DiningRoom.jpg)
 --------
 ![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
 --------
@@ -44,9 +46,7 @@ Gallery
 --------
 ![Substance Boy](./screenshots/MeetMat_Maps.png)
 --------
-![City](./screenshots/city.png)
---------
-![Dragon](./screenshots/dragon.png)
+![Dragon](./screenshots/dragon.jpg)
 
 References/Credits
 --------
