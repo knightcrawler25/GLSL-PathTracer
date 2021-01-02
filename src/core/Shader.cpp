@@ -1,12 +1,7 @@
 ﻿/*
  * MIT License
  *
- * Copyright(c) 2019-2020 Asif Ali
- *
- * Authors/Contributors:
- *
- * Asif Ali
- * Cedric Guillemet
+ * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this softwareand associated documentation files(the "Software"), to deal
