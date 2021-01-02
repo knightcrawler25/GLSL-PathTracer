@@ -428,7 +428,7 @@ namespace GLSLPT
         float r1, r2, r3;
 
         // Denoise Image
-        if (scene->renderOptions.enableDenoiser && frameCounter > 0 && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTilesX * numTilesY)) == 0)
+        if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTilesX * numTilesY)) == 0)
         {
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);

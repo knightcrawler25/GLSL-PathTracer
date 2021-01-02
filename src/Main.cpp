@@ -119,6 +119,7 @@ bool InitRenderer()
     return true;
 }
 
+// TODO: Fix occassional crashes when saving screenshot
 void SaveFrame(const std::string filename)
 {
     unsigned char* data = nullptr;
@@ -307,7 +308,7 @@ void MainLoop(void* arg)
             Vec3* bgCol = &renderOptions.bgColor;
 
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable HDR", &renderOptions.useEnvMap);
+            requiresReload |= ImGui::Checkbox("Enable EnvMap", &renderOptions.useEnvMap);
             optionsChanged |= ImGui::SliderFloat("HDR multiplier", &renderOptions.hdrMultiplier, 0.1f, 10.0f);
             requiresReload |= ImGui::Checkbox("Enable RR", &renderOptions.enableRR);
             requiresReload |= ImGui::SliderInt("RR Depth", &renderOptions.RRDepth, 1, 10);

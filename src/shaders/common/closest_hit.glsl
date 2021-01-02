@@ -122,9 +122,9 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         int rightIndex = int(LRLeaf.y);
         int leaf = int(LRLeaf.z);
 
-        if (leaf > 0)
+        if (leaf > 0) // Leaf node of BLAS
         {
-            for (int i = 0; i < rightIndex; i++) // Loop through indices
+            for (int i = 0; i < rightIndex; i++) // Loop through tris
             {
                 int index = leftIndex + i;
                 ivec3 vert_indices = ivec3(texelFetch(vertexIndicesTex, index).xyz);
@@ -162,7 +162,7 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
                 }
             }
         }
-        else if (leaf < 0)
+        else if (leaf < 0) // Leaf node of TLAS
         {
             idx = leftIndex;
 

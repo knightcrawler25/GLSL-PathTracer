@@ -241,6 +241,7 @@ vec3 PathTrace(Ray r)
 
                 if (depth > 0 || state.specularBounce)
                 {
+                    // TODO: Fix NaNs when using certain HDRs
                     lightPdf = EnvPdf(r);
                     misWeight = powerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
@@ -285,9 +286,6 @@ vec3 PathTrace(Ray r)
         }
 #endif
 
-
-        
-        
         r.direction = bsdfSampleRec.bsdfDir;
         r.origin = state.fhp + r.direction * EPS;
     }

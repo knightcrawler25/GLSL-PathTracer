@@ -27,7 +27,7 @@
  * SOFTWARE.
  */
 
-#version 300 es
+#version 330
 #define PROGRESSIVE
 
 precision highp float;

@@ -69,9 +69,9 @@ bool AnyHit(Ray r, float maxDist)
         int rightIndex = int(LRLeaf.y);
         int leaf = int(LRLeaf.z);
 
-        if (leaf > 0)
+        if (leaf > 0) // Leaf node of BLAS
         {
-            for (int i = 0; i < rightIndex; i++) // Loop through indices
+            for (int i = 0; i < rightIndex; i++) // Loop through tris
             {
                 int index = leftIndex + i;
                 ivec3 vert_indices = ivec3(texelFetch(vertexIndicesTex, index).xyz);
@@ -99,7 +99,7 @@ bool AnyHit(Ray r, float maxDist)
                     return true;
             }
         }
-        else if (leaf < 0)
+        else if (leaf < 0) // Leaf node of TLAS
         {
             idx = leftIndex;
 
