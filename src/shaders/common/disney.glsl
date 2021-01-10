@@ -29,18 +29,35 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
-    vec3 H = normalize(L + V);
+    vec3 H;
 
+    float specularAlpha = max(0.001, state.mat.roughness);
+
+    // Transmission
+    if (dot(N, L) <= 0.0)
+    {
+        H = -normalize(L + V * state.eta);
+        L = -L;
+
+        float NDotH = abs(dot(N, H));
+        float VDotH = abs(dot(V, H));
+        float LDotH = abs(dot(L, H));
+
+        float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+        float F = DielectricFresnel(LDotH, state.eta);
+        float denomSqrt = LDotH + VDotH * state.eta;
+        //return pdfGTR2 * (1.0 - F) * VDotH / (denomSqrt * denomSqrt);
+        return 1.0;
+    }
+
+    // Reflection
     float brdfPdf = 0.0;
     float bsdfPdf = 0.0;
 
+    H = normalize(L + V);
+
     float NDotH = abs(dot(N, H));
-
-    // TODO: Fix importance sampling for microfacet transmission
-    if (dot(N, L) <= 0.0)
-        return 1.0;
-
-    float specularAlpha = max(0.001, state.mat.roughness);
+    
     float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
@@ -54,14 +71,14 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay) * NDotH;
     float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
-    float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * abs(dot(L, H)));
+    float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * abs(dot(V, H)));
     float pdfDiff = abs(dot(L, N)) * (1.0 / PI);
     brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
 
     // PDFs for bsdf
     float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-    float F = Fresnel(abs(dot(L, H)), 1.0, state.mat.ior);
-    bsdfPdf = pdfGTR2 * F / (4.0 * abs(dot(L, H)));
+    float F = DielectricFresnel(abs(dot(L, H)), state.eta);
+    bsdfPdf = pdfGTR2 * F / (4.0 * abs(dot(V, H)));
 
     return mix(brdfPdf, bsdfPdf, state.mat.transmission);
 }
@@ -82,23 +99,19 @@ vec3 DisneySample(in Ray ray, inout State state)
     // BSDF
     if (rand() < state.mat.transmission)
     {
-        float n1 = 1.0;
-        float n2 = state.mat.ior;
-
         vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
         float theta = abs(dot(N, V));
-        float eta = dot(state.normal, state.ffnormal) > 0.0 ? (n1 / n2) : (n2 / n1);
-        float cos2t = 1.0 - eta * eta * (1.0 - theta * theta);
+        float cos2t = 1.0 - state.eta * state.eta * (1.0 - theta * theta);
 
-        float F = Fresnel(theta, n1, n2);
+        float F = DielectricFresnel(theta, state.eta);
 
         if (cos2t < 0.0 || rand() < F)
             dir = normalize(reflect(-V, H));
         else
         {
-            dir = normalize(refract(-V, H, eta));
+            dir = normalize(refract(-V, H, state.eta));
             state.specularBounce = true;
         }
     }
@@ -130,19 +143,17 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
-
     vec3 H = normalize(L + V);
-
-    float NDotL = dot(N, L);
-    float NDotV = dot(N, V);
-
-    float NDotH = dot(N, H);
-    float LDotH = dot(L, H);
 
     vec3 brdf = vec3(0.0);
     vec3 bsdf = vec3(0.0);
 
-    // TODO: Fix bsdf for microfacet transmission
+    float NDotL = dot(N, L);
+    float NDotV = dot(N, V);
+    float NDotH = dot(N, H);
+    float VDotH = dot(V, H);
+    float LDotH = dot(L, H);
+
     if (state.mat.transmission > 0.0)
     {
         vec3 transmittance = vec3(1.0);
@@ -151,15 +162,34 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         if (dot(state.normal, state.ffnormal) < 0.0)
             transmittance = exp(extinction * state.hitDist);
 
+        float a = max(0.001, state.mat.roughness);
+        
         if (dot(N, L) <= 0.0)
-            bsdf = state.mat.albedo * transmittance / abs(NDotL);
-        else
         {
-            float a = max(0.001, state.mat.roughness);
-            float F = Fresnel(LDotH, 1.0, state.mat.ior);
+            H = -normalize(L + V * state.eta);
+            L = -L;
+
+            float LDotH = dot(L, H);
+            float VDotH = dot(V, H);
+            float NDotH = dot(N, H);
+            float NDotL = dot(N, L);
+            float NDotV = dot(N, V);
+
+            float F = DielectricFresnel(abs(LDotH), state.eta);
             float D = GTR2(NDotH, a);
             float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
-            bsdf = state.mat.albedo * F * G * D;
+
+            float denomSqrt = LDotH + VDotH * state.eta;
+            // TODO: Fix issue with shading normals: https://blog.yiningkarlli.com/2015/01/consistent-normal-interpolation.html
+            // bsdf = state.mat.albedo * transmittance * (1.0 - F) * G * D * VDotH * LDotH * 4.0 / (denomSqrt * denomSqrt);
+            bsdf = state.mat.albedo / NDotL;
+        }
+        else
+        {
+            float F = DielectricFresnel(abs(LDotH), state.eta);
+            float D = GTR2(NDotH, a);
+            float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
+            bsdf = state.mat.albedo * transmittance * F * G * D;
         }
     }
 

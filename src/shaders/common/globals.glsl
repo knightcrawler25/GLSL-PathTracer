@@ -81,9 +81,9 @@ struct Light
 struct State 
 { 
     int depth;
+    float eta;
     float hitDist;
     vec3 fhp;
-
     vec3 normal; 
     vec3 ffnormal; 
     vec3 tangent; 

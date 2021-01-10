@@ -125,6 +125,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     }
 
     state.mat = mat;
+    state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
 //-----------------------------------------------------------------------
@@ -262,6 +263,7 @@ vec3 PathTrace(Ray r)
         radiance += DirectLight(r, state) * throughput;
 
         bsdfSampleRec.bsdfDir = DisneySample(r, state);
+
         bsdfSampleRec.pdf = DisneyPdf(r, state, bsdfSampleRec.bsdfDir);
 
         if (bsdfSampleRec.pdf > 0.0)

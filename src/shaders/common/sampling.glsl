@@ -48,10 +48,10 @@ float SchlickFresnel(float u)
 }
 
 //-----------------------------------------------------------------------
-float Fresnel(float theta, float n1, float n2)
+float DielectricFresnel(float theta, float eta)
 //-----------------------------------------------------------------------
 {
-    float R0 = (n1 - n2) / (n1 + n2);
+    float R0 = (eta - 1.0) / (eta + 1.0);
     R0 *= R0;
     return R0 + (1.0 - R0) * SchlickFresnel(theta);
 }
@@ -77,32 +77,32 @@ float GTR2(float NDotH, float a)
 }
 
 //-----------------------------------------------------------------------
-float GTR2_aniso(float NdotH, float HdotX, float HdotY, float ax, float ay)
+float GTR2_aniso(float NDotH, float HDotX, float HDotY, float ax, float ay)
 //-----------------------------------------------------------------------
 {
-    float a = HdotX / ax;
-    float b = HdotY / ay;
-    float c = a * a + b * b + NdotH * NdotH;
+    float a = HDotX / ax;
+    float b = HDotY / ay;
+    float c = a * a + b * b + NDotH * NDotH;
     return 1.0 / (PI * ax * ay * c * c);
 }
 
 //-----------------------------------------------------------------------
-float SmithG_GGX(float NDotv, float alphaG)
+float SmithG_GGX(float NDotV, float alphaG)
 //-----------------------------------------------------------------------
 {
     float a = alphaG * alphaG;
-    float b = NDotv * NDotv;
-    return 1.0 / (NDotv + sqrt(a + b - a * b));
+    float b = NDotV * NDotV;
+    return 1.0 / (NDotV + sqrt(a + b - a * b));
 }
 
 //-----------------------------------------------------------------------
-float SmithG_GGX_aniso(float NdotV, float VdotX, float VdotY, float ax, float ay)
+float SmithG_GGX_aniso(float NDotV, float VDotX, float VDotY, float ax, float ay)
 //-----------------------------------------------------------------------
 {
-    float a = VdotX * ax;
-    float b = VdotY * ay;
-    float c = NdotV;
-    return 1.0 / (NdotV + sqrt(a*a + b*b + c*c));
+    float a = VDotX * ax;
+    float b = VDotY * ay;
+    float c = NDotV;
+    return 1.0 / (NDotV + sqrt(a*a + b*b + c*c));
 }
 
 //-----------------------------------------------------------------------
