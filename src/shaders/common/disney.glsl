@@ -4,7 +4,7 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this softwareand associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files(the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
  * copies of the Software, and to permit persons to whom the Software is
@@ -31,33 +31,31 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H;
 
+    if (state.rayType == eRefraction)
+        H = normalize(L + V * state.eta);
+    else
+        H = normalize(L + V);
+
+    float NDotH = abs(dot(N, H));
+    float VDotH = abs(dot(V, H));
+    float LDotH = abs(dot(L, H));
+    float NDotL = abs(dot(N, L));
+
     float specularAlpha = max(0.001, state.mat.roughness);
 
-    // Transmission
-    if (dot(N, L) <= 0.0)
+    // Handle transmission separately
+    if (state.rayType == eRefraction)
     {
-        H = -normalize(L + V * state.eta);
-        L = -L;
-
-        float NDotH = abs(dot(N, H));
-        float VDotH = abs(dot(V, H));
-        float LDotH = abs(dot(L, H));
-
         float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
         float F = DielectricFresnel(LDotH, state.eta);
         float denomSqrt = LDotH + VDotH * state.eta;
-        //return pdfGTR2 * (1.0 - F) * VDotH / (denomSqrt * denomSqrt);
-        return 1.0;
+        return pdfGTR2 * (1.0 - F) * VDotH / (denomSqrt * denomSqrt);
     }
 
     // Reflection
     float brdfPdf = 0.0;
     float bsdfPdf = 0.0;
 
-    H = normalize(L + V);
-
-    float NDotH = abs(dot(N, H));
-    
     float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
@@ -71,14 +69,14 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay) * NDotH;
     float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
-    float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * abs(dot(V, H)));
-    float pdfDiff = abs(dot(L, N)) * (1.0 / PI);
+    float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * VDotH);
+    float pdfDiff = NDotL * (1.0 / PI);
     brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
 
     // PDFs for bsdf
     float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-    float F = DielectricFresnel(abs(dot(L, H)), state.eta);
-    bsdfPdf = pdfGTR2 * F / (4.0 * abs(dot(V, H)));
+    float F = DielectricFresnel(LDotH, state.eta);
+    bsdfPdf = pdfGTR2 * F / (4.0 * VDotH);
 
     return mix(brdfPdf, bsdfPdf, state.mat.transmission);
 }
@@ -90,6 +88,7 @@ vec3 DisneySample(in Ray ray, inout State state)
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     state.specularBounce = false;
+    state.rayType = eReflection;
 
     vec3 dir;
 
@@ -107,12 +106,15 @@ vec3 DisneySample(in Ray ray, inout State state)
 
         float F = DielectricFresnel(theta, state.eta);
 
+        // Reflection/Total internal reflection
         if (cos2t < 0.0 || rand() < F)
             dir = normalize(reflect(-V, H));
+        // Transmission
         else
         {
             dir = normalize(refract(-V, H, state.eta));
             state.specularBounce = true;
+            state.rayType = eRefraction;
         }
     }
     // BRDF
@@ -128,10 +130,12 @@ vec3 DisneySample(in Ray ray, inout State state)
         }
         else
         {
+            //TODO: Switch to sampling visible normals 
             vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
             H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
             dir = reflect(-V, H);
         }
+
     }
     return dir;
 }
@@ -143,16 +147,21 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     vec3 L = bsdfDir;
-    vec3 H = normalize(L + V);
+    vec3 H;
+
+    if (state.rayType == eRefraction)
+        H = normalize(L + V * state.eta);
+    else
+        H = normalize(L + V);
+
+    float NDotL = abs(dot(N, L));
+    float NDotV = abs(dot(N, V));
+    float NDotH = abs(dot(N, H));
+    float VDotH = abs(dot(V, H));
+    float LDotH = abs(dot(L, H));
 
     vec3 brdf = vec3(0.0);
     vec3 bsdf = vec3(0.0);
-
-    float NDotL = dot(N, L);
-    float NDotV = dot(N, V);
-    float NDotH = dot(N, H);
-    float VDotH = dot(V, H);
-    float LDotH = dot(L, H);
 
     if (state.mat.transmission > 0.0)
     {
@@ -163,37 +172,24 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
             transmittance = exp(extinction * state.hitDist);
 
         float a = max(0.001, state.mat.roughness);
-        
-        if (dot(N, L) <= 0.0)
+
+        float F = DielectricFresnel(LDotH, state.eta);
+        float D = GTR2(NDotH, a);
+        float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
+
+        // TODO: Include subsurface scattering
+        if (state.rayType == eRefraction)
         {
-            H = -normalize(L + V * state.eta);
-            L = -L;
-
-            float LDotH = dot(L, H);
-            float VDotH = dot(V, H);
-            float NDotH = dot(N, H);
-            float NDotL = dot(N, L);
-            float NDotV = dot(N, V);
-
-            float F = DielectricFresnel(abs(LDotH), state.eta);
-            float D = GTR2(NDotH, a);
-            float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
-
             float denomSqrt = LDotH + VDotH * state.eta;
-            // TODO: Fix issue with shading normals: https://blog.yiningkarlli.com/2015/01/consistent-normal-interpolation.html
-            // bsdf = state.mat.albedo * transmittance * (1.0 - F) * G * D * VDotH * LDotH * 4.0 / (denomSqrt * denomSqrt);
-            bsdf = state.mat.albedo / NDotL;
+            bsdf = state.mat.albedo * transmittance * (1.0 - F) * D * G * VDotH * LDotH * 4.0 / (denomSqrt * denomSqrt);
         }
         else
         {
-            float F = DielectricFresnel(abs(LDotH), state.eta);
-            float D = GTR2(NDotH, a);
-            float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
-            bsdf = state.mat.albedo * transmittance * F * G * D;
+            bsdf = state.mat.albedo * transmittance * F * D * G;
         }
     }
 
-    if (state.mat.transmission < 1.0 && NDotL > 0.0 && NDotV > 0.0)
+    if (state.mat.transmission < 1.0 && dot(N, L) > 0.0 && dot(N, V) > 0.0)
     {
         vec3 Cdlin = state.mat.albedo;
         float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
@@ -216,6 +212,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
         float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
 
+        // TODO: Add anisotropic rotation
         // specular
         float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
         float ax = max(0.001, state.mat.roughness / aspect);
@@ -234,8 +231,11 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         float Fr = mix(0.04, 1.0, FH);
         float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
 
-        brdf = ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic) + Gs * Fs * Ds + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
+        brdf = ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic)
+                + Gs * Fs * Ds
+                + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
     }
 
     return mix(brdf, bsdf, state.mat.transmission);
 }
+

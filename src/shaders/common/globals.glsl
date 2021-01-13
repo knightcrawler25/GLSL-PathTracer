@@ -27,6 +27,9 @@
 #define INFINITY  1000000.0
 #define EPS 0.00001
 
+#define eReflection 0
+#define eRefraction 1
+
 mat4 transform;
 
 vec2 seed;
@@ -83,6 +86,7 @@ struct State
     int depth;
     float eta;
     float hitDist;
+
     vec3 fhp;
     vec3 normal; 
     vec3 ffnormal; 
@@ -91,6 +95,7 @@ struct State
     
     bool isEmitter;
     bool specularBounce;
+    int rayType;
 
     vec2 texCoord; 
     vec3 bary; 
