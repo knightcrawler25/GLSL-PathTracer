@@ -42,7 +42,7 @@ namespace GLSLPT
 
     enum LightType
     {
-        QuadLight,
+        RectLight,
         SphereLight
     };
 

@@ -163,7 +163,7 @@ namespace GLSLPT
 
                if (strcmp(light_type, "Quad") == 0)
                 {
-                    light.type = LightType::QuadLight;
+                    light.type = LightType::RectLight;
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
                     light.area = Vec3::Length(Vec3::Cross(light.u, light.v));

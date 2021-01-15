@@ -146,7 +146,7 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
-        if (dot(lightDir, state.normal) > 0.0)
+        if (dot(lightDir, state.ffnormal) > 0.0)
         {
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
@@ -175,13 +175,16 @@ vec3 DirectLight(in Ray r, in State state)
         int index = int(rand() * float(numOfLights));
 
         // Fetch light Data
-        vec3 p   = texelFetch(lightsTex, ivec2(index * 5 + 0, 0), 0).xyz;
-        vec3 e   = texelFetch(lightsTex, ivec2(index * 5 + 1, 0), 0).xyz;
-        vec3 u   = texelFetch(lightsTex, ivec2(index * 5 + 2, 0), 0).xyz;
-        vec3 v   = texelFetch(lightsTex, ivec2(index * 5 + 3, 0), 0).xyz;
-        vec3 rad = texelFetch(lightsTex, ivec2(index * 5 + 4, 0), 0).xyz;
+        vec3 position = texelFetch(lightsTex, ivec2(index * 5 + 0, 0), 0).xyz;
+        vec3 emission = texelFetch(lightsTex, ivec2(index * 5 + 1, 0), 0).xyz;
+        vec3 u        = texelFetch(lightsTex, ivec2(index * 5 + 2, 0), 0).xyz; // u vector for rect
+        vec3 v        = texelFetch(lightsTex, ivec2(index * 5 + 3, 0), 0).xyz; // v vector for rect
+        vec3 params   = texelFetch(lightsTex, ivec2(index * 5 + 4, 0), 0).xyz;
+        float radius  = params.x;
+        float area    = params.y;
+        float type    = params.z; // 0->rect, 1->sphere
 
-        light = Light(p, e, u, v, rad);
+        light = Light(position, emission, u, v, radius, area, type);
         sampleLight(light, lightSampleRec);
 
         vec3 lightDir = lightSampleRec.surfacePos - surfacePos;
@@ -199,7 +202,7 @@ vec3 DirectLight(in Ray r, in State state)
         {
             float bsdfPdf = DisneyPdf(r, state, lightDir);
             vec3 f = DisneyEval(r, state, lightDir);
-            float lightPdf = lightDistSq / (light.radiusAreaType.y * abs(dot(lightSampleRec.normal, lightDir)));
+            float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
 
             L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
         }
@@ -235,7 +238,7 @@ vec3 PathTrace(Ray r)
                 float misWeight = 1.0f;
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), acos(r.direction.y) * (1.0 / PI));
 
-                if (depth > 0 || state.specularBounce)
+                if (depth > 0 && !state.specularBounce)
                 {
                     // TODO: Fix NaNs when using certain HDRs
                     lightPdf = EnvPdf(r);

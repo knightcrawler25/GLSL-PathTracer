@@ -27,8 +27,8 @@
 #define INFINITY  1000000.0
 #define EPS 0.00001
 
-#define eReflection 0
-#define eRefraction 1
+#define REFL 0
+#define REFR 1
 
 mat4 transform;
 
@@ -78,7 +78,9 @@ struct Light
     vec3 emission; 
     vec3 u; 
     vec3 v; 
-    vec3 radiusAreaType; 
+    float radius; 
+    float area;
+    float type;
 };
 
 struct State 

@@ -147,13 +147,13 @@ void sampleSphereLight(in Light light, inout LightSampleRec lightSampleRec)
     float r1 = rand();
     float r2 = rand();
 
-    lightSampleRec.surfacePos = light.position + UniformSampleSphere(r1, r2) * light.radiusAreaType.x;
+    lightSampleRec.surfacePos = light.position + UniformSampleSphere(r1, r2) * light.radius;
     lightSampleRec.normal = normalize(lightSampleRec.surfacePos - light.position);
     lightSampleRec.emission = light.emission * float(numOfLights);
 }
 
 //-----------------------------------------------------------------------
-void sampleQuadLight(in Light light, inout LightSampleRec lightSampleRec)
+void sampleRectLight(in Light light, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
     float r1 = rand();
@@ -168,8 +168,8 @@ void sampleQuadLight(in Light light, inout LightSampleRec lightSampleRec)
 void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
-    if (int(light.radiusAreaType.z) == 0) // Quad Light
-        sampleQuadLight(light, lightSampleRec);
+    if (int(light.type) == 0) // Rect Light
+        sampleRectLight(light, lightSampleRec);
     else
         sampleSphereLight(light, lightSampleRec);
 }

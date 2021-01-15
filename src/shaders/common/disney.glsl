@@ -31,7 +31,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H;
 
-    if (state.rayType == eRefraction)
+    if (state.rayType == REFR)
         H = normalize(L + V * state.eta);
     else
         H = normalize(L + V);
@@ -44,12 +44,12 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float specularAlpha = max(0.001, state.mat.roughness);
 
     // Handle transmission separately
-    if (state.rayType == eRefraction)
+    if (state.rayType == REFR)
     {
         float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
         float F = DielectricFresnel(LDotH, state.eta);
         float denomSqrt = LDotH + VDotH * state.eta;
-        return pdfGTR2 * (1.0 - F) * VDotH / (denomSqrt * denomSqrt);
+        return pdfGTR2 * (1.0 - F) * LDotH / (denomSqrt * denomSqrt);
     }
 
     // Reflection
@@ -88,7 +88,7 @@ vec3 DisneySample(in Ray ray, inout State state)
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     state.specularBounce = false;
-    state.rayType = eReflection;
+    state.rayType = REFL;
 
     vec3 dir;
 
@@ -114,7 +114,7 @@ vec3 DisneySample(in Ray ray, inout State state)
         {
             dir = normalize(refract(-V, H, state.eta));
             state.specularBounce = true;
-            state.rayType = eRefraction;
+            state.rayType = REFR;
         }
     }
     // BRDF
@@ -149,7 +149,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H;
 
-    if (state.rayType == eRefraction)
+    if (state.rayType == REFR)
         H = normalize(L + V * state.eta);
     else
         H = normalize(L + V);
@@ -178,7 +178,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
 
         // TODO: Include subsurface scattering
-        if (state.rayType == eRefraction)
+        if (state.rayType == REFR)
         {
             float denomSqrt = LDotH + VDotH * state.eta;
             bsdf = state.mat.albedo * transmittance * (1.0 - F) * D * G * VDotH * LDotH * 4.0 / (denomSqrt * denomSqrt);

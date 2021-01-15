@@ -88,7 +88,7 @@ namespace GLSLPT
         int red_mat_id   = scene->AddMaterial(red_plastic);
 
         Light light;
-        light.type = LightType::QuadLight;
+        light.type = LightType::RectLight;
         light.position = Vec3(-0.103555f, 0.284840f, 0.606827f);
         light.u = Vec3(-0.103555f, 0.465656f, 0.521355f) - light.position;
         light.v = Vec3(0.096445f, 0.284840f, 0.606827f) - light.position;
@@ -96,7 +96,7 @@ namespace GLSLPT
         light.emission = Vec3(40, 41, 41);
 
         Light light2;
-        light2.type = LightType::QuadLight;
+        light2.type = LightType::RectLight;
         light2.position = Vec3(0.303145f, 0.461806f, -0.450967f);
         light2.u = Vec3(0.362568f, 0.280251f, -0.510182f) - light2.position;
         light2.v = Vec3(0.447143f, 0.461806f, -0.306465f) - light2.position;

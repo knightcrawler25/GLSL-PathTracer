@@ -36,15 +36,19 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         // Fetch light Data
         vec3 position = texelFetch(lightsTex, ivec2(i * 5 + 0, 0), 0).xyz;
         vec3 emission = texelFetch(lightsTex, ivec2(i * 5 + 1, 0), 0).xyz;
-        vec3 u = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
-        vec3 v = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
-        vec3 radiusAreaType = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
+        vec3 u        = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
+        vec3 v        = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
+        vec3 params   = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
+        float radius  = params.x;
+        float area    = params.y;
+        float type    = params.z;
 
-        if (radiusAreaType.z == 0.) // Rectangular Area Light
+        // Rectangular Area Light
+        if (type == 0.) 
         {
             vec3 normal = normalize(cross(u, v));
-            //if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
-            //    continue;
+            if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
+                continue;
             vec4 plane = vec4(normal, dot(normal, position));
             u *= 1.0f / dot(u, u);
             v *= 1.0f / dot(v, v);
@@ -56,21 +60,23 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
             {
                 t = d;
                 float cosTheta = dot(-r.direction, normal);
-                float pdf = (t * t) / (radiusAreaType.y * cosTheta);
+                float pdf = (t * t) / (area * cosTheta);
                 lightSampleRec.emission = emission;
                 lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
             }
         }
-        if (radiusAreaType.z == 1.) // Spherical Area Light
+
+        // Spherical Area Light
+        if (type == 1.) 
         {
-            d = SphereIntersect(radiusAreaType.x, position, r);
+            d = SphereIntersect(radius, position, r);
             if (d < 0.)
                 d = INFINITY;
             if (d < t)
             {
                 t = d;
-                float pdf = (t * t) / radiusAreaType.y;
+                float pdf = (t * t) / area;
                 lightSampleRec.emission = emission;
                 lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
