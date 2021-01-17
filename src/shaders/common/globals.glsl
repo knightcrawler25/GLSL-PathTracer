@@ -25,7 +25,7 @@
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
 #define INFINITY  1000000.0
-#define EPS 0.00001
+#define EPS 0.001
 
 #define REFL 0
 #define REFR 1
@@ -35,89 +35,89 @@ mat4 transform;
 vec2 seed;
 vec3 tempTexCoords;
 
-struct Ray 
-{ 
-    vec3 origin; 
-    vec3 direction; 
+struct Ray
+{
+    vec3 origin;
+    vec3 direction;
 };
 
 struct Material
 {
-    vec3 albedo; 
-    float specular; 
-    vec3 emission; 
-    float anisotropic; 
-    float metallic; 
-    float roughness; 
-    float subsurface; 
-    float specularTint; 
-    float sheen; 
-    float sheenTint; 
-    float clearcoat; 
-    float clearcoatGloss; 
-    float transmission; 
-    float ior; 
+    vec3 albedo;
+    float specular;
+    vec3 emission;
+    float anisotropic;
+    float metallic;
+    float roughness;
+    float subsurface;
+    float specularTint;
+    float sheen;
+    float sheenTint;
+    float clearcoat;
+    float clearcoatGloss;
+    float transmission;
+    float ior;
     vec3 extinction;
     vec3 texIDs;
 };
 
-struct Camera 
-{ 
-    vec3 up; 
+struct Camera
+{
+    vec3 up;
     vec3 right;
-    vec3 forward; 
-    vec3 position; 
-    float fov; 
+    vec3 forward;
+    vec3 position;
+    float fov;
     float focalDist;
-    float aperture; 
+    float aperture;
 };
 
-struct Light 
-{ 
-    vec3 position; 
-    vec3 emission; 
-    vec3 u; 
-    vec3 v; 
-    float radius; 
+struct Light
+{
+    vec3 position;
+    vec3 emission;
+    vec3 u;
+    vec3 v;
+    float radius;
     float area;
     float type;
 };
 
-struct State 
-{ 
+struct State
+{
     int depth;
     float eta;
     float hitDist;
 
     vec3 fhp;
-    vec3 normal; 
-    vec3 ffnormal; 
-    vec3 tangent; 
+    vec3 normal;
+    vec3 ffnormal;
+    vec3 tangent;
     vec3 bitangent;
-    
+
     bool isEmitter;
     bool specularBounce;
     int rayType;
 
-    vec2 texCoord; 
-    vec3 bary; 
-    ivec3 triID; 
+    vec2 texCoord;
+    vec3 bary;
+    ivec3 triID;
     int matID;
     Material mat;
 };
 
-struct BsdfSampleRec 
-{ 
-    vec3 bsdfDir; 
+struct BsdfSampleRec
+{
+    vec3 bsdfDir;
     float pdf;
 };
 
-struct LightSampleRec 
-{ 
-    vec3 surfacePos; 
-    vec3 normal; 
-    vec3 emission; 
-    float pdf; 
+struct LightSampleRec
+{
+    vec3 surfacePos;
+    vec3 normal;
+    vec3 emission;
+    float pdf;
 };
 
 uniform Camera camera;

@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-//----------------------------------------------------------------------
+ //----------------------------------------------------------------------
 vec3 ImportanceSampleGGX(float rgh, float r1, float r2)
 //----------------------------------------------------------------------
 {
@@ -44,23 +44,32 @@ float SchlickFresnel(float u)
 {
     float m = clamp(1.0 - u, 0.0, 1.0);
     float m2 = m * m;
-    return m2 * m2*m; // pow(m,5)
+    return m2 * m2 * m; // pow(m,5)
 }
 
 //-----------------------------------------------------------------------
-float DielectricFresnel(float theta, float eta)
+float DielectricFresnel(float cos_theta_i, float eta)
 //-----------------------------------------------------------------------
 {
-    float R0 = (eta - 1.0) / (eta + 1.0);
-    R0 *= R0;
-    return R0 + (1.0 - R0) * SchlickFresnel(theta);
+    float sinThetaTSq = eta * eta * (1.0f - cos_theta_i * cos_theta_i);
+
+    // Total internal reflection
+    if (sinThetaTSq > 1.0)
+        return 1.0;
+
+    float cos_theta_t = sqrt(max(1.0 - sinThetaTSq, 0.0));
+
+    float rs = (eta * cos_theta_t - cos_theta_i) / (eta * cos_theta_t + cos_theta_i);
+    float rp = (eta * cos_theta_i - cos_theta_t) / (eta * cos_theta_i + cos_theta_t);
+
+    return 0.5f * (rs * rs + rp * rp);
 }
 
 //-----------------------------------------------------------------------
 float GTR1(float NDotH, float a)
 //-----------------------------------------------------------------------
 {
-    if (a >= 1.0) 
+    if (a >= 1.0)
         return (1.0 / PI);
     float a2 = a * a;
     float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
@@ -72,8 +81,8 @@ float GTR2(float NDotH, float a)
 //-----------------------------------------------------------------------
 {
     float a2 = a * a;
-    float t = 1.0 + (a2 - 1.0)*NDotH*NDotH;
-    return a2 / (PI * t*t);
+    float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
+    return a2 / (PI * t * t);
 }
 
 //-----------------------------------------------------------------------
@@ -102,7 +111,7 @@ float SmithG_GGX_aniso(float NDotV, float VDotX, float VDotY, float ax, float ay
     float a = VDotX * ax;
     float b = VDotY * ay;
     float c = NDotV;
-    return 1.0 / (NDotV + sqrt(a*a + b*b + c*c));
+    return 1.0 / (NDotV + sqrt(a * a + b * b + c * c));
 }
 
 //-----------------------------------------------------------------------
@@ -114,7 +123,7 @@ vec3 CosineSampleHemisphere(float u1, float u2)
     float phi = 2.0 * PI * u2;
     dir.x = r * cos(phi);
     dir.y = r * sin(phi);
-    dir.z = sqrt(max(0.0, 1.0 - dir.x*dir.x - dir.y*dir.y));
+    dir.z = sqrt(max(0.0, 1.0 - dir.x * dir.x - dir.y * dir.y));
 
     return dir;
 }
@@ -137,7 +146,7 @@ float powerHeuristic(float a, float b)
 //-----------------------------------------------------------------------
 {
     float t = a * a;
-    return t / (b*b + t);
+    return t / (b * b + t);
 }
 
 //-----------------------------------------------------------------------
@@ -206,7 +215,7 @@ vec4 EnvSample(inout vec3 color)
     if (sin(theta) == 0.0)
         pdf = 0.0;
 
-    return vec4(-sin(theta) * cos(phi), cos(theta), -sin(theta)*sin(phi), (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta)));
+    return vec4(-sin(theta) * cos(phi), cos(theta), -sin(theta) * sin(phi), (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta)));
 }
 
 #endif
