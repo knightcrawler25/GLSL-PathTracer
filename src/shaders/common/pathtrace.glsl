@@ -278,11 +278,10 @@ vec3 PathTrace(Ray r)
         // Russian roulette
         if (depth >= RR_DEPTH)
         {
-            float q = max(max(throughput.x, max(throughput.y, throughput.z)), 0.001);
+            float q = min(max(throughput.x, max(throughput.y, throughput.z)) * state.eta * state.eta, 0.95);
             if (rand() > q)
                 break;
-
-            throughput *= 1.0 / q;
+            throughput /= q;
         }
 #endif
 

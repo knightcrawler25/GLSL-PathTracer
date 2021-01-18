@@ -48,7 +48,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     if (state.rayType == REFR)
     {
         float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-        float F = DielectricFresnel(NDotV, state.eta);
+        float F = DielectricFresnel(VDotH, state.eta);
         float denomSqrt = LDotH + VDotH * state.eta;
         return pdfGTR2 * (1.0 - F) * LDotH / (denomSqrt * denomSqrt) * state.mat.transmission;
     }
@@ -76,7 +76,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 
     // PDFs for bsdf
     float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-    float F = DielectricFresnel(NDotV, state.eta);
+    float F = DielectricFresnel(VDotH, state.eta);
     bsdfPdf = pdfGTR2 * F / (4.0 * VDotH);
 
     return mix(brdfPdf, bsdfPdf, state.mat.transmission);
@@ -102,17 +102,16 @@ vec3 DisneySample(in Ray ray, inout State state)
         vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-        //float F = DielectricFresnel(theta, state.eta);
-        vec3 T = refract(-V, H, state.eta);
-        float F = DielectricFresnel(abs(dot(N, V)), state.eta);
+        vec3 R = reflect(-V, H);
+        float F = DielectricFresnel(dot(R, H), state.eta);
 
         // Reflection/Total internal reflection
         if (rand() < F)
-            dir = normalize(reflect(-V, H));
+            dir = normalize(R);
         // Transmission
         else
         {
-            dir = normalize(T);
+            dir = normalize(refract(-V, H, state.eta));
             state.specularBounce = true;
             state.rayType = REFR;
         }
@@ -172,7 +171,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
             transmittance = exp(extinction * state.hitDist);
 
         float a = max(0.001, state.mat.roughness);
-        float F = DielectricFresnel(NDotV, state.eta);
+        float F = DielectricFresnel(VDotH, state.eta);
         float D = GTR2(NDotH, a);
         float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
 
@@ -180,7 +179,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         if (state.rayType == REFR)
         {
             float denomSqrt = LDotH + VDotH * state.eta;
-            bsdf = state.mat.albedo * transmittance * (1.0 - F) * D * G * VDotH * LDotH * 4.0 / (denomSqrt * denomSqrt);
+            bsdf = state.mat.albedo * transmittance * (1.0 - F) * D * G * VDotH * LDotH * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
         }
         else
         {
@@ -231,8 +230,8 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
 
         brdf = ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic)
-            + Gs * Fs * Ds
-            + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
+                + Gs * Fs * Ds
+                + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
     }
 
     return mix(brdf, bsdf, state.mat.transmission);
