@@ -384,7 +384,7 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("Clearcoat", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoat, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("ClearcoatGloss", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatGloss, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Transmission", &scene->materials[scene->meshInstances[selectedInstance].materialID].transmission, 0.001f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.0f, 2.0f);
+            objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.001f, 2.0f);
             objectPropChanged |= ImGui::ColorEdit3("Extinction", (float*)extinction, 0);
 
             // Transforms Properties
