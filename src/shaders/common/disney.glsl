@@ -22,6 +22,17 @@
  * SOFTWARE.
  */
 
+ /* References:
+ * https://static1.squarespace.com/static/58586fa5ebbd1a60e7d76d3e/t/593a3afa46c3c4a376d779f6/1496988449807/s2012_pbs_disney_brdf_notes_v2.pdf
+ * https://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
+ * https://github.com/wdas/brdf/blob/main/src/brdfs/disney.brdf
+ * https://github.com/mmacklin/tinsel/blob/master/src/disney.h
+ * http://simon-kallweit.me/rendercompo2015/report/
+ * http://shihchinw.github.io/2015/07/implementing-disney-principled-brdf-in-arnold.html
+ * https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
+ * https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ */
+
  //-----------------------------------------------------------------------
 float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
@@ -62,12 +73,8 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
-    float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
-    float ax = max(0.001, state.mat.roughness / aspect);
-    float ay = max(0.001, state.mat.roughness * aspect);
-
     // PDFs for brdf
-    float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay) * NDotH;
+    float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay) * NDotH;
     float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
     float ratio = 1.0 / (1.0 + state.mat.clearcoat);
     float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * VDotH);
@@ -99,17 +106,16 @@ vec3 DisneySample(in Ray ray, inout State state)
     // BSDF
     if (rand() < state.mat.transmission)
     {
-        vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
+        vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
         vec3 R = reflect(-V, H);
         float F = DielectricFresnel(dot(R, H), state.eta);
 
-        // Reflection/Total internal reflection
-        if (rand() < F)
+        if (rand() < F) // Reflection/Total internal reflection
             dir = normalize(R);
-        // Transmission
-        else
+        
+        else // Transmission
         {
             dir = normalize(refract(-V, H, state.eta));
             state.specularBounce = true;
@@ -129,9 +135,18 @@ vec3 DisneySample(in Ray ray, inout State state)
         }
         else
         {
-            //TODO: Switch to sampling visible normals 
-            vec3 H = ImportanceSampleGGX(state.mat.roughness, r1, r2);
-            H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
+            float specRatio = 1.0 / (1.0 + state.mat.clearcoat);
+            float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
+
+            vec3 H;
+            
+            // TODO: Implement http://jcgt.org/published/0007/04/01/
+            if(rand() < specRatio) 
+               H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2); // Sample primary specular lobe
+            else 
+               H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2); // Sample clearcoat lobe
+            
+            H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
             dir = reflect(-V, H);
         }
 
@@ -167,6 +182,8 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         vec3 transmittance = vec3(1.0);
         vec3 extinction = log(state.mat.extinction);
 
+        // Update transmittance only if the ray is currently inside the object.
+        // This does not work for thin surfaces.
         if (dot(state.normal, state.ffnormal) < 0.0)
             transmittance = exp(extinction * state.hitDist);
 
@@ -212,14 +229,11 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
 
         // TODO: Add anisotropic rotation
         // specular
-        float aspect = sqrt(1.0 - state.mat.anisotropic * 0.9);
-        float ax = max(0.001, state.mat.roughness / aspect);
-        float ay = max(0.001, state.mat.roughness * aspect);
-        float Ds = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), ax, ay);
+        float Ds = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
         float FH = SchlickFresnel(LDotH);
         vec3 Fs = mix(Cspec0, vec3(1.0), FH);
-        float Gs = SmithG_GGX_aniso(NDotL, dot(L, state.tangent), dot(L, state.bitangent), ax, ay);
-        Gs *= SmithG_GGX_aniso(NDotV, dot(V, state.tangent), dot(V, state.bitangent), ax, ay);
+        float Gs = SmithG_GGX_aniso(NDotL, dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
+        Gs *= SmithG_GGX_aniso(NDotV, dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
 
         // sheen
         vec3 Fsheen = FH * state.mat.sheen * Csheen;

@@ -49,6 +49,8 @@ struct Material
     float anisotropic;
     float metallic;
     float roughness;
+    float ax;
+    float ay;
     float subsurface;
     float specularTint;
     float sheen;

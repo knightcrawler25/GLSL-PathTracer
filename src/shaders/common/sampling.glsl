@@ -22,8 +22,38 @@
  * SOFTWARE.
  */
 
- //----------------------------------------------------------------------
-vec3 ImportanceSampleGGX(float rgh, float r1, float r2)
+//----------------------------------------------------------------------
+vec3 ImportanceSampleGTR1(float rgh, float r1, float r2)
+//----------------------------------------------------------------------
+{
+    float a = max(0.001, rgh);
+    float a2 = a * a;
+
+    float phi = r1 * TWO_PI;
+
+    float cosTheta = sqrt((1.0 - pow(a2, 1.0 - r1)) / (1.0 - a2));
+    float sinTheta = clamp(sqrt(1.0 - (cosTheta * cosTheta)), 0.0, 1.0);
+    float sinPhi = sin(phi);
+    float cosPhi = cos(phi);
+
+    return vec3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
+}
+
+//----------------------------------------------------------------------
+vec3 ImportanceSampleGTR2_aniso(float ax, float ay, float r1, float r2)
+//----------------------------------------------------------------------
+{
+    float phi = r1 * TWO_PI;
+
+    float sinPhi = ay * sin(phi);
+    float cosPhi = ax * cos(phi);
+    float tanTheta = sqrt(r2 / (1 - r2));
+
+    return vec3(tanTheta * cosPhi, tanTheta * sinPhi, 1.0);
+}
+
+//----------------------------------------------------------------------
+vec3 ImportanceSampleGTR2(float rgh, float r1, float r2)
 //----------------------------------------------------------------------
 {
     float a = max(0.001, rgh);
