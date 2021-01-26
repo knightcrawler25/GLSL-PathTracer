@@ -57,7 +57,7 @@ struct Material
     float sheenTint;
     float clearcoat;
     float clearcoatGloss;
-    float transmission;
+    float specTrans;
     float ior;
     vec3 extinction;
     vec3 texIDs;

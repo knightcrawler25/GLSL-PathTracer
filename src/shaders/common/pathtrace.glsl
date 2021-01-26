@@ -91,7 +91,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     mat.clearcoat      = param4.z;
     mat.clearcoatGloss = param4.w;
 
-    mat.transmission   = param5.x;
+    mat.specTrans      = param5.x;
     mat.ior            = param5.y;
 
     mat.extinction     = vec3(param5.zw, param6.x);
@@ -279,6 +279,10 @@ vec3 PathTrace(Ray r)
             throughput *= DisneyEval(r, state, bsdfSampleRec.bsdfDir) * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
         else
             break;
+
+        // Calculate transmittance only if the ray is currently inside the object. This does not work for thin surfaces.
+        if (dot(state.normal, state.ffnormal) < 0.0)
+            throughput *= exp(log(state.mat.extinction) * state.hitDist);
 
 #ifdef RR
         // Russian roulette
