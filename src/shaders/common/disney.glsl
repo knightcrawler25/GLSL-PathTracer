@@ -23,14 +23,16 @@
  */
 
  /* References:
- * https://static1.squarespace.com/static/58586fa5ebbd1a60e7d76d3e/t/593a3afa46c3c4a376d779f6/1496988449807/s2012_pbs_disney_brdf_notes_v2.pdf
- * https://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
- * https://github.com/wdas/brdf/blob/main/src/brdfs/disney.brdf
- * https://github.com/mmacklin/tinsel/blob/master/src/disney.h
- * http://simon-kallweit.me/rendercompo2015/report/
- * http://shihchinw.github.io/2015/07/implementing-disney-principled-brdf-in-arnold.html
- * https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
- * https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ * [1] https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf
+ * [2] https://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
+ * [3] https://github.com/wdas/brdf/blob/main/src/brdfs/disney.brdf
+ * [4] https://github.com/mmacklin/tinsel/blob/master/src/disney.h
+ * [5] http://simon-kallweit.me/rendercompo2015/report/
+ * [6] http://shihchinw.github.io/2015/07/implementing-disney-principled-brdf-in-arnold.html
+ * [7] https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
+ * [8] https://github.com/schuttejoe/Selas/blob/dev/Source/Core/Shading/Disney.cpp
+ * [9] https://github.com/mmp/pbrt-v3/blob/master/src/materials/disney.cpp
+ * [10] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
  */
 
  //-----------------------------------------------------------------------
@@ -184,7 +186,6 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 bsdf = vec3(0.0);
 
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
-    float diffuseWeight = (1.0 - state.mat.metallic) * (1.0 - state.mat.specTrans);
 
     if (transWeight > 0.0)
     {
@@ -202,8 +203,6 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         {
             bsdf = state.mat.albedo * F * D * G;
         }
-
-        bsdf = bsdf * (1.0 - state.mat.metallic) * state.mat.specTrans;
     }
 
     if (transWeight < 1.0 && dot(N, L) > 0.0 && dot(N, V) > 0.0)
@@ -245,11 +244,11 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         float Fr = mix(0.04, 1.0, FH);
         float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
 
-        brdf = ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * diffuseWeight
+        brdf = ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic)
                 + Gs * Fs * Ds
                 + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
     }
 
-    return brdf + bsdf;
+    return mix(brdf, bsdf, transWeight);
 }
 

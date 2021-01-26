@@ -48,7 +48,7 @@ namespace GLSLPT
             enableRR = true;
             useConstantBg = false;
             RRDepth = 2;
-            bgColor = Vec3(1.0f, 1.0f, 1.0f);
+            bgColor = Vec3(0.3f, 0.3f, 0.3f);
             denoiserFrameCnt = 20;
             enableDenoiser = true;
         }
