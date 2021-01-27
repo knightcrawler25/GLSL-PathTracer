@@ -49,8 +49,6 @@ struct Material
     float anisotropic;
     float metallic;
     float roughness;
-    float ax;
-    float ay;
     float subsurface;
     float specularTint;
     float sheen;
@@ -61,6 +59,9 @@ struct Material
     float ior;
     vec3 extinction;
     vec3 texIDs;
+    // Roughness calculated from anisotropic
+    float ax;
+    float ay;
 };
 
 struct Camera

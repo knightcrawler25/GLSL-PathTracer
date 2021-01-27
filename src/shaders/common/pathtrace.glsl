@@ -78,11 +78,6 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     mat.metallic       = param3.x;
     mat.roughness      = param3.y;
 
-    // Calculate anisotropic roughness along the tangent and bitangent directions
-    float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
-    mat.ax = max(0.001, mat.roughness / aspect);
-    mat.ay = max(0.001, mat.roughness * aspect);
-
     mat.subsurface     = param3.z;
     mat.specularTint   = param3.w;
 
@@ -129,6 +124,11 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
         Onb(state.ffnormal, state.tangent, state.bitangent);
     }
+
+    // Calculate anisotropic roughness along the tangent and bitangent directions
+    float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
+    mat.ax = max(0.001, mat.roughness / aspect);
+    mat.ay = max(0.001, mat.roughness * aspect);
 
     state.mat = mat;
     state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / mat.ior) : mat.ior;
