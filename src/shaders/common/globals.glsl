@@ -29,6 +29,7 @@
 
 #define REFL 0
 #define REFR 1
+#define SUBS 2
 
 mat4 transform;
 

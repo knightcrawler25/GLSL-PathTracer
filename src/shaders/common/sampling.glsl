@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-//----------------------------------------------------------------------
+ //----------------------------------------------------------------------
 vec3 ImportanceSampleGTR1(float rgh, float r1, float r2)
 //----------------------------------------------------------------------
 {
@@ -145,12 +145,12 @@ float SmithG_GGX_aniso(float NDotV, float VDotX, float VDotY, float ax, float ay
 }
 
 //-----------------------------------------------------------------------
-vec3 CosineSampleHemisphere(float u1, float u2)
+vec3 CosineSampleHemisphere(float r1, float r2)
 //-----------------------------------------------------------------------
 {
     vec3 dir;
-    float r = sqrt(u1);
-    float phi = 2.0 * PI * u2;
+    float r = sqrt(r1);
+    float phi = TWO_PI * r2;
     dir.x = r * cos(phi);
     dir.y = r * sin(phi);
     dir.z = sqrt(max(0.0, 1.0 - dir.x * dir.x - dir.y * dir.y));
@@ -159,16 +159,24 @@ vec3 CosineSampleHemisphere(float u1, float u2)
 }
 
 //-----------------------------------------------------------------------
-vec3 UniformSampleSphere(float u1, float u2)
+vec3 UniformSampleHemisphere(float r1, float r2)
 //-----------------------------------------------------------------------
 {
-    float z = 1.0 - 2.0 * u1;
-    float r = sqrt(max(0.f, 1.0 - z * z));
-    float phi = 2.0 * PI * u2;
-    float x = r * cos(phi);
-    float y = r * sin(phi);
+    float r = sqrt(max(0.0, 1.0 - r1 * r1));
+    float phi = TWO_PI * r2;
 
-    return vec3(x, y, z);
+    return vec3(r * cos(phi), r * sin(phi), r1);
+}
+
+//-----------------------------------------------------------------------
+vec3 UniformSampleSphere(float r1, float r2)
+//-----------------------------------------------------------------------
+{
+    float z = 1.0 - 2.0 * r1;
+    float r = sqrt(max(0.0, 1.0 - z * z));
+    float phi = TWO_PI * r2;
+
+    return vec3(r * cos(phi), r * sin(phi), z);
 }
 
 //-----------------------------------------------------------------------

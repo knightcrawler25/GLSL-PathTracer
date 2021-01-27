@@ -33,6 +33,7 @@
  * [8] https://github.com/schuttejoe/Selas/blob/dev/Source/Core/Shading/Disney.cpp
  * [9] https://github.com/mmp/pbrt-v3/blob/master/src/materials/disney.cpp
  * [10] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ * [11] https://graphics.pixar.com/library/RadiosityCaching/paper.pdf
  */
 
  //-----------------------------------------------------------------------
@@ -56,28 +57,33 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float NDotV = abs(dot(N, V));
 
     float specularAlpha = max(0.001, state.mat.roughness);
-    float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
-
-    // Handle transmission separately
-    if (state.rayType == REFR)
-    {
-        float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-        float F = DielectricFresnel(VDotH, state.eta);
-        float denomSqrt = LDotH + VDotH * state.eta;
-        return pdfGTR2 * (1.0 - F) * LDotH / (denomSqrt * denomSqrt) * transWeight;
-    }
-
-    // Reflection
-    float brdfPdf = 0.0;
-    float bsdfPdf = 0.0;
-
     float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float specularRatio = 1.0 - diffuseRatio;
 
-    // PDFs for brdf
-    if(dot(N, L) > 0.0 && dot(N, V) > 0.0)
+    float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
+
+    float brdfPdf = 0.0;
+    float bsdfPdf = 0.0;
+
+    // Handle transmission/subsurface separately
+    if (state.rayType != REFL)
+    {
+        // Subsurface
+        brdfPdf = 1.0 / TWO_PI * state.mat.subsurface * diffuseRatio;
+
+        // Transmission
+        float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+        float F = DielectricFresnel(VDotH, state.eta);
+        float denomSqrt = LDotH + VDotH * state.eta;
+        bsdfPdf = pdfGTR2 * (1.0 - F) * LDotH / (denomSqrt * denomSqrt);
+
+        return mix(brdfPdf, bsdfPdf, transWeight);
+    }
+
+    // BRDF Reflection
+    if (dot(N, L) > 0.0 && dot(N, V) > 0.0)
     {
         float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay) * NDotH;
         float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
@@ -87,7 +93,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
         brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
     }
 
-    // PDFs for bsdf
+    // BSDF Reflection
     float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
     float F = DielectricFresnel(VDotH, state.eta);
     bsdfPdf = pdfGTR2 * F / (4.0 * VDotH);
@@ -122,7 +128,7 @@ vec3 DisneySample(in Ray ray, inout State state)
 
         if (rand() < F) // Reflection/Total internal reflection
             dir = normalize(R);
-   
+
         else // Transmission
         {
             dir = normalize(refract(-V, H, state.eta));
@@ -137,9 +143,19 @@ vec3 DisneySample(in Ray ray, inout State state)
 
         if (rand() < diffuseRatio)
         {
-            vec3 H = CosineSampleHemisphere(r1, r2);
-            H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
-            dir = H;
+            // This way of performing subsurface scattering was taken from Tinsel [4] and is similar [11].
+            // Simpler than random walk but not sure if accurate.
+            if (rand() < state.mat.subsurface)
+            {
+                dir = UniformSampleHemisphere(r1, r2);
+                dir = state.tangent * dir.x + state.bitangent * dir.y - N * dir.z;
+                state.rayType = SUBS;
+            }
+            else
+            {
+                dir = CosineSampleHemisphere(r1, r2);
+                dir = state.tangent * dir.x + state.bitangent * dir.y + N * dir.z;
+            }
         }
         else
         {
@@ -147,18 +163,18 @@ vec3 DisneySample(in Ray ray, inout State state)
             float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
             vec3 H;
-            
+
             // TODO: Implement http://jcgt.org/published/0007/04/01/
-            if(rand() < specRatio) 
-               H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2); // Sample primary specular lobe
-            else 
-               H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2); // Sample clearcoat lobe
-            
+            if (rand() < specRatio)
+                H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2); // Sample primary specular lobe
+            else
+                H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2); // Sample clearcoat lobe
+
             H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
             dir = reflect(-V, H);
         }
-
     }
+
     return dir;
 }
 
@@ -187,6 +203,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
 
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
+    // BSDF
     if (transWeight > 0.0)
     {
         float a = max(0.001, state.mat.roughness);
@@ -205,48 +222,59 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         }
     }
 
-    if (transWeight < 1.0 && dot(N, L) > 0.0 && dot(N, V) > 0.0)
+    if (transWeight < 1.0)
     {
-        vec3 Cdlin = state.mat.albedo;
-        float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
-
-        vec3 Ctint = Cdlum > 0.0 ? Cdlin / Cdlum : vec3(1.0f); // normalize lum. to isolate hue+sat
-        vec3 Cspec0 = mix(state.mat.specular * 0.08 * mix(vec3(1.0), Ctint, state.mat.specularTint), Cdlin, state.mat.metallic);
-        vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
-
-        // Diffuse fresnel - go from 1 at normal incidence to .5 at grazing
-        // and mix in diffuse retro-reflection based on roughness
         float FL = SchlickFresnel(NDotL);
         float FV = SchlickFresnel(NDotV);
-        float Fd90 = 0.5 + 2.0 * LDotH * LDotH * state.mat.roughness;
-        float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
 
-        // Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
-        // 1.25 scale is used to (roughly) preserve albedo
-        // Fss90 used to "flatten" retroreflection based on roughness
-        float Fss90 = LDotH * LDotH * state.mat.roughness;
-        float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
-        float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
+        // Subsurface
+        if (state.rayType == SUBS)
+        {
+            float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
+            brdf = sqrt(state.mat.albedo) * 1.0 / PI * Fd * state.mat.subsurface * (1.0 - state.mat.metallic);
+        }
+        // BRDF
+        else
+        {
+            vec3 Cdlin = state.mat.albedo;
+            float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
 
-        // TODO: Add anisotropic rotation
-        // specular
-        float Ds = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
-        float FH = SchlickFresnel(LDotH);
-        vec3 Fs = mix(Cspec0, vec3(1.0), FH);
-        float Gs = SmithG_GGX_aniso(NDotL, dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
-        Gs *= SmithG_GGX_aniso(NDotV, dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
+            vec3 Ctint = Cdlum > 0.0 ? Cdlin / Cdlum : vec3(1.0f); // normalize lum. to isolate hue+sat
+            vec3 Cspec0 = mix(state.mat.specular * 0.08 * mix(vec3(1.0), Ctint, state.mat.specularTint), Cdlin, state.mat.metallic);
+            vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
 
-        // sheen
-        vec3 Fsheen = FH * state.mat.sheen * Csheen;
+            // Diffuse fresnel - go from 1 at normal incidence to .5 at grazing
+            // and mix in diffuse retro-reflection based on roughness
+            float Fd90 = 0.5 + 2.0 * LDotH * LDotH * state.mat.roughness;
+            float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
 
-        // clearcoat (ior = 1.5 -> F0 = 0.04)
-        float Dr = GTR1(NDotH, mix(0.1, 0.001, state.mat.clearcoatGloss));
-        float Fr = mix(0.04, 1.0, FH);
-        float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
+            // Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
+            // 1.25 scale is used to (roughly) preserve albedo
+            // Fss90 used to "flatten" retroreflection based on roughness
+            // float Fss90 = LDotH * LDotH * state.mat.roughness;
+            // float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+            // float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
 
-        brdf = ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic)
+            // TODO: Add anisotropic rotation
+            // specular
+            float Ds = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
+            float FH = SchlickFresnel(LDotH);
+            vec3 Fs = mix(Cspec0, vec3(1.0), FH);
+            float Gs = SmithG_GGX_aniso(NDotL, dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
+            Gs *= SmithG_GGX_aniso(NDotV, dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
+
+            // sheen
+            vec3 Fsheen = FH * state.mat.sheen * Csheen;
+
+            // clearcoat (ior = 1.5 -> F0 = 0.04)
+            float Dr = GTR1(NDotH, mix(0.1, 0.001, state.mat.clearcoatGloss));
+            float Fr = mix(0.04, 1.0, FH);
+            float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
+
+            brdf = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic)
                 + Gs * Fs * Ds
                 + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
+        }
     }
 
     return mix(brdf, bsdf, transWeight);
