@@ -141,7 +141,7 @@ vec3 DirectLight(in Ray r, in State state)
     vec3 L = vec3(0.0);
     BsdfSampleRec bsdfSampleRec;
 
-    vec3 surfacePos = state.fhp + state.ffnormal * EPS;
+    vec3 surfacePos = state.fhp + state.normal * EPS;
 
     // Environment Light
 #ifdef ENVMAP
@@ -152,7 +152,7 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
-        if (dot(lightDir, state.ffnormal) > 0.0)
+        //if (dot(lightDir, state.ffnormal) > 0.0)
         {
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
@@ -162,9 +162,12 @@ vec3 DirectLight(in Ray r, in State state)
                 float bsdfPdf = DisneyPdf(r, state, lightDir);
                 vec3 f = DisneyEval(r, state, lightDir);
 
-                float misWeight = powerHeuristic(lightPdf, bsdfPdf);
-                if (misWeight > 0.0)
-                    L += misWeight * f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
+                if (bsdfPdf > 0.0)
+                {
+                    float misWeight = powerHeuristic(lightPdf, bsdfPdf);
+                    if (misWeight > 0.0)
+                        L += misWeight * f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
+                }
             }
         }
     }
@@ -198,7 +201,7 @@ vec3 DirectLight(in Ray r, in State state)
         float lightDistSq = lightDist * lightDist;
         lightDir /= sqrt(lightDistSq);
 
-        if (dot(lightDir, state.ffnormal) <= 0.0 || dot(lightDir, lightSampleRec.normal) >= 0.0)
+        if (dot(lightDir, lightSampleRec.normal) >= 0.0)
             return L;
 
         Ray shadowRay = Ray(surfacePos, lightDir);
@@ -209,8 +212,10 @@ vec3 DirectLight(in Ray r, in State state)
             float bsdfPdf = DisneyPdf(r, state, lightDir);
             vec3 f = DisneyEval(r, state, lightDir);
             float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
-
-            L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
+            //if (bsdfPdf > 0.0)
+            {
+                L += powerHeuristic(lightPdf, bsdfPdf) * f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
+            }
         }
     }
 #endif
@@ -227,12 +232,16 @@ vec3 PathTrace(Ray r)
     State state;
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
+    vec3 absorption = vec3(0.0);
 
     for (int depth = 0; depth < maxDepth; depth++)
     {
         float lightPdf = 1.0f;
         state.depth = depth;
         float t = ClosestHit(r, state, lightSampleRec);
+
+        // Calculate transmittance only if the ray is currently inside the object. This does not work for thin surfaces.
+        throughput *= exp(absorption * state.hitDist);
 
         if (t == INFINITY)
         {
@@ -275,14 +284,13 @@ vec3 PathTrace(Ray r)
 
         bsdfSampleRec.pdf = DisneyPdf(r, state, bsdfSampleRec.bsdfDir);
 
+        if (dot(state.ffnormal, bsdfSampleRec.bsdfDir) < 0.0)
+            absorption = log(state.mat.extinction);
+
         if (bsdfSampleRec.pdf > 0.0)
             throughput *= DisneyEval(r, state, bsdfSampleRec.bsdfDir) * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
         else
             break;
-
-        // Calculate transmittance only if the ray is currently inside the object. This does not work for thin surfaces.
-        if (dot(state.normal, state.ffnormal) < 0.0)
-            throughput *= exp(log(state.mat.extinction) * state.hitDist);
 
 #ifdef RR
         // Russian roulette

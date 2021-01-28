@@ -45,9 +45,9 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H;
 
-    if (state.rayType == REFR)
-        H = normalize(L + V * state.eta);
-    else
+    //if (dot(N, L) < 0.0)
+    //    H = normalize(L + V * state.eta);
+    //else
         H = normalize(L + V);
 
     float NDotH = abs(dot(N, H));
@@ -68,37 +68,41 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     float bsdfPdf = 0.0;
 
     // Handle transmission/subsurface separately
-    if (state.rayType != REFL)
+    if (dot(N, L) < 0.0)
     {
         // Subsurface
-        brdfPdf = 1.0 / TWO_PI * state.mat.subsurface * diffuseRatio;
+        brdfPdf = 1.0 / TWO_PI * state.mat.subsurface * 0.5;
 
         // Transmission
-        float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+        /*float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
         float F = DielectricFresnel(VDotH, state.eta);
         float denomSqrt = LDotH + VDotH * state.eta;
         bsdfPdf = pdfGTR2 * (1.0 - F) * LDotH / (denomSqrt * denomSqrt);
 
-        return mix(brdfPdf, bsdfPdf, transWeight);
+        return mix(brdfPdf, bsdfPdf, transWeight);*/
+
+        return brdfPdf;
     }
 
     // BRDF Reflection
-    if (dot(N, L) > 0.0 && dot(N, V) > 0.0)
+    //if (dot(N, L) > 0.0 && dot(N, V) > 0.0)
     {
         float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay) * NDotH;
         float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
         float ratio = 1.0 / (1.0 + state.mat.clearcoat);
         float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * VDotH);
-        float pdfDiff = NDotL * (1.0 / PI);
-        brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
+        float pdfDiff = NDotL * (1.0 / PI) * (1.0 - state.mat.subsurface);
+        brdfPdf = 0.5 * pdfDiff + 0.5 * pdfSpec;
     }
 
     // BSDF Reflection
-    float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+    /*float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
     float F = DielectricFresnel(VDotH, state.eta);
     bsdfPdf = pdfGTR2 * F / (4.0 * VDotH);
 
-    return mix(brdfPdf, bsdfPdf, transWeight);
+    return mix(brdfPdf, bsdfPdf, transWeight);*/
+
+    return brdfPdf;
 }
 
 //-----------------------------------------------------------------------
@@ -107,8 +111,6 @@ vec3 DisneySample(in Ray ray, inout State state)
 {
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
-    state.specularBounce = false;
-    state.rayType = REFL;
 
     vec3 dir;
 
@@ -118,7 +120,7 @@ vec3 DisneySample(in Ray ray, inout State state)
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
     // BSDF
-    if (rand() < transWeight)
+    /*if (rand() < transWeight)
     {
         vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
@@ -132,16 +134,14 @@ vec3 DisneySample(in Ray ray, inout State state)
         else // Transmission
         {
             dir = normalize(refract(-V, H, state.eta));
-            state.specularBounce = true;
-            state.rayType = REFR;
         }
     }
     // BRDF
-    else
+    else*/
     {
         float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
 
-        if (rand() < diffuseRatio)
+        if (rand() < 0.5)
         {
             // This way of performing subsurface scattering was taken from Tinsel [4] and is similar [11].
             // Simpler than random walk but not sure if accurate.
@@ -149,7 +149,6 @@ vec3 DisneySample(in Ray ray, inout State state)
             {
                 dir = UniformSampleHemisphere(r1, r2);
                 dir = state.tangent * dir.x + state.bitangent * dir.y - N * dir.z;
-                state.rayType = SUBS;
             }
             else
             {
@@ -187,9 +186,9 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H;
 
-    if (state.rayType == REFR)
-        H = normalize(L + V * state.eta);
-    else
+    //if (dot(N, L) < 0.0)
+    //    H = normalize(L + V * state.eta);
+    //else
         H = normalize(L + V);
 
     float NDotL = abs(dot(N, L));
@@ -204,14 +203,14 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
     // BSDF
-    if (transWeight > 0.0)
+    /*if (transWeight > 0.0)
     {
         float a = max(0.001, state.mat.roughness);
         float F = DielectricFresnel(VDotH, state.eta);
         float D = GTR2(NDotH, a);
         float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
 
-        if (state.rayType == REFR)
+        if (dot(N, L) < 0.0)
         {
             float denomSqrt = LDotH + VDotH * state.eta;
             bsdf = state.mat.albedo * (1.0 - F) * D * G * VDotH * LDotH * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
@@ -220,18 +219,21 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         {
             bsdf = state.mat.albedo * F * D * G;
         }
-    }
+    }*/
 
-    if (transWeight < 1.0)
+    //if (transWeight < 1.0)
     {
         float FL = SchlickFresnel(NDotL);
         float FV = SchlickFresnel(NDotV);
 
         // Subsurface
-        if (state.rayType == SUBS)
+        if (dot(N, L) < 0.0)
         {
-            float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
-            brdf = sqrt(state.mat.albedo) * 1.0 / PI * Fd * state.mat.subsurface * (1.0 - state.mat.metallic);
+            if (state.mat.subsurface > 0.0)
+            {
+                float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
+                brdf = sqrt(state.mat.albedo) * 1.0 / PI * Fd * state.mat.subsurface * (1.0 - state.mat.metallic);
+            }
         }
         // BRDF
         else
@@ -272,11 +274,12 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
             float Gr = SmithG_GGX(NDotL, 0.25) * SmithG_GGX(NDotV, 0.25);
 
             brdf = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic)
-                + Gs * Fs * Ds
-                + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
+                    + Gs * Fs * Ds
+                    + 0.25 * state.mat.clearcoat * Gr * Fr * Dr;
         }
     }
 
-    return mix(brdf, bsdf, transWeight);
-}
+    //return mix(brdf, bsdf, transWeight);
 
+    return brdf;
+}
