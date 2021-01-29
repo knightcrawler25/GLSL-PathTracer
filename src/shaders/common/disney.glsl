@@ -40,7 +40,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec,
 {
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
-    vec3 L = normalize(bsdfDir);
+    vec3 L = bsdfDir;
     vec3 H;
 
     if (dot(N, L) < 0.0)
@@ -133,7 +133,7 @@ vec3 DisneySample(in Ray ray, inout State state, inout vec3 H)
         if (rand() < F) 
             dir = normalize(R); // Reflection/Total internal reflection
         else
-            dir = refract(-V, H, state.eta); // Transmission
+            dir = normalize(refract(-V, H, state.eta)); // Transmission
             
     }
     // BRDF
