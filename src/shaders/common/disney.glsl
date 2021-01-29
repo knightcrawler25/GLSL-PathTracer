@@ -30,31 +30,37 @@
  * [5] http://simon-kallweit.me/rendercompo2015/report/
  * [6] http://shihchinw.github.io/2015/07/implementing-disney-principled-brdf-in-arnold.html
  * [7] https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
- * [8] https://github.com/schuttejoe/Selas/blob/dev/Source/Core/Shading/Disney.cpp
- * [9] https://github.com/mmp/pbrt-v3/blob/master/src/materials/disney.cpp
- * [10] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
- * [11] https://graphics.pixar.com/library/RadiosityCaching/paper.pdf
+ * [8] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ * [9] https://graphics.pixar.com/library/RadiosityCaching/paper.pdf
  */
 
  //-----------------------------------------------------------------------
-float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
+float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec, vec3 X)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
-    vec3 L = bsdfDir;
+    vec3 L = normalize(bsdfDir);
     vec3 H;
 
-    //if (dot(N, L) < 0.0)
-    //    H = normalize(L + V * state.eta);
-    //else
+    if (dot(N, L) < 0.0)
+    {
+        H = -normalize(L * (1.0 / state.eta) + V);
+        if (dot(N, H) < 0.0)
+            H = -H;
+    }
+    else
         H = normalize(L + V);
 
-    float NDotH = abs(dot(N, H));
-    float VDotH = abs(dot(V, H));
-    float LDotH = abs(dot(L, H));
-    float NDotL = abs(dot(N, L));
-    float NDotV = abs(dot(N, V));
+    // Used when performing BSDF sampling. The above code is causing issues with fireflies at glancing angles so this is temporary fix
+    if(useHalfVec)
+        H = X;
+
+    float NDotH = dot(N, H);
+    float VDotH = dot(V, H);
+    float LDotH = dot(L, H);
+    float NDotL = dot(N, L);
+    float NDotV = dot(N, V);
 
     float specularAlpha = max(0.001, state.mat.roughness);
     float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
@@ -71,46 +77,42 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     if (dot(N, L) < 0.0)
     {
         // Subsurface
-        brdfPdf = 1.0 / TWO_PI * state.mat.subsurface * 0.5;
+        brdfPdf = (1.0 / TWO_PI) * state.mat.subsurface * diffuseRatio;
 
         // Transmission
-        /*float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-        float F = DielectricFresnel(VDotH, state.eta);
-        float denomSqrt = LDotH + VDotH * state.eta;
-        bsdfPdf = pdfGTR2 * (1.0 - F) * LDotH / (denomSqrt * denomSqrt);
+        float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+        float F = DielectricFresnel(abs(VDotH), state.eta);
+        float denomSqrt = LDotH * state.eta + VDotH;
+        bsdfPdf = pdfGTR2 * (1.0 - F) * abs(LDotH) / (denomSqrt * denomSqrt);
 
-        return mix(brdfPdf, bsdfPdf, transWeight);*/
-
-        return brdfPdf;
+        return mix(brdfPdf, bsdfPdf, transWeight);
     }
-
-    // BRDF Reflection
-    //if (dot(N, L) > 0.0 && dot(N, V) > 0.0)
+    else
     {
+        // BRDF Reflection
         float pdfGTR2_aniso = GTR2_aniso(NDotH, dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay) * NDotH;
         float pdfGTR1 = GTR1(NDotH, clearcoatAlpha) * NDotH;
         float ratio = 1.0 / (1.0 + state.mat.clearcoat);
         float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * VDotH);
         float pdfDiff = NDotL * (1.0 / PI) * (1.0 - state.mat.subsurface);
-        brdfPdf = 0.5 * pdfDiff + 0.5 * pdfSpec;
+        brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
+
+        // BSDF Reflection
+        float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
+        float F = DielectricFresnel(VDotH, state.eta);
+        bsdfPdf = pdfGTR2 * F / (4.0 * VDotH);
     }
 
-    // BSDF Reflection
-    /*float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
-    float F = DielectricFresnel(VDotH, state.eta);
-    bsdfPdf = pdfGTR2 * F / (4.0 * VDotH);
-
-    return mix(brdfPdf, bsdfPdf, transWeight);*/
-
-    return brdfPdf;
+    return mix(brdfPdf, bsdfPdf, transWeight);
 }
 
 //-----------------------------------------------------------------------
-vec3 DisneySample(in Ray ray, inout State state)
+vec3 DisneySample(in Ray ray, inout State state, inout vec3 H)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
+    state.isSubsurface = false;
 
     vec3 dir;
 
@@ -120,48 +122,48 @@ vec3 DisneySample(in Ray ray, inout State state)
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
     // BSDF
-    /*if (rand() < transWeight)
+    if (rand() < transWeight)
     {
-        vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
+        H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
         vec3 R = reflect(-V, H);
-        float F = DielectricFresnel(dot(R, H), state.eta);
+        float F = DielectricFresnel(abs(dot(R, H)), state.eta);
 
-        if (rand() < F) // Reflection/Total internal reflection
-            dir = normalize(R);
-
-        else // Transmission
-        {
-            dir = normalize(refract(-V, H, state.eta));
-        }
+        if (rand() < F) 
+            dir = normalize(R); // Reflection/Total internal reflection
+        else
+            dir = refract(-V, H, state.eta); // Transmission
+            
     }
     // BRDF
-    else*/
+    else
     {
         float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
 
-        if (rand() < 0.5)
+        if (rand() < diffuseRatio)
         {
-            // This way of performing subsurface scattering was taken from Tinsel [4] and is similar [11].
+            // This way of performing subsurface scattering was taken from Tinsel [4] and is similar [9].
             // Simpler than random walk but not sure if accurate.
             if (rand() < state.mat.subsurface)
             {
                 dir = UniformSampleHemisphere(r1, r2);
                 dir = state.tangent * dir.x + state.bitangent * dir.y - N * dir.z;
+                state.isSubsurface = true;
             }
             else
             {
                 dir = CosineSampleHemisphere(r1, r2);
                 dir = state.tangent * dir.x + state.bitangent * dir.y + N * dir.z;
             }
+            H = normalize(dir + V);
         }
         else
         {
             float specRatio = 1.0 / (1.0 + state.mat.clearcoat);
             float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
-            vec3 H;
+            //vec3 H;
 
             // TODO: Implement http://jcgt.org/published/0007/04/01/
             if (rand() < specRatio)
@@ -178,7 +180,7 @@ vec3 DisneySample(in Ray ray, inout State state)
 }
 
 //-----------------------------------------------------------------------
-vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
+vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec, vec3 X)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
@@ -186,16 +188,24 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 L = bsdfDir;
     vec3 H;
 
-    //if (dot(N, L) < 0.0)
-    //    H = normalize(L + V * state.eta);
-    //else
+    if (dot(N, L) < 0.0)
+    {
+        H = -normalize(L * (1.0 / state.eta) + V);
+        if (dot(N, H) < 0.0)
+            H = -H;
+    }
+    else
         H = normalize(L + V);
 
-    float NDotL = abs(dot(N, L));
-    float NDotV = abs(dot(N, V));
-    float NDotH = abs(dot(N, H));
-    float VDotH = abs(dot(V, H));
-    float LDotH = abs(dot(L, H));
+    // Used when performing BSDF sampling. The above code is causing issues with fireflies at glancing angles so this is temporary fix
+    if (useHalfVec)
+        H = X;
+
+    float NDotL = dot(N, L);
+    float NDotV = dot(N, V);
+    float NDotH = dot(N, H);
+    float VDotH = dot(V, H);
+    float LDotH = dot(L, H);
 
     vec3 brdf = vec3(0.0);
     vec3 bsdf = vec3(0.0);
@@ -203,27 +213,27 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
     // BSDF
-    /*if (transWeight > 0.0)
+    if (transWeight > 0.0)
     {
         float a = max(0.001, state.mat.roughness);
-        float F = DielectricFresnel(VDotH, state.eta);
+        float F = DielectricFresnel(abs(VDotH), state.eta);
         float D = GTR2(NDotH, a);
-        float G = SmithG_GGX(NDotL, a) * SmithG_GGX(NDotV, a);
+        float G = SmithG_GGX(abs(NDotL), a) * SmithG_GGX(NDotV, a);
 
         if (dot(N, L) < 0.0)
         {
-            float denomSqrt = LDotH + VDotH * state.eta;
-            bsdf = state.mat.albedo * (1.0 - F) * D * G * VDotH * LDotH * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
+            float denomSqrt = LDotH * state.eta + VDotH;
+            bsdf = state.mat.albedo * (1.0 - F) * D * G * abs(VDotH) * abs(LDotH) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
         }
         else
         {
             bsdf = state.mat.albedo * F * D * G;
         }
-    }*/
+    }
 
-    //if (transWeight < 1.0)
+    if (transWeight < 1.0)
     {
-        float FL = SchlickFresnel(NDotL);
+        float FL = SchlickFresnel(abs(NDotL));
         float FV = SchlickFresnel(NDotV);
 
         // Subsurface
@@ -279,7 +289,6 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
         }
     }
 
-    //return mix(brdf, bsdf, transWeight);
+    return mix(brdf, bsdf, transWeight);
 
-    return brdf;
 }
