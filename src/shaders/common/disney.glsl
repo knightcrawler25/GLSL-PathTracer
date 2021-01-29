@@ -44,12 +44,13 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 H;
 
     if (dot(N, L) < 0.0)
+    {
         H = -normalize(L * (1.0 / state.eta) + V);
+        if (dot(N, H) < 0.0)
+            H = -H;
+    }
     else
         H = normalize(L + V);
-
-    if (dot(V, H) < 0.0)
-        H = -H;
 
     float NDotH = dot(N, H);
     float VDotH = dot(V, H);
@@ -79,8 +80,6 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
         float F = DielectricFresnel(abs(VDotH), state.eta);
         float denomSqrt = LDotH * state.eta + VDotH;
         bsdfPdf = pdfGTR2 * (1.0 - F) * abs(LDotH) / (denomSqrt * denomSqrt);
-
-        return mix(brdfPdf, bsdfPdf, transWeight);
     }
     else
     {
@@ -90,7 +89,7 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
         float ratio = 1.0 / (1.0 + state.mat.clearcoat);
         float pdfSpec = mix(pdfGTR1, pdfGTR2_aniso, ratio) / (4.0 * VDotH);
         float pdfDiff = NDotL * (1.0 / PI) * (1.0 - state.mat.subsurface);
-        brdfPdf = diffuseRatio * pdfDiff + specularRatio * pdfSpec;
+        brdfPdf = mix(pdfSpec, pdfDiff, diffuseRatio);
 
         // BSDF Reflection
         float pdfGTR2 = GTR2(NDotH, specularAlpha) * NDotH;
@@ -109,6 +108,7 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
     vec3 V = -ray.direction;
     state.isSubsurface = false;
     vec3 f = vec3(0.0);
+    pdf = 0.0;
 
     float r1 = rand();
     float r2 = rand();
@@ -140,26 +140,29 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
         if (rand() < F) // Reflection/Total internal reflection
         {
             L = normalize(R); 
+
+            if (dot(N, L) < 0.0)
+                return vec3(0.0);
+
             pdf *= F / (4.0 * dot(V, H)) * transWeight;
 
             float G = SmithG_GGX(abs(dot(N, L)), specularAlpha) * SmithG_GGX(dot(N, V), specularAlpha);
-            f = state.mat.albedo * F * D * G * transWeight;
+            f = state.mat.albedo * F * D * G;
         }
         else // Transmission
         {
             L = normalize(refract(-V, H, state.eta));
+
             float denomSqrt = dot(L, H) * state.eta + dot(V, H);
             pdf *= (1.0 - F) * abs(dot(L, H)) / (denomSqrt * denomSqrt) * transWeight;
 
             float G = SmithG_GGX(abs(dot(N, L)), specularAlpha) * SmithG_GGX(dot(N, V), specularAlpha);
-            f = state.mat.albedo * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt) * transWeight;
+            f = state.mat.albedo * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
         }
     }
     // BRDF
     else
     {
-        float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
-
         if (rand() < diffuseRatio)
         {
             // This way of performing subsurface scattering was taken from Tinsel [4] and is similar [9].
@@ -168,12 +171,13 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
             {
                 L = UniformSampleHemisphere(r1, r2);
                 L = state.tangent * L.x + state.bitangent * L.y - N * L.z;
+
                 pdf = (1.0 / TWO_PI) * state.mat.subsurface * diffuseRatio * (1.0 - transWeight);
                 
                 float FL = SchlickFresnel(abs(dot(N, L)));
                 float FV = SchlickFresnel(dot(N, V));
                 float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
-                f = sqrt(state.mat.albedo) * (1.0 / PI) * Fd * state.mat.subsurface * (1.0 - state.mat.metallic) * (1.0 - transWeight);
+                f = sqrt(state.mat.albedo) * (1.0 / PI) * Fd * (1.0 - state.mat.metallic);
 
                 state.isSubsurface = true; // Required when sampling lights from inside surface
             }
@@ -181,7 +185,11 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
             {
                 L = CosineSampleHemisphere(r1, r2);
                 L = state.tangent * L.x + state.bitangent * L.y + N * L.z;
-                pdf = dot(N, L) * (1.0 / PI) * (1.0 - state.mat.subsurface) * (1.0 - transWeight);
+
+                if (dot(N, L) < 0.0)
+                    return vec3(0.0);
+
+                pdf = dot(N, L) * (1.0 / PI) * (1.0 - state.mat.subsurface) * diffuseRatio * (1.0 - transWeight);
 
                 vec3 H = normalize(L + V);
                 float FL = SchlickFresnel(abs(dot(N, L)));
@@ -190,7 +198,7 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
                 float Fd90 = 0.5 + 2.0 * dot(L, H) * dot(L, H) * state.mat.roughness;
                 float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
                 vec3 Fsheen = FH * state.mat.sheen * Csheen;
-                f = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic) * (1.0 - transWeight);
+                f = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic);
             }
         }
         else
@@ -205,6 +213,9 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
                 H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
                 L = reflect(-V, H);
 
+                if (dot(N, L) < 0.0)
+                    return vec3(0.0);
+
                 float D = GTR2_aniso(dot(N, H), dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
                 pdf = D * dot(N, H) / (4.0 * dot(V, H)) * lobeRatio * (1.0 - diffuseRatio) * (1.0 - transWeight);
 
@@ -212,7 +223,7 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
                 vec3 F = mix(Cspec0, vec3(1.0), FH);
                 float G = SmithG_GGX_aniso(dot(N, L), dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
                 G *= SmithG_GGX_aniso(dot(N, V), dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
-                f = vec3(1.0) * F * D * G * (1.0 - transWeight);
+                f = vec3(1.0) * F * D * G;
             }
             else // Sample clearcoat lobe
             {
@@ -220,13 +231,16 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
                 H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
                 L = reflect(-V, H);
 
+                if (dot(N, L) < 0.0)
+                    return vec3(0.0);
+
                 float D = GTR1(dot(N, H), clearcoatAlpha);
                 pdf = D * dot(N, H) / (4.0 * dot(V, H)) * (1.0 - lobeRatio) * (1.0 - diffuseRatio) * (1.0 - transWeight);
                 
                 float FH = SchlickFresnel(dot(L, H));
                 float F = mix(0.04, 1.0, FH);
                 float G = SmithG_GGX(dot(N, L), 0.25) * SmithG_GGX(dot(N, V), 0.25);
-                f = vec3(1.0) * 0.25 * state.mat.clearcoat * F * D * G * (1.0 - transWeight);
+                f = vec3(1.0) * 0.25 * state.mat.clearcoat * F * D * G;
             }
         }
     }
@@ -244,12 +258,13 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
     vec3 H;
 
     if (dot(N, L) < 0.0)
+    {
         H = -normalize(L * (1.0 / state.eta) + V);
+        if (dot(N, H) < 0.0)
+            H = -H;
+    }
     else
         H = normalize(L + V);
-
-    if (dot(V, H) < 0.0)
-        H = -H;
 
     float NDotL = dot(N, L);
     float NDotV = dot(N, V);
@@ -292,7 +307,7 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
             if (state.mat.subsurface > 0.0)
             {
                 float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
-                brdf = sqrt(state.mat.albedo) * 1.0 / PI * Fd * state.mat.subsurface * (1.0 - state.mat.metallic);
+                brdf = sqrt(state.mat.albedo) * 1.0 / PI * Fd * (1.0 - state.mat.metallic);
             }
         }
         // BRDF
@@ -309,13 +324,6 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
             // and mix in diffuse retro-reflection based on roughness
             float Fd90 = 0.5 + 2.0 * LDotH * LDotH * state.mat.roughness;
             float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
-
-            // Based on Hanrahan-Krueger brdf approximation of isotropic bssrdf
-            // 1.25 scale is used to (roughly) preserve albedo
-            // Fss90 used to "flatten" retroreflection based on roughness
-            // float Fss90 = LDotH * LDotH * state.mat.roughness;
-            // float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
-            // float ss = 1.25 * (Fss * (1.0 / (NDotL + NDotV) - 0.5) + 0.5);
 
             // TODO: Add anisotropic rotation
             // specular
