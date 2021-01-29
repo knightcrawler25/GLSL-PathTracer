@@ -35,7 +35,7 @@
  */
 
  //-----------------------------------------------------------------------
-float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec, vec3 X)
+float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
@@ -44,17 +44,12 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec,
     vec3 H;
 
     if (dot(N, L) < 0.0)
-    {
         H = -normalize(L * (1.0 / state.eta) + V);
-        if (dot(N, H) < 0.0)
-            H = -H;
-    }
     else
         H = normalize(L + V);
 
-    // Used when performing BSDF sampling. The above code is causing issues with fireflies at glancing angles so this is temporary fix
-    if(useHalfVec)
-        H = X;
+    if (dot(V, H) < 0.0)
+        H = -H;
 
     float NDotH = dot(N, H);
     float VDotH = dot(V, H);
@@ -107,34 +102,58 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec,
 }
 
 //-----------------------------------------------------------------------
-vec3 DisneySample(in Ray ray, inout State state, inout vec3 H)
+vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
     vec3 V = -ray.direction;
     state.isSubsurface = false;
-
-    vec3 dir;
+    vec3 f = vec3(0.0);
 
     float r1 = rand();
     float r2 = rand();
 
+    float specularAlpha = max(0.001, state.mat.roughness);
+    float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
+
+    float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
+
+    vec3 Cdlin = state.mat.albedo;
+    float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z; // luminance approx.
+
+    vec3 Ctint = Cdlum > 0.0 ? Cdlin / Cdlum : vec3(1.0f); // normalize lum. to isolate hue+sat
+    vec3 Cspec0 = mix(state.mat.specular * 0.08 * mix(vec3(1.0), Ctint, state.mat.specularTint), Cdlin, state.mat.metallic);
+    vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
 
     // BSDF
     if (rand() < transWeight)
     {
-        H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
+        vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
         vec3 R = reflect(-V, H);
         float F = DielectricFresnel(abs(dot(R, H)), state.eta);
+        float D = GTR2(dot(N, H), specularAlpha);
+        pdf = D * dot(N, H);
 
-        if (rand() < F) 
-            dir = normalize(R); // Reflection/Total internal reflection
-        else
-            dir = normalize(refract(-V, H, state.eta)); // Transmission
-            
+        if (rand() < F) // Reflection/Total internal reflection
+        {
+            L = normalize(R); 
+            pdf *= F / (4.0 * dot(V, H)) * transWeight;
+
+            float G = SmithG_GGX(abs(dot(N, L)), specularAlpha) * SmithG_GGX(dot(N, V), specularAlpha);
+            f = state.mat.albedo * F * D * G * transWeight;
+        }
+        else // Transmission
+        {
+            L = normalize(refract(-V, H, state.eta));
+            float denomSqrt = dot(L, H) * state.eta + dot(V, H);
+            pdf *= (1.0 - F) * abs(dot(L, H)) / (denomSqrt * denomSqrt) * transWeight;
+
+            float G = SmithG_GGX(abs(dot(N, L)), specularAlpha) * SmithG_GGX(dot(N, V), specularAlpha);
+            f = state.mat.albedo * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt) * transWeight;
+        }
     }
     // BRDF
     else
@@ -147,40 +166,76 @@ vec3 DisneySample(in Ray ray, inout State state, inout vec3 H)
             // Simpler than random walk but not sure if accurate.
             if (rand() < state.mat.subsurface)
             {
-                dir = UniformSampleHemisphere(r1, r2);
-                dir = state.tangent * dir.x + state.bitangent * dir.y - N * dir.z;
-                state.isSubsurface = true;
+                L = UniformSampleHemisphere(r1, r2);
+                L = state.tangent * L.x + state.bitangent * L.y - N * L.z;
+                pdf = (1.0 / TWO_PI) * state.mat.subsurface * diffuseRatio * (1.0 - transWeight);
+                
+                float FL = SchlickFresnel(abs(dot(N, L)));
+                float FV = SchlickFresnel(dot(N, V));
+                float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
+                f = sqrt(state.mat.albedo) * (1.0 / PI) * Fd * state.mat.subsurface * (1.0 - state.mat.metallic) * (1.0 - transWeight);
+
+                state.isSubsurface = true; // Required when sampling lights from inside surface
             }
             else
             {
-                dir = CosineSampleHemisphere(r1, r2);
-                dir = state.tangent * dir.x + state.bitangent * dir.y + N * dir.z;
+                L = CosineSampleHemisphere(r1, r2);
+                L = state.tangent * L.x + state.bitangent * L.y + N * L.z;
+                pdf = dot(N, L) * (1.0 / PI) * (1.0 - state.mat.subsurface) * (1.0 - transWeight);
+
+                vec3 H = normalize(L + V);
+                float FL = SchlickFresnel(abs(dot(N, L)));
+                float FV = SchlickFresnel(dot(N, V));
+                float FH = SchlickFresnel(dot(L, H));
+                float Fd90 = 0.5 + 2.0 * dot(L, H) * dot(L, H) * state.mat.roughness;
+                float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+                vec3 Fsheen = FH * state.mat.sheen * Csheen;
+                f = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic) * (1.0 - transWeight);
             }
-            H = normalize(dir + V);
         }
         else
         {
-            float specRatio = 1.0 / (1.0 + state.mat.clearcoat);
+            float lobeRatio = 1.0 / (1.0 + state.mat.clearcoat);
             float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
-
-            //vec3 H;
-
+            
             // TODO: Implement http://jcgt.org/published/0007/04/01/
-            if (rand() < specRatio)
-                H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2); // Sample primary specular lobe
-            else
-                H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2); // Sample clearcoat lobe
+            if (rand() < lobeRatio) // Sample primary specular lobe
+            {
+                vec3 H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2);
+                H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
+                L = reflect(-V, H);
 
-            H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
-            dir = reflect(-V, H);
+                float D = GTR2_aniso(dot(N, H), dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
+                pdf = D * dot(N, H) / (4.0 * dot(V, H)) * lobeRatio * (1.0 - diffuseRatio) * (1.0 - transWeight);
+
+                float FH = SchlickFresnel(dot(L, H));
+                vec3 F = mix(Cspec0, vec3(1.0), FH);
+                float G = SmithG_GGX_aniso(dot(N, L), dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
+                G *= SmithG_GGX_aniso(dot(N, V), dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
+                f = vec3(1.0) * F * D * G * (1.0 - transWeight);
+            }
+            else // Sample clearcoat lobe
+            {
+                vec3 H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2);
+                H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
+                L = reflect(-V, H);
+
+                float D = GTR1(dot(N, H), clearcoatAlpha);
+                pdf = D * dot(N, H) / (4.0 * dot(V, H)) * (1.0 - lobeRatio) * (1.0 - diffuseRatio) * (1.0 - transWeight);
+                
+                float FH = SchlickFresnel(dot(L, H));
+                float F = mix(0.04, 1.0, FH);
+                float G = SmithG_GGX(dot(N, L), 0.25) * SmithG_GGX(dot(N, V), 0.25);
+                f = vec3(1.0) * 0.25 * state.mat.clearcoat * F * D * G * (1.0 - transWeight);
+            }
         }
     }
 
-    return dir;
+    return f;
 }
 
 //-----------------------------------------------------------------------
-vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec, vec3 X)
+vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir)
 //-----------------------------------------------------------------------
 {
     vec3 N = state.ffnormal;
@@ -189,17 +244,12 @@ vec3 DisneyEval(in Ray ray, inout State state, in vec3 bsdfDir, bool useHalfVec,
     vec3 H;
 
     if (dot(N, L) < 0.0)
-    {
         H = -normalize(L * (1.0 / state.eta) + V);
-        if (dot(N, H) < 0.0)
-            H = -H;
-    }
     else
         H = normalize(L + V);
 
-    // Used when performing BSDF sampling. The above code is causing issues with fireflies at glancing angles so this is temporary fix
-    if (useHalfVec)
-        H = X;
+    if (dot(V, H) < 0.0)
+        H = -H;
 
     float NDotL = dot(N, L);
     float NDotV = dot(N, V);

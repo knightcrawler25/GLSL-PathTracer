@@ -159,8 +159,8 @@ vec3 DirectLight(in Ray r, in State state)
 
             if (!inShadow)
             {
-                float bsdfPdf = DisneyPdf(r, state, lightDir, false, vec3(0.0));
-                vec3 f = DisneyEval(r, state, lightDir, false, vec3(0.0));
+                float bsdfPdf = DisneyPdf(r, state, lightDir);
+                vec3 f = DisneyEval(r, state, lightDir);
 
                 if (bsdfPdf > 0.0)
                 {
@@ -209,8 +209,8 @@ vec3 DirectLight(in Ray r, in State state)
 
         if (!inShadow)
         {
-            float bsdfPdf = DisneyPdf(r, state, lightDir, false, vec3(0.0));
-            vec3 f = DisneyEval(r, state, lightDir, false, vec3(0.0));
+            float bsdfPdf = DisneyPdf(r, state, lightDir);
+            vec3 f = DisneyEval(r, state, lightDir);
             float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
 
             if (bsdfPdf > 0.0)
@@ -232,7 +232,7 @@ vec3 PathTrace(Ray r)
     State state;
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
-    vec3 absorption = vec3(1.0);
+    vec3 absorption = vec3(0.0);
 
     for (int depth = 0; depth < maxDepth; depth++)
     {
@@ -283,17 +283,16 @@ vec3 PathTrace(Ray r)
 
         radiance += DirectLight(r, state) * throughput;
         
-        vec3 H;
-        bsdfSampleRec.bsdfDir = DisneySample(r, state, H);
+        vec3 f = DisneySample_f(r, state, bsdfSampleRec.bsdfDir, bsdfSampleRec.pdf);
 
-        bsdfSampleRec.pdf = DisneyPdf(r, state, bsdfSampleRec.bsdfDir, true, H);
+        //bsdfSampleRec.pdf = DisneyPdf(r, state, bsdfSampleRec.bsdfDir, true, H);
 
         // Set absorption only if the ray is currently inside the object.
         if (dot(state.ffnormal, bsdfSampleRec.bsdfDir) < 0.0)
             absorption = -log(state.mat.extinction);
 
         if (bsdfSampleRec.pdf > 0.0)
-            throughput *= DisneyEval(r, state, bsdfSampleRec.bsdfDir, true, H) * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
+            throughput *= f * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
         else
             break;
 
