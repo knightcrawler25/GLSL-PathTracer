@@ -25,10 +25,11 @@
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
 #define INFINITY  1000000.0
-#define EPS 0.001
+#define EPS 0.0001
 
 #define REFL 0
 #define REFR 1
+#define SUBS 2
 
 mat4 transform;
 
@@ -49,18 +50,19 @@ struct Material
     float anisotropic;
     float metallic;
     float roughness;
-    float ax;
-    float ay;
     float subsurface;
     float specularTint;
     float sheen;
     float sheenTint;
     float clearcoat;
-    float clearcoatGloss;
+    float clearcoatRoughness;
     float specTrans;
     float ior;
     vec3 extinction;
     vec3 texIDs;
+    // Roughness calculated from anisotropic
+    float ax;
+    float ay;
 };
 
 struct Camera
@@ -99,7 +101,7 @@ struct State
 
     bool isEmitter;
     bool specularBounce;
-    int rayType;
+    bool isSubsurface;
 
     vec2 texCoord;
     vec3 bary;
@@ -110,7 +112,11 @@ struct State
 
 struct BsdfSampleRec
 {
-    vec3 bsdfDir;
+    vec3 N;
+    vec3 L;
+    vec3 V;
+    vec3 H;
+    vec3 f;
     float pdf;
 };
 
