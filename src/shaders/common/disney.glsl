@@ -43,7 +43,7 @@ void EvalDielectricReflection(State state, inout BsdfSampleRec bRec)
     float F = DielectricFresnel(dot(bRec.V, bRec.H), state.eta);
     float D = GTR2(dot(bRec.N, bRec.H), state.mat.roughness);
     
-    bRec.pdf = D * dot(bRec.N, bRec.H) / (4.0 * dot(bRec.V, bRec.H));
+    bRec.pdf = D * dot(bRec.N, bRec.H) * F / (4.0 * dot(bRec.V, bRec.H));
 
     float G = SmithG_GGX(abs(dot(bRec.N, bRec.L)), state.mat.roughness) * SmithG_GGX(dot(bRec.N, bRec.V), state.mat.roughness);
     bRec.f = state.mat.albedo * F * D * G;
@@ -57,7 +57,7 @@ void EvalDielectricRefraction(State state, inout BsdfSampleRec bRec)
     float D = GTR2(dot(bRec.N, bRec.H), state.mat.roughness);
 
     float denomSqrt = dot(bRec.L, bRec.H) * state.eta + dot(bRec.V, bRec.H);
-    bRec.pdf = D * abs(dot(bRec.L, bRec.H)) / (denomSqrt * denomSqrt);
+    bRec.pdf = D * dot(bRec.N, bRec.H) * (1.0 - F) * abs(dot(bRec.L, bRec.H)) / (denomSqrt * denomSqrt);
 
     float G = SmithG_GGX(abs(dot(bRec.N, bRec.L)), state.mat.roughness) * SmithG_GGX(dot(bRec.N, bRec.V), state.mat.roughness);
     bRec.f = state.mat.albedo * (1.0 - F) * D * G * abs(dot(bRec.V, bRec.H)) * abs(dot(bRec.L, bRec.H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
@@ -136,6 +136,11 @@ void DisneySample(inout State state, inout BsdfSampleRec bRec)
     float r1 = rand();
     float r2 = rand();
 
+    vec3 brdf = vec3(0.0);
+    vec3 bsdf = vec3(0.0);
+    float brdfPdf = 0.0;
+    float bsdfPdf = 0.0;
+
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
@@ -156,22 +161,19 @@ void DisneySample(inout State state, inout BsdfSampleRec bRec)
         float F = DielectricFresnel(abs(dot(R, bRec.H)), state.eta);
 
         // Reflection/Total internal reflection
-        if (rand() < F) 
+        if (rand() < F)
         {
-            bRec.L = normalize(R); 
-
+            bRec.L = normalize(R);
             EvalDielectricReflection(state, bRec);
-            bRec.pdf *= F * transWeight;
-            bRec.f *= transWeight;
         }
         else // Transmission
         {
             bRec.L = normalize(refract(-bRec.V, bRec.H, state.eta));
-
             EvalDielectricRefraction(state, bRec);
-            bRec.pdf *= (1.0 - F) * transWeight;
-            bRec.f *= transWeight;
         }
+
+        bsdf = bRec.f;
+        bsdfPdf = bRec.pdf;
     }
     else // BRDF
     {
@@ -185,10 +187,10 @@ void DisneySample(inout State state, inout BsdfSampleRec bRec)
                 bRec.L = state.tangent * L.x + state.bitangent * L.y - bRec.N * L.z;
 
                 EvalSubsurface(state, bRec);
-                bRec.pdf *= state.mat.subsurface * diffuseRatio * (1.0 - transWeight);
-                bRec.f *= (1.0 - transWeight);
+                bRec.pdf *= state.mat.subsurface * diffuseRatio;
 
                 state.isSubsurface = true; // Required when sampling lights from inside surface
+                //state.specularBounce = true;
             }
             else // Diffuse
             {
@@ -198,8 +200,7 @@ void DisneySample(inout State state, inout BsdfSampleRec bRec)
                 bRec.H = normalize(bRec.L + bRec.V);
 
                 EvalDiffuse(state, bRec, Csheen);
-                bRec.pdf *= (1.0 - state.mat.subsurface) * diffuseRatio * (1.0 - transWeight);
-                bRec.f *= (1.0 - transWeight);
+                bRec.pdf *= (1.0 - state.mat.subsurface) * diffuseRatio;
             }
         }
         else // Specular
@@ -215,8 +216,7 @@ void DisneySample(inout State state, inout BsdfSampleRec bRec)
                 bRec.L = normalize(reflect(-bRec.V, bRec.H));
 
                 EvalSpecular(state, bRec, Cspec0);
-                bRec.pdf *= primarySpecRatio * (1.0 - diffuseRatio) * (1.0 - transWeight);
-                bRec.f *= (1.0 - transWeight);
+                bRec.pdf *= primarySpecRatio * (1.0 - diffuseRatio);
             }
             else // Sample clearcoat lobe
             {
@@ -226,10 +226,14 @@ void DisneySample(inout State state, inout BsdfSampleRec bRec)
 
                 EvalClearcoat(state, bRec);
                 bRec.pdf *= (1.0 - primarySpecRatio) * (1.0 - diffuseRatio);
-                bRec.f *= (1.0 - transWeight);
             }
         }
+        brdf = bRec.f;
+        brdfPdf = bRec.pdf;
     }
+
+    bRec.pdf = mix(brdfPdf, bsdfPdf, transWeight);
+    bRec.f = mix(brdf, bsdf, transWeight);
 }
 
 //-----------------------------------------------------------------------
@@ -256,21 +260,18 @@ void DisneyEval(State state, inout BsdfSampleRec bRec)
     // BSDF
     if (transWeight > 0.0)
     {
-        float F = DielectricFresnel(abs(dot(bRec.V, bRec.H)), state.eta);
-
         // Transmission
         if (dot(bRec.N, bRec.L) < 0.0) 
         {
             EvalDielectricRefraction(state, bRec);
-            bsdf += bRec.f;
-            bsdfPdf += bRec.pdf * (1.0 - F);
         }
         else // Reflection
         {
             EvalDielectricReflection(state, bRec);
-            bsdf += bRec.f;
-            bsdfPdf += bRec.pdf * F;
         }
+
+        bsdf += bRec.f;
+        bsdfPdf += bRec.pdf;
     }
 
     if (transWeight < 1.0)
@@ -278,7 +279,7 @@ void DisneyEval(State state, inout BsdfSampleRec bRec)
         // Subsurface
         if (dot(bRec.N, bRec.L) < 0.0)
         {
-            // TODO: Double check this. Causing occassional NaNs
+            // TODO: Double check this. Causing occassional NaNs and fails furnace test when used with transmission
             if (state.mat.subsurface > 0.0)
             {
                 EvalSubsurface(state, bRec);
