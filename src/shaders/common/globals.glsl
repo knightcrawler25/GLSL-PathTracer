@@ -25,7 +25,7 @@
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
 #define INFINITY  1000000.0
-#define EPS 0.001
+#define EPS 0.0001
 
 #define REFL 0
 #define REFR 1
@@ -55,7 +55,7 @@ struct Material
     float sheen;
     float sheenTint;
     float clearcoat;
-    float clearcoatGloss;
+    float clearcoatRoughness;
     float specTrans;
     float ior;
     vec3 extinction;
@@ -116,6 +116,7 @@ struct BsdfSampleRec
     vec3 L;
     vec3 V;
     vec3 H;
+    vec3 f;
     float pdf;
 };
 
