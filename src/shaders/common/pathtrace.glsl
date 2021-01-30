@@ -76,7 +76,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     mat.anisotropic    = param2.w;
 
     mat.metallic       = param3.x;
-    mat.roughness      = param3.y;
+    mat.roughness      = max(param3.y, 0.001);
 
     mat.subsurface     = param3.z;
     mat.specularTint   = param3.w;
@@ -233,7 +233,7 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
-
+    
     for (int depth = 0; depth < maxDepth; depth++)
     {
         float lightPdf = 1.0f;
@@ -266,6 +266,9 @@ vec3 PathTrace(Ray r)
         GetNormalsAndTexCoord(state, r);
         GetMaterialsAndTextures(state, r);
 
+        bsdfSampleRec.V = -r.direction;
+        bsdfSampleRec.N = state.ffnormal;
+
         if (dot(state.normal, state.ffnormal) > 0.0)
             absorption = vec3(0.0);
 
@@ -283,16 +286,14 @@ vec3 PathTrace(Ray r)
 
         radiance += DirectLight(r, state) * throughput;
         
-        vec3 f = DisneySample_f(r, state, bsdfSampleRec.bsdfDir, bsdfSampleRec.pdf);
-
-        //bsdfSampleRec.pdf = DisneyPdf(r, state, bsdfSampleRec.bsdfDir, true, H);
+        DisneySample(state, bsdfSampleRec);
 
         // Set absorption only if the ray is currently inside the object.
-        if (dot(state.ffnormal, bsdfSampleRec.bsdfDir) < 0.0)
+        if (dot(state.ffnormal, bsdfSampleRec.L) < 0.0)
             absorption = -log(state.mat.extinction);
 
         if (bsdfSampleRec.pdf > 0.0)
-            throughput *= f * abs(dot(state.ffnormal, bsdfSampleRec.bsdfDir)) / bsdfSampleRec.pdf;
+            throughput *= bsdfSampleRec.f * abs(dot(state.ffnormal, bsdfSampleRec.L)) / bsdfSampleRec.pdf;
         else
             break;
 
@@ -307,7 +308,7 @@ vec3 PathTrace(Ray r)
         }
 #endif
 
-        r.direction = bsdfSampleRec.bsdfDir;
+        r.direction = bsdfSampleRec.L;
         r.origin = state.fhp + r.direction * EPS;
     }
 

@@ -101,20 +101,96 @@ float DisneyPdf(in Ray ray, inout State state, in vec3 bsdfDir)
 }
 
 //-----------------------------------------------------------------------
-vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf)
+void EvalDielectricReflection(State state, inout BsdfSampleRec bRec)
 //-----------------------------------------------------------------------
 {
-    vec3 N = state.ffnormal;
-    vec3 V = -ray.direction;
+    float F = DielectricFresnel(dot(bRec.V, bRec.H), state.eta);
+    float D = GTR2(dot(bRec.N, bRec.H), state.mat.roughness);
+    
+    bRec.pdf = D * dot(bRec.N, bRec.H) / (4.0 * dot(bRec.V, bRec.H));
+
+    float G = SmithG_GGX(abs(dot(bRec.N, bRec.L)), state.mat.roughness) * SmithG_GGX(dot(bRec.N, bRec.V), state.mat.roughness);
+    bRec.f = state.mat.albedo * F * D * G;
+}
+
+//-----------------------------------------------------------------------
+void EvalDielectricRefraction(State state, inout BsdfSampleRec bRec)
+//-----------------------------------------------------------------------
+{
+    float F = DielectricFresnel(dot(bRec.V, bRec.H), state.eta);
+    float D = GTR2(dot(bRec.N, bRec.H), state.mat.roughness);
+
+    float denomSqrt = dot(bRec.L, bRec.H) * state.eta + dot(bRec.V, bRec.H);
+    bRec.pdf = D * abs(dot(bRec.L, bRec.H)) / (denomSqrt * denomSqrt);
+
+    float G = SmithG_GGX(abs(dot(bRec.N, bRec.L)), state.mat.roughness) * SmithG_GGX(dot(bRec.N, bRec.V), state.mat.roughness);
+    bRec.f = state.mat.albedo * (1.0 - F) * D * G * abs(dot(bRec.V, bRec.H)) * abs(dot(bRec.L, bRec.H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
+}
+
+//-----------------------------------------------------------------------
+void EvalSpecular(State state, inout BsdfSampleRec bRec, vec3 Cspec0)
+//-----------------------------------------------------------------------
+{
+    float D = GTR2_aniso(dot(bRec.N, bRec.H), dot(bRec.H, state.tangent), dot(bRec.H, state.bitangent), state.mat.ax, state.mat.ay);
+    bRec.pdf = D * dot(bRec.N, bRec.H) / (4.0 * dot(bRec.V, bRec.H));
+
+    float FH = SchlickFresnel(dot(bRec.L, bRec.H));
+    vec3 F = mix(Cspec0, vec3(1.0), FH);
+    float G = SmithG_GGX_aniso(dot(bRec.N, bRec.L), dot(bRec.L, state.tangent), dot(bRec.L, state.bitangent), state.mat.ax, state.mat.ay);
+    G *= SmithG_GGX_aniso(dot(bRec.N, bRec.V), dot(bRec.V, state.tangent), dot(bRec.V, state.bitangent), state.mat.ax, state.mat.ay);
+    bRec.f = F * D * G;
+}
+
+//-----------------------------------------------------------------------
+void EvalClearcoat(State state, inout BsdfSampleRec bRec, float clearcoatAlpha)
+//-----------------------------------------------------------------------
+{
+    float D = GTR1(dot(bRec.N, bRec.H), clearcoatAlpha);
+    bRec.pdf = D * dot(bRec.N, bRec.H) / (4.0 * dot(bRec.V, bRec.H));
+
+    float FH = SchlickFresnel(dot(bRec.L, bRec.H));
+    float F = mix(0.04, 1.0, FH);
+    float G = SmithG_GGX(dot(bRec.N, bRec.L), 0.25) * SmithG_GGX(dot(bRec.N, bRec.V), 0.25);
+    bRec.f = vec3(0.25 * state.mat.clearcoat * F * D * G);
+}
+
+//-----------------------------------------------------------------------
+void EvalDiffuse(State state, inout BsdfSampleRec bRec, vec3 Csheen)
+//-----------------------------------------------------------------------
+{
+    bRec.pdf = dot(bRec.N, bRec.L) * (1.0 / PI);
+
+    float FL = SchlickFresnel(abs(dot(bRec.N, bRec.L)));
+    float FV = SchlickFresnel(dot(bRec.N, bRec.V));
+    float FH = SchlickFresnel(dot(bRec.L, bRec.H));
+    float Fd90 = 0.5 + 2.0 * dot(bRec.L, bRec.H) * dot(bRec.L, bRec.H) * state.mat.roughness;
+    float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+    vec3 Fsheen = FH * state.mat.sheen * Csheen;
+    bRec.f = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * state.mat.albedo + Fsheen) * (1.0 - state.mat.metallic);
+}
+
+//-----------------------------------------------------------------------
+void EvalSubsurface(State state, inout BsdfSampleRec bRec)
+//-----------------------------------------------------------------------
+{
+    bRec.pdf = (1.0 / TWO_PI);
+
+    float FL = SchlickFresnel(abs(dot(bRec.N, bRec.L)));
+    float FV = SchlickFresnel(dot(bRec.N, bRec.V));
+    float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
+    bRec.f = sqrt(state.mat.albedo) * (1.0 / PI) * Fd * (1.0 - state.mat.metallic);
+}
+
+//-----------------------------------------------------------------------
+vec3 DisneySample(inout State state, inout BsdfSampleRec bRec)
+//-----------------------------------------------------------------------
+{
     state.isSubsurface = false;
-    vec3 f = vec3(0.0);
-    pdf = 0.0;
+    bRec.f = vec3(0.0);
+    bRec.pdf = 0.0;
 
     float r1 = rand();
     float r2 = rand();
-
-    float specularAlpha = max(0.001, state.mat.roughness);
-    float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
     float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
@@ -130,34 +206,28 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
     if (rand() < transWeight)
     {
         vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
-        H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
+        bRec.H = state.tangent * H.x + state.bitangent * H.y + bRec.N * H.z;
 
-        vec3 R = reflect(-V, H);
-        float F = DielectricFresnel(abs(dot(R, H)), state.eta);
-        float D = GTR2(dot(N, H), specularAlpha);
-        pdf = D * dot(N, H);
+        vec3 R = reflect(-bRec.V, bRec.H);
+        float F = DielectricFresnel(abs(dot(R, bRec.H)), state.eta);
 
         if (rand() < F) // Reflection/Total internal reflection
         {
-            L = normalize(R); 
+            bRec.L = normalize(R); 
 
-            if (dot(N, L) < 0.0)
+            if (dot(bRec.N, bRec.L) < 0.0)
                 return vec3(0.0);
 
-            pdf *= F / (4.0 * dot(V, H)) * transWeight;
+            EvalDielectricReflection(state, bRec);
+            bRec.pdf *= F * transWeight;
 
-            float G = SmithG_GGX(abs(dot(N, L)), specularAlpha) * SmithG_GGX(dot(N, V), specularAlpha);
-            f = state.mat.albedo * F * D * G;
         }
         else // Transmission
         {
-            L = normalize(refract(-V, H, state.eta));
+            bRec.L = normalize(refract(-bRec.V, bRec.H, state.eta));
 
-            float denomSqrt = dot(L, H) * state.eta + dot(V, H);
-            pdf *= (1.0 - F) * abs(dot(L, H)) / (denomSqrt * denomSqrt) * transWeight;
-
-            float G = SmithG_GGX(abs(dot(N, L)), specularAlpha) * SmithG_GGX(dot(N, V), specularAlpha);
-            f = state.mat.albedo * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
+            EvalDielectricRefraction(state, bRec);
+            bRec.pdf *= (1.0 - F) * transWeight;
         }
     }
     // BRDF
@@ -169,83 +239,61 @@ vec3 DisneySample_f(in Ray ray, inout State state, inout vec3 L, inout float pdf
             // Simpler than random walk but not sure if accurate.
             if (rand() < state.mat.subsurface)
             {
-                L = UniformSampleHemisphere(r1, r2);
-                L = state.tangent * L.x + state.bitangent * L.y - N * L.z;
+                vec3 L = UniformSampleHemisphere(r1, r2);
+                bRec.L = state.tangent * L.x + state.bitangent * L.y - bRec.N * L.z;
 
-                pdf = (1.0 / TWO_PI) * state.mat.subsurface * diffuseRatio * (1.0 - transWeight);
-                
-                float FL = SchlickFresnel(abs(dot(N, L)));
-                float FV = SchlickFresnel(dot(N, V));
-                float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
-                f = sqrt(state.mat.albedo) * (1.0 / PI) * Fd * (1.0 - state.mat.metallic);
+                EvalSubsurface(state, bRec);
+                bRec.pdf *= state.mat.subsurface * diffuseRatio * (1.0 - transWeight);
 
                 state.isSubsurface = true; // Required when sampling lights from inside surface
             }
             else
             {
-                L = CosineSampleHemisphere(r1, r2);
-                L = state.tangent * L.x + state.bitangent * L.y + N * L.z;
+                vec3 L = CosineSampleHemisphere(r1, r2);
+                bRec.L = state.tangent * L.x + state.bitangent * L.y + bRec.N * L.z;
 
-                if (dot(N, L) < 0.0)
+                if (dot(bRec.N, bRec.L) < 0.0)
                     return vec3(0.0);
 
-                pdf = dot(N, L) * (1.0 / PI) * (1.0 - state.mat.subsurface) * diffuseRatio * (1.0 - transWeight);
+                bRec.H = normalize(bRec.L + bRec.V);
 
-                vec3 H = normalize(L + V);
-                float FL = SchlickFresnel(abs(dot(N, L)));
-                float FV = SchlickFresnel(dot(N, V));
-                float FH = SchlickFresnel(dot(L, H));
-                float Fd90 = 0.5 + 2.0 * dot(L, H) * dot(L, H) * state.mat.roughness;
-                float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
-                vec3 Fsheen = FH * state.mat.sheen * Csheen;
-                f = ((1.0 / PI) * Fd * (1.0 - state.mat.subsurface) * Cdlin + Fsheen) * (1.0 - state.mat.metallic);
+                EvalDiffuse(state, bRec, Csheen);
+                bRec.pdf *= (1.0 - state.mat.subsurface) * diffuseRatio * (1.0 - transWeight);
             }
         }
         else
         {
             float lobeRatio = 1.0 / (1.0 + state.mat.clearcoat);
-            float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
             
             // TODO: Implement http://jcgt.org/published/0007/04/01/
             if (rand() < lobeRatio) // Sample primary specular lobe
             {
                 vec3 H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2);
-                H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
-                L = reflect(-V, H);
+                bRec.H = normalize(state.tangent * H.x + state.bitangent * H.y + bRec.N * H.z);
+                bRec.L = reflect(-bRec.V, bRec.H);
 
-                if (dot(N, L) < 0.0)
+                if (dot(bRec.N, bRec.L) < 0.0)
                     return vec3(0.0);
 
-                float D = GTR2_aniso(dot(N, H), dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
-                pdf = D * dot(N, H) / (4.0 * dot(V, H)) * lobeRatio * (1.0 - diffuseRatio) * (1.0 - transWeight);
-
-                float FH = SchlickFresnel(dot(L, H));
-                vec3 F = mix(Cspec0, vec3(1.0), FH);
-                float G = SmithG_GGX_aniso(dot(N, L), dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
-                G *= SmithG_GGX_aniso(dot(N, V), dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
-                f = vec3(1.0) * F * D * G;
+                EvalSpecular(state, bRec, Cspec0);
+                bRec.pdf *= lobeRatio * (1.0 - diffuseRatio) * (1.0 - transWeight);
             }
             else // Sample clearcoat lobe
             {
-                vec3 H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2);
-                H = normalize(state.tangent * H.x + state.bitangent * H.y + N * H.z);
-                L = reflect(-V, H);
+                float clearcoatAlpha = mix(0.1, 0.001, state.mat.clearcoatGloss);
 
-                if (dot(N, L) < 0.0)
+                vec3 H = ImportanceSampleGTR1(clearcoatAlpha, r1, r2);
+                bRec.H = normalize(state.tangent * H.x + state.bitangent * H.y + bRec.N * H.z);
+                bRec.L = reflect(-bRec.V, bRec.H);
+
+                if (dot(bRec.N, bRec.L) < 0.0)
                     return vec3(0.0);
 
-                float D = GTR1(dot(N, H), clearcoatAlpha);
-                pdf = D * dot(N, H) / (4.0 * dot(V, H)) * (1.0 - lobeRatio) * (1.0 - diffuseRatio) * (1.0 - transWeight);
-                
-                float FH = SchlickFresnel(dot(L, H));
-                float F = mix(0.04, 1.0, FH);
-                float G = SmithG_GGX(dot(N, L), 0.25) * SmithG_GGX(dot(N, V), 0.25);
-                f = vec3(1.0) * 0.25 * state.mat.clearcoat * F * D * G;
+                EvalClearcoat(state, bRec, clearcoatAlpha);
+                bRec.pdf *= (1.0 - lobeRatio) * (1.0 - diffuseRatio) * (1.0 - transWeight);
             }
         }
     }
-
-    return f;
 }
 
 //-----------------------------------------------------------------------

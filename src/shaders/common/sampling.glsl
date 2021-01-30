@@ -260,15 +260,15 @@ vec4 EnvSample(inout vec3 color)
 #endif
 
 //-----------------------------------------------------------------------
-vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, in BsdfSampleRec bsdfSampleRec)
+vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lRec, in BsdfSampleRec bRec)
 //-----------------------------------------------------------------------
 {
     vec3 Le;
 
     if (state.depth == 0 || state.specularBounce)
-        Le = lightSampleRec.emission;
+        Le = lRec.emission;
     else
-        Le = powerHeuristic(bsdfSampleRec.pdf, lightSampleRec.pdf) * lightSampleRec.emission;
+        Le = powerHeuristic(bRec.pdf, lRec.pdf) * lRec.emission;
 
     return Le;
 }
