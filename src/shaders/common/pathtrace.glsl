@@ -143,10 +143,6 @@ vec3 DirectLight(in Ray r, in State state)
 
     BsdfSampleRec bsdfSampleRec;
 
-    // Fill record for BSDF sampling
-    bsdfSampleRec.N = state.ffnormal;
-    bsdfSampleRec.V = -r.direction;
-
     // If sampling subsurface then push surfacePos towards the outer surface to be able to hit a light source
     if(state.isSubsurface)
         surfacePos = state.fhp + state.normal * EPS;
@@ -169,8 +165,7 @@ vec3 DirectLight(in Ray r, in State state)
 
             if (!inShadow)
             {
-                bsdfSampleRec.L = lightDir;
-                DisneyEval(state, bsdfSampleRec);
+                bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0)
                 {
@@ -219,9 +214,7 @@ vec3 DirectLight(in Ray r, in State state)
 
         if (!inShadow)
         {
-            bsdfSampleRec.L = lightDir;
-
-            DisneyEval(state, bsdfSampleRec);
+            bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
             float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
 
             if (bsdfSampleRec.pdf > 0.0)
@@ -277,10 +270,6 @@ vec3 PathTrace(Ray r)
         GetNormalsAndTexCoord(state, r);
         GetMaterialsAndTextures(state, r);
 
-        // Fill record for BSDF sampling
-        bsdfSampleRec.V = -r.direction;
-        bsdfSampleRec.N = state.ffnormal;
-
         // Reset absorption when ray is going out of surface
         if (dot(state.normal, state.ffnormal) > 0.0)
             absorption = vec3(0.0);
@@ -299,12 +288,12 @@ vec3 PathTrace(Ray r)
         throughput *= exp(-absorption * t);
 
         radiance += DirectLight(r, state) * throughput;
-        
-        DisneySample(state, bsdfSampleRec);
+
+        bsdfSampleRec.f = DisneySample(state, -r.direction, state.ffnormal, bsdfSampleRec.L, bsdfSampleRec.pdf);
 
         // Set absorption only if the ray is currently inside the object.
         if (dot(state.ffnormal, bsdfSampleRec.L) < 0.0)
-            absorption = -log(state.mat.extinction);
+            absorption = -log(state.mat.extinction) / vec3(0.1);
 
         if (bsdfSampleRec.pdf > 0.0)
             throughput *= bsdfSampleRec.f * abs(dot(state.ffnormal, bsdfSampleRec.L)) / bsdfSampleRec.pdf;

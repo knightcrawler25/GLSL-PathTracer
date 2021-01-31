@@ -112,10 +112,7 @@ struct State
 
 struct BsdfSampleRec
 {
-    vec3 N;
     vec3 L;
-    vec3 V;
-    vec3 H;
     vec3 f;
     float pdf;
 };
