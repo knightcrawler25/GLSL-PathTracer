@@ -139,15 +139,9 @@ vec3 DirectLight(in Ray r, in State state)
 //-----------------------------------------------------------------------
 {
     vec3 Li = vec3(0.0);
-    vec3 surfacePos;
+    vec3 surfacePos = state.fhp;
 
     BsdfSampleRec bsdfSampleRec;
-
-    // If sampling subsurface then push surfacePos towards the outer surface to be able to hit a light source
-    if(state.isSubsurface)
-        surfacePos = state.fhp + state.normal * EPS;
-    else
-        surfacePos = state.fhp + state.ffnormal * EPS;
 
     // Environment Light
 #ifdef ENVMAP
@@ -160,7 +154,7 @@ vec3 DirectLight(in Ray r, in State state)
 
         if (state.isSubsurface || dot(lightDir, state.ffnormal) > 0.0)
         {
-            Ray shadowRay = Ray(surfacePos, lightDir);
+            Ray shadowRay = Ray(surfacePos + FaceForward(state.normal, lightDir) * EPS, lightDir);
             bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
 
             if (!inShadow)
@@ -209,7 +203,7 @@ vec3 DirectLight(in Ray r, in State state)
         if (!state.isSubsurface && (dot(lightDir, state.ffnormal) <= 0.0 || dot(lightDir, lightSampleRec.normal) >= 0.0))
             return Li;
 
-        Ray shadowRay = Ray(surfacePos, lightDir);
+        Ray shadowRay = Ray(surfacePos + FaceForward(state.normal, lightDir) * EPS, lightDir);
         bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
         if (!inShadow)
@@ -293,7 +287,7 @@ vec3 PathTrace(Ray r)
 
         // Set absorption only if the ray is currently inside the object.
         if (dot(state.ffnormal, bsdfSampleRec.L) < 0.0)
-            absorption = -log(state.mat.extinction) / vec3(0.1);
+            absorption = -log(state.mat.extinction) / vec3(0.2); // TODO: Add atDistance
 
         if (bsdfSampleRec.pdf > 0.0)
             throughput *= bsdfSampleRec.f * abs(dot(state.ffnormal, bsdfSampleRec.L)) / bsdfSampleRec.pdf;

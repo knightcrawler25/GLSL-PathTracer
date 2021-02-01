@@ -31,7 +31,6 @@
  * [6] http://shihchinw.github.io/2015/07/implementing-disney-principled-brdf-in-arnold.html
  * [7] https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
  * [8] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
- * [9] https://graphics.pixar.com/library/RadiosityCaching/paper.pdf
  */
 
 //-----------------------------------------------------------------------
@@ -120,7 +119,7 @@ vec3 EvalSubsurface(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
     float FL = SchlickFresnel(abs(dot(N, L)));
     float FV = SchlickFresnel(dot(N, V));
     float Fd = (1.0f - 0.5f * FL) * (1.0f - 0.5f * FV);
-    return sqrt(state.mat.albedo) * state.mat.subsurface * (1.0 / PI) * Fd * (1.0 - state.mat.metallic);
+    return sqrt(state.mat.albedo) * state.mat.subsurface * (1.0 / PI) * Fd * (1.0 - state.mat.metallic) * (1.0 - state.mat.specTrans);
 }
 
 //-----------------------------------------------------------------------
@@ -172,8 +171,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     {
         if (rand() < diffuseRatio)
         {
-            // This way of performing subsurface scattering was taken from Tinsel [4] and is similar [9].
-            // Simpler than random walk but not sure if accurate.
+            // Diffuse transmission. A way to approximate subsurface scattering
             if (rand() < state.mat.subsurface)
             {
                 L = UniformSampleHemisphere(r1, r2);
@@ -271,7 +269,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
         // Subsurface
         if (dot(N, L) < 0.0)
         {
-            // TODO: Double check this. Causing occassional NaNs and fails furnace test when used with transmission
+            // TODO: Double check this. Fails furnace test when used with rough transmission
             if (state.mat.subsurface > 0.0)
             {
                 brdf = EvalSubsurface(state, V, N, L, m_pdf);
