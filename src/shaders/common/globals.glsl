@@ -112,10 +112,7 @@ struct State
 
 struct BsdfSampleRec
 {
-    vec3 N;
     vec3 L;
-    vec3 V;
-    vec3 H;
     vec3 f;
     float pdf;
 };
@@ -130,10 +127,13 @@ struct LightSampleRec
 
 uniform Camera camera;
 
-//-----------
 float rand()
-//-----------
 {
     seed -= randomVector.xy;
     return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+vec3 FaceForward(vec3 a, vec3 b)
+{
+    return dot(a, b) < 0.0 ? -b : b;
 }
