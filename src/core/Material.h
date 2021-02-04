@@ -48,7 +48,7 @@ namespace GLSLPT
             sheen          = 0.0f;
             sheenTint      = 0.0f;
             clearcoat      = 0.0f;
-            clearcoatRoughness = 0.0f;
+            clearcoatGloss = 0.0f;
 
             transmission  = 0.0f;
             ior           = 1.45f;
@@ -73,7 +73,7 @@ namespace GLSLPT
         float sheen;
         float sheenTint;
         float clearcoat;
-        float clearcoatRoughness;
+        float clearcoatGloss;
 
         float transmission;
         float ior;

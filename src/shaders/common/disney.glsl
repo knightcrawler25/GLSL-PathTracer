@@ -84,7 +84,7 @@ vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 {
     if (dot(N, L) < 0.0) return vec3(0.0);
 
-    float D = GTR1(dot(N, H), state.mat.clearcoatRoughness);
+    float D = GTR1(dot(N, H), mix(0.1, 0.001, state.mat.clearcoatGloss));
     pdf = D * dot(N, H) / (4.0 * dot(V, H));
 
     float FH = SchlickFresnel(dot(L, H));
@@ -210,7 +210,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
             }
             else // Sample clearcoat lobe
             {
-                vec3 H = ImportanceSampleGTR1(state.mat.clearcoatRoughness, r1, r2);
+                vec3 H = ImportanceSampleGTR1(mix(0.1, 0.001, state.mat.clearcoatGloss), r1, r2);
                 H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
                 L = normalize(reflect(-V, H));
 

@@ -55,7 +55,7 @@ struct Material
     float sheen;
     float sheenTint;
     float clearcoat;
-    float clearcoatRoughness;
+    float clearcoatGloss;
     float specTrans;
     float ior;
     vec3 extinction;

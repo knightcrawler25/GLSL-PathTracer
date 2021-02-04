@@ -84,7 +84,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     mat.sheen          = param4.x;
     mat.sheenTint      = param4.y;
     mat.clearcoat      = param4.z;
-    mat.clearcoatRoughness = mix(0.001, 0.1, param4.w);
+    mat.clearcoatGloss = param4.w;
 
     mat.specTrans      = param5.x;
     mat.ior            = param5.y;
