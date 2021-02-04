@@ -200,19 +200,19 @@ vec3 DirectLight(in Ray r, in State state)
         float lightDistSq = lightDist * lightDist;
         lightDir /= sqrt(lightDistSq);
 
-        if (!state.isSubsurface && (dot(lightDir, state.ffnormal) <= 0.0 || dot(lightDir, lightSampleRec.normal) >= 0.0))
-            return Li;
-
-        Ray shadowRay = Ray(surfacePos + FaceForward(state.normal, lightDir) * EPS, lightDir);
-        bool inShadow = AnyHit(shadowRay, lightDist - EPS);
-
-        if (!inShadow)
+        if ((state.isSubsurface || dot(lightDir, state.ffnormal) > 0.0) && dot(lightDir, lightSampleRec.normal) < 0.0)
         {
-            bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
-            float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
+            Ray shadowRay = Ray(surfacePos + FaceForward(state.normal, lightDir) * EPS, lightDir);
+            bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
-            if (bsdfSampleRec.pdf > 0.0)
-                Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
+            if (!inShadow)
+            {
+                bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
+                float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
+
+                if (bsdfSampleRec.pdf > 0.0)
+                    Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
+            }
         }
     }
 #endif
