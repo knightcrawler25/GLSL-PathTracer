@@ -58,9 +58,10 @@ struct Material
     float clearcoatGloss;
     float specTrans;
     float ior;
+    float atDistance;
     vec3 extinction;
     vec3 texIDs;
-    // Roughness calculated from anisotropic
+    // Roughness calculated from anisotropic param
     float ax;
     float ay;
 };

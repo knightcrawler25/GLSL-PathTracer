@@ -112,6 +112,7 @@ namespace GLSLPT
                     sscanf(line, " transmission %f", &material.transmission);
                     sscanf(line, " ior %f", &material.ior);
                     sscanf(line, " extinction %f %f %f", &material.extinction.x, &material.extinction.y, &material.extinction.z);
+                    sscanf(line, " atDistance %f", &material.atDistance);
                     sscanf(line, " albedoTexture %s", albedoTexName);
                     sscanf(line, " metallicRoughnessTexture %s", metallicRoughnessTexName);
                     sscanf(line, " normalTexture %s", normalTexName);

@@ -62,12 +62,13 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     int index = state.matID;
     Material mat;
 
-    vec4 param1 = texelFetch(materialsTex, ivec2(index * 6 + 0, 0), 0);
-    vec4 param2 = texelFetch(materialsTex, ivec2(index * 6 + 1, 0), 0);
-    vec4 param3 = texelFetch(materialsTex, ivec2(index * 6 + 2, 0), 0);
-    vec4 param4 = texelFetch(materialsTex, ivec2(index * 6 + 3, 0), 0);
-    vec4 param5 = texelFetch(materialsTex, ivec2(index * 6 + 4, 0), 0);
-    vec4 param6 = texelFetch(materialsTex, ivec2(index * 6 + 5, 0), 0);
+    vec4 param1 = texelFetch(materialsTex, ivec2(index * 7 + 0, 0), 0);
+    vec4 param2 = texelFetch(materialsTex, ivec2(index * 7 + 1, 0), 0);
+    vec4 param3 = texelFetch(materialsTex, ivec2(index * 7 + 2, 0), 0);
+    vec4 param4 = texelFetch(materialsTex, ivec2(index * 7 + 3, 0), 0);
+    vec4 param5 = texelFetch(materialsTex, ivec2(index * 7 + 4, 0), 0);
+    vec4 param6 = texelFetch(materialsTex, ivec2(index * 7 + 5, 0), 0);
+    vec4 param7 = texelFetch(materialsTex, ivec2(index * 7 + 6, 0), 0);
 
     mat.albedo         = param1.xyz;
     mat.specular       = param1.w;
@@ -88,9 +89,11 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
     mat.specTrans      = param5.x;
     mat.ior            = param5.y;
+    mat.atDistance     = param5.z;
 
-    mat.extinction     = vec3(param5.zw, param6.x);
-    mat.texIDs         = vec3(param6.yzw);
+    mat.extinction     = param6.xyz;
+
+    mat.texIDs         = param7.xyz;
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
@@ -287,7 +290,7 @@ vec3 PathTrace(Ray r)
 
         // Set absorption only if the ray is currently inside the object.
         if (dot(state.ffnormal, bsdfSampleRec.L) < 0.0)
-            absorption = -log(state.mat.extinction) / vec3(0.2); // TODO: Add atDistance
+            absorption = -log(state.mat.extinction) / state.mat.atDistance;
 
         if (bsdfSampleRec.pdf > 0.0)
             throughput *= bsdfSampleRec.f * abs(dot(state.ffnormal, bsdfSampleRec.L)) / bsdfSampleRec.pdf;

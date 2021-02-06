@@ -143,6 +143,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     vec3 Cspec0 = mix(state.mat.specular * 0.08 * mix(vec3(1.0), Ctint, state.mat.specularTint), Cdlin, state.mat.metallic);
     vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
 
+    // TODO: Reuse random numbers and reduce so many calls to rand()
     // BSDF
     if (rand() < transWeight)
     {
@@ -170,8 +171,9 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     else // BRDF
     {
         if (rand() < diffuseRatio)
-        {
+        { 
             // Diffuse transmission. A way to approximate subsurface scattering
+            // TODO: Replace with actual volumetric scattering and absorption
             if (rand() < state.mat.subsurface)
             {
                 L = UniformSampleHemisphere(r1, r2);
@@ -269,7 +271,6 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
         // Subsurface
         if (dot(N, L) < 0.0)
         {
-            // TODO: Double check this. Fails furnace test when used with rough transmission
             if (state.mat.subsurface > 0.0)
             {
                 brdf = EvalSubsurface(state, V, N, L, m_pdf);
