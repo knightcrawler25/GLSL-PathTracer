@@ -102,7 +102,6 @@ struct State
 
     bool isEmitter;
     bool specularBounce;
-    bool isSubsurface;
 
     vec2 texCoord;
     vec3 bary;

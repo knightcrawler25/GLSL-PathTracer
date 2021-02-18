@@ -142,7 +142,7 @@ vec3 DirectLight(in Ray r, in State state)
 //-----------------------------------------------------------------------
 {
     vec3 Li = vec3(0.0);
-    vec3 surfacePos = state.fhp;
+    vec3 surfacePos = state.fhp + state.ffnormal * EPS;
 
     BsdfSampleRec bsdfSampleRec;
 
@@ -155,9 +155,9 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
-        if (state.isSubsurface || dot(lightDir, state.ffnormal) > 0.0)
+        if (dot(lightDir, state.ffnormal) > 0.0)
         {
-            Ray shadowRay = Ray(surfacePos + FaceForward(state.normal, lightDir) * EPS, lightDir);
+            Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
 
             if (!inShadow)
@@ -203,9 +203,9 @@ vec3 DirectLight(in Ray r, in State state)
         float lightDistSq = lightDist * lightDist;
         lightDir /= sqrt(lightDistSq);
 
-        if ((state.isSubsurface || dot(lightDir, state.ffnormal) > 0.0) && dot(lightDir, lightSampleRec.normal) < 0.0)
+        if (dot(lightDir, state.ffnormal) > 0.0 && dot(lightDir, lightSampleRec.normal) < 0.0)
         {
-            Ray shadowRay = Ray(surfacePos + FaceForward(state.normal, lightDir) * EPS, lightDir);
+            Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
             if (!inShadow)
@@ -237,7 +237,6 @@ vec3 PathTrace(Ray r)
     
     for (int depth = 0; depth < maxDepth; depth++)
     {
-        float lightPdf = 1.0f;
         state.depth = depth;
         float t = ClosestHit(r, state, lightSampleRec);
 
@@ -254,7 +253,7 @@ vec3 PathTrace(Ray r)
                 if (depth > 0 && !state.specularBounce)
                 {
                     // TODO: Fix NaNs when using certain HDRs
-                    lightPdf = EnvPdf(r);
+                    float lightPdf = EnvPdf(r);
                     misWeight = powerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
                 radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
@@ -301,7 +300,7 @@ vec3 PathTrace(Ray r)
         // Russian roulette
         if (depth >= RR_DEPTH)
         {
-            float q = min(max(throughput.x, max(throughput.y, throughput.z)) * state.eta * state.eta + 0.001, 0.95);
+            float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
             if (rand() > q)
                 break;
             throughput /= q;
