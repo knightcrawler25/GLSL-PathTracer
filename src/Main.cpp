@@ -57,6 +57,7 @@ Scene* scene       = nullptr;
 Renderer* renderer = nullptr;
 
 std::vector<string> sceneFiles;
+std::vector<const char*> scenes;
 
 float mouseSensitivity = 0.01f;
 bool keyPressed        = false;
@@ -90,6 +91,7 @@ void GetSceneFiles()
         if (std::string(file.extension) == "scene")
         {
             sceneFiles.push_back(assetsDir + std::string(file.name));
+            scenes.push_back(sceneFiles[sceneFiles.size()-1].c_str());
         }
     }
 
@@ -277,12 +279,6 @@ void MainLoop(void* arg)
         if (ImGui::Button("Save Screenshot"))
         {
             SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".jpg");
-        }
-
-        std::vector<const char*> scenes;
-        for (int i = 0; i < sceneFiles.size(); ++i)
-        {
-            scenes.push_back(sceneFiles[i].c_str());
         }
 
         if (ImGui::Combo("Scene", &sampleSceneIndex, scenes.data(), scenes.size()))
