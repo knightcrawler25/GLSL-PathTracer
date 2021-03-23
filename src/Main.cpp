@@ -121,7 +121,7 @@ void SaveFrame(const std::string filename)
     int w, h;
     renderer->GetOutputBuffer(&data, w, h);
     stbi_flip_vertically_on_write(true);
-    stbi_write_bmp(filename.c_str(), w, h, 3, data);
+    stbi_write_png(filename.c_str(), w, h, 3, data, w*3);
     delete data;
 }
 
@@ -276,7 +276,7 @@ void MainLoop(void* arg)
 
         if (ImGui::Button("Save Screenshot"))
         {
-            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".jpg");
+            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".png");
         }
 
         std::vector<const char*> scenes;
@@ -378,7 +378,7 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SpecularTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].specularTint, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Subsurface", &scene->materials[scene->meshInstances[selectedInstance].materialID].subsurface, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
+            //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Sheen", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheen, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SheenTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheenTint, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Clearcoat", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoat, 0.0f, 1.0f);

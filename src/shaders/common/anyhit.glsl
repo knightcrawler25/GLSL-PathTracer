@@ -26,6 +26,45 @@
 bool AnyHit(Ray r, float maxDist)
 //-----------------------------------------------------------------------
 {
+
+#ifdef LIGHTS
+    // Intersect Emitters
+    for (int i = 0; i < numOfLights; i++)
+    {
+        // Fetch light Data
+        vec3 position = texelFetch(lightsTex, ivec2(i * 5 + 0, 0), 0).xyz;
+        vec3 emission = texelFetch(lightsTex, ivec2(i * 5 + 1, 0), 0).xyz;
+        vec3 u = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
+        vec3 v = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
+        vec3 params = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
+        float radius = params.x;
+        float area = params.y;
+        float type = params.z;
+
+        // Intersect rectangular area light
+        if (type == QUAD_LIGHT)
+        {
+            vec3 normal = normalize(cross(u, v));
+            vec4 plane = vec4(normal, dot(normal, position));
+            u *= 1.0f / dot(u, u);
+            v *= 1.0f / dot(v, v);
+
+            float d = RectIntersect(position, u, v, plane, r);
+            if (d > 0.0 && d < maxDist)
+                return true;
+        }
+
+        // Intersect spherical area light
+        if (type == SPHERE_LIGHT)
+        {
+            float d = SphereIntersect(radius, position, r);
+            if (d > 0.0 && d < maxDist)
+                return true;
+        }
+    }
+#endif
+
+    // Intersect BVH and tris
     int stack[64];
     int ptr = 0;
     stack[ptr++] = -1;

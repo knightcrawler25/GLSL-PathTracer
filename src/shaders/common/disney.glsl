@@ -37,7 +37,11 @@
 vec3 EvalDielectricReflection(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 //-----------------------------------------------------------------------
 {
-    if (dot(N, L) < 0.0) return vec3(0.0);
+    if (!(dot(N, L) * dot(N, V) > 0.0))
+	{
+		pdf = 0;
+		return vec3(0.0);
+	}
 
     float F = DielectricFresnel(dot(V, H), state.eta);
     float D = GTR2(dot(N, H), state.mat.roughness);
@@ -52,6 +56,12 @@ vec3 EvalDielectricReflection(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout
 vec3 EvalDielectricRefraction(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 //-----------------------------------------------------------------------
 {
+    if (dot(N, L) > 0.0)
+	{
+		pdf = 0;
+		return vec3(0.0);
+	}
+
     float F = DielectricFresnel(abs(dot(V, H)), state.eta);
     float D = GTR2(dot(N, H), state.mat.roughness);
 
@@ -66,15 +76,18 @@ vec3 EvalDielectricRefraction(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout
 vec3 EvalSpecular(State state, vec3 Cspec0, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 //-----------------------------------------------------------------------
 {
-    if (dot(N, L) < 0.0) return vec3(0.0);
+    if (!(dot(N, L) * dot(N, V) > 0.0))
+	{
+		pdf = 0;
+		return vec3(0.0);
+	}
 
-    float D = GTR2_aniso(dot(N, H), dot(H, state.tangent), dot(H, state.bitangent), state.mat.ax, state.mat.ay);
+    float D = GTR2(dot(N, H), state.mat.roughness);
     pdf = D * dot(N, H) / (4.0 * dot(V, H));
 
     float FH = SchlickFresnel(dot(L, H));
     vec3 F = mix(Cspec0, vec3(1.0), FH);
-    float G = SmithG_GGX_aniso(dot(N, L), dot(L, state.tangent), dot(L, state.bitangent), state.mat.ax, state.mat.ay);
-    G *= SmithG_GGX_aniso(dot(N, V), dot(V, state.tangent), dot(V, state.bitangent), state.mat.ax, state.mat.ay);
+    float G = SmithG_GGX(abs(dot(N, L)), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
     return F * D * G;
 }
 
@@ -82,7 +95,11 @@ vec3 EvalSpecular(State state, vec3 Cspec0, vec3 V, vec3 N, vec3 L, vec3 H, inou
 vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 //-----------------------------------------------------------------------
 {
-    if (dot(N, L) < 0.0) return vec3(0.0);
+    if (!(dot(N, L) * dot(N, V) > 0.0))
+	{
+		pdf = 0;
+		return vec3(0.0);
+	}
 
     float D = GTR1(dot(N, H), mix(0.1, 0.001, state.mat.clearcoatGloss));
     pdf = D * dot(N, H) / (4.0 * dot(V, H));
@@ -97,7 +114,11 @@ vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 //-----------------------------------------------------------------------
 {
-    if (dot(N, L) < 0.0) return vec3(0.0);
+    if (!(dot(N, L) * dot(N, V) > 0.0))
+	{
+		pdf = 0;
+		return vec3(0.0);
+	}
 
     pdf = dot(N, L) * (1.0 / PI);
 
@@ -108,8 +129,7 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout
     float Fd90 = 0.5 + 2.0 * dot(L, H) * dot(L, H) * state.mat.roughness;
     float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
 
-    // TODO: Replace with volumetric scattering
-    // SS 
+    // Fake Subsurface TODO: Replace with volumetric scattering
     float Fss90 = dot(L, H) * dot(L, H) * state.mat.roughness;
     float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
     float ss = 1.25 * (Fss * (1.0 / (dot(N, L) + dot(N, V)) - 0.5) + 0.5);
@@ -122,7 +142,6 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout
 vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
 //-----------------------------------------------------------------------
 {
-    state.specularBounce = false;
     pdf = 0.0;
     vec3 f = vec3(0.0);
 
@@ -140,13 +159,12 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
 
     // TODO: Reuse random numbers and reduce so many calls to rand()
-    // BSDF
     if (rand() < transWeight)
     {
         vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-        if (dot(V, H) < 0.0)
+        if (dot(N, H) < 0.0)
             H = -H;
 
         vec3 R = reflect(-V, H);
@@ -160,8 +178,6 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
         }
         else // Transmission
         {
-            // TODO: Check how other renderers handle dielectrics
-            state.specularBounce = true; 
             L = normalize(refract(-V, H, state.eta));
             f = EvalDielectricRefraction(state, V, N, L, H, pdf);
         }
@@ -169,7 +185,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
         f *= transWeight;
         pdf *= transWeight;
     }
-    else // BRDF
+    else
     {
         if (rand() < diffuseRatio)
         { 
@@ -189,10 +205,10 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
             if (rand() < primarySpecRatio) 
             {
                 // TODO: Implement http://jcgt.org/published/0007/04/01/
-                vec3 H = ImportanceSampleGTR2_aniso(state.mat.ax, state.mat.ay, r1, r2);
+                vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
                 H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-                if (dot(V, H) < 0.0)
+                if (dot(N, H) < 0.0)
                     H = -H;
 
                 L = normalize(reflect(-V, H));
@@ -205,7 +221,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
                 vec3 H = ImportanceSampleGTR1(mix(0.1, 0.001, state.mat.clearcoatGloss), r1, r2);
                 H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-                if (dot(V, H) < 0.0)
+                if (dot(N, H) < 0.0)
                     H = -H;
 
                 L = normalize(reflect(-V, H));
@@ -226,11 +242,12 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
 //-----------------------------------------------------------------------
 {
     vec3 H;
+    bool refl = dot(N, L) * dot(N, V) > 0.0;
 
-    if (dot(N, L) < 0.0)
-        H = normalize(L * (1.0 / state.eta) + V);
-    else
+    if (refl)
         H = normalize(L + V);
+    else
+        H = normalize(L * (1.0 / state.eta) + V);
 
     if (dot(N, H) < 0.0)
         H = -H;
@@ -244,17 +261,16 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
     float brdfPdf = 0.0;
     float bsdfPdf = 0.0;
 
-    // BSDF
     if (transWeight > 0.0)
     {
-        // Transmission
-        if (dot(N, L) < 0.0) 
+        // Reflection
+        if (refl) 
+        {
+            bsdf = EvalDielectricReflection(state, V, N, L, H, bsdfPdf); 
+        }
+        else // Transmission
         {
             bsdf = EvalDielectricRefraction(state, V, N, L, H, bsdfPdf);
-        }
-        else // Reflection
-        {
-            bsdf = EvalDielectricReflection(state, V, N, L, H, bsdfPdf);
         }
     }
 

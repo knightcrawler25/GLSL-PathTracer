@@ -142,7 +142,7 @@ vec3 DirectLight(in Ray r, in State state)
 //-----------------------------------------------------------------------
 {
     vec3 Li = vec3(0.0);
-    vec3 surfacePos = state.fhp + state.ffnormal * EPS;
+    vec3 surfacePos = state.fhp + state.normal * EPS;
 
     BsdfSampleRec bsdfSampleRec;
 
@@ -155,21 +155,18 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
-        if (dot(lightDir, state.ffnormal) > 0.0)
+        Ray shadowRay = Ray(surfacePos, lightDir);
+        bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
+
+        if (!inShadow)
         {
-            Ray shadowRay = Ray(surfacePos, lightDir);
-            bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
+            bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
 
-            if (!inShadow)
+            if (bsdfSampleRec.pdf > 0.0)
             {
-                bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
-
-                if (bsdfSampleRec.pdf > 0.0)
-                {
-                    float misWeight = powerHeuristic(lightPdf, bsdfSampleRec.pdf);
-                    if (misWeight > 0.0)
-                        Li += misWeight * bsdfSampleRec.f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
-                }
+                float misWeight = powerHeuristic(lightPdf, bsdfSampleRec.pdf);
+                if (misWeight > 0.0)
+                    Li += misWeight * bsdfSampleRec.f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
             }
         }
     }
@@ -203,7 +200,7 @@ vec3 DirectLight(in Ray r, in State state)
         float lightDistSq = lightDist * lightDist;
         lightDir /= sqrt(lightDistSq);
 
-        if (dot(lightDir, state.ffnormal) > 0.0 && dot(lightDir, lightSampleRec.normal) < 0.0)
+        if (dot(lightDir, lightSampleRec.normal) < 0.0)
         {
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, lightDist - EPS);
@@ -234,6 +231,7 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
+    state.specularBounce = false;
     
     for (int depth = 0; depth < maxDepth; depth++)
     {

@@ -31,6 +31,9 @@
 #define REFR 1
 #define SUBS 2
 
+#define QUAD_LIGHT 0
+#define SPHERE_LIGHT 1
+
 mat4 transform;
 
 vec2 seed;
