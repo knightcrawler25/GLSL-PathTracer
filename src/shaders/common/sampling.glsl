@@ -215,7 +215,7 @@ void sampleRectLight(in Light light, inout LightSampleRec lightSampleRec)
 void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
-    if (int(light.type) == 0) // Rect Light
+    if (int(light.type) == QUAD_LIGHT)
         sampleRectLight(light, lightSampleRec);
     else
         sampleSphereLight(light, lightSampleRec);

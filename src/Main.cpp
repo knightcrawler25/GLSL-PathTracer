@@ -121,7 +121,7 @@ void SaveFrame(const std::string filename)
     int w, h;
     renderer->GetOutputBuffer(&data, w, h);
     stbi_flip_vertically_on_write(true);
-    stbi_write_bmp(filename.c_str(), w, h, 3, data);
+    stbi_write_png(filename.c_str(), w, h, 3, data, w*3);
     delete data;
 }
 
@@ -276,7 +276,7 @@ void MainLoop(void* arg)
 
         if (ImGui::Button("Save Screenshot"))
         {
-            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".jpg");
+            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".png");
         }
 
         std::vector<const char*> scenes;
@@ -378,13 +378,14 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SpecularTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].specularTint, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Subsurface", &scene->materials[scene->meshInstances[selectedInstance].materialID].subsurface, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
+            //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Sheen", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheen, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SheenTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheenTint, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Clearcoat", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoat, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("clearcoatRoughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatRoughness, 0.001f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("clearcoatGloss", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatGloss, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Transmission", &scene->materials[scene->meshInstances[selectedInstance].materialID].transmission, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.001f, 2.0f);
+            objectPropChanged |= ImGui::SliderFloat("atDistance", &scene->materials[scene->meshInstances[selectedInstance].materialID].atDistance, 0.05f, 10.0f);
             objectPropChanged |= ImGui::ColorEdit3("Extinction", (float*)extinction, 0);
 
             // Transforms Properties

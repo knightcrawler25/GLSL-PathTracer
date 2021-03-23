@@ -31,6 +31,9 @@
 #define REFR 1
 #define SUBS 2
 
+#define QUAD_LIGHT 0
+#define SPHERE_LIGHT 1
+
 mat4 transform;
 
 vec2 seed;
@@ -55,12 +58,13 @@ struct Material
     float sheen;
     float sheenTint;
     float clearcoat;
-    float clearcoatRoughness;
+    float clearcoatGloss;
     float specTrans;
     float ior;
+    float atDistance;
     vec3 extinction;
     vec3 texIDs;
-    // Roughness calculated from anisotropic
+    // Roughness calculated from anisotropic param
     float ax;
     float ay;
 };
@@ -101,7 +105,6 @@ struct State
 
     bool isEmitter;
     bool specularBounce;
-    bool isSubsurface;
 
     vec2 texCoord;
     vec3 bary;
