@@ -198,7 +198,7 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = lightSampleRec.surfacePos - surfacePos;
         float lightDist = length(lightDir);
         float lightDistSq = lightDist * lightDist;
-        lightDir /= sqrt(lightDistSq);
+        lightDir /= lightDist;
 
         if (dot(lightDir, lightSampleRec.normal) < 0.0)
         {
