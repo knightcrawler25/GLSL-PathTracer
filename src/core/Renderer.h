@@ -50,7 +50,8 @@ namespace GLSLPT
             RRDepth = 2;
             bgColor = Vec3(0.3f, 0.3f, 0.3f);
             denoiserFrameCnt = 20;
-            enableDenoiser = true;
+            //enableDenoiser = true;
+            enableDenoiser = false;
         }
         iVec2 resolution;
         int maxDepth;
@@ -110,6 +111,7 @@ namespace GLSLPT
         virtual void Update(float secondsElapsed);
         virtual float GetProgress() const = 0;
         virtual int GetSampleCount() const = 0;
+        virtual float GetRenderTime() const = 0;
         virtual void GetOutputBuffer(unsigned char**, int &w, int &h) = 0;
     };
 }

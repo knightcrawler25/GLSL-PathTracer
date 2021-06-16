@@ -110,7 +110,7 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout
     if (dot(N, L) <= 0.0)
         return vec3(0.0);
 
-    pdf = dot(N, L) * (1.0 / PI);
+    pdf = dot(N, L) * (INV_PI);
 
     // Diffuse
     float FL = SchlickFresnel(dot(N, L));
@@ -125,7 +125,7 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout
     float ss = 1.25 * (Fss * (1.0 / (dot(N, L) + dot(N, V)) - 0.5) + 0.5);
 
     vec3 Fsheen = FH * state.mat.sheen * Csheen;
-    return ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * state.mat.albedo + Fsheen) * (1.0 - state.mat.metallic);
+    return ((INV_PI) * mix(Fd, ss, state.mat.subsurface) * state.mat.albedo + Fsheen) * (1.0 - state.mat.metallic);
 }
 
 //-----------------------------------------------------------------------

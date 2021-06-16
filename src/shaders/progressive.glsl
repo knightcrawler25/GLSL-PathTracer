@@ -48,27 +48,31 @@ void main(void)
 {
     seed = TexCoords;
 
-    float r1 = 2.0 * rand();
-    float r2 = 2.0 * rand();
+    float r1 = rand();
+    float r2 = rand();
 
     vec2 jitter;
-    jitter.x = r1 < 1.0 ? sqrt(r1) - 1.0 : 1.0 - sqrt(2.0 - r1);
-    jitter.y = r2 < 1.0 ? sqrt(r2) - 1.0 : 1.0 - sqrt(2.0 - r2);
+    jitter.x = r1 < 1.0 ? sqrt(r1 + r1) - 1.0 : 1.0 - sqrt(2.0 - r1 - r1);
+    jitter.y = r2 < 1.0 ? sqrt(r2 + r2) - 1.0 : 1.0 - sqrt(2.0 - r2 - r2);
 
-    jitter /= (screenResolution * 0.5);
-    vec2 d = (2.0 * TexCoords - 1.0) + jitter;
+    jitter *= screenResolution1;
+    vec2 d = (TexCoords + TexCoords - 1.0) + jitter;
 
-    float scale = tan(camera.fov * 0.5);
-    d.y *= screenResolution.y / screenResolution.x * scale;
-    d.x *= scale;
+    d.y *= camera.fovTAN1;
+    d.x *= camera.fovTAN;
     vec3 rayDir = normalize(d.x * camera.right + d.y * camera.up + camera.forward);
 
     vec3 focalPoint = camera.focalDist * rayDir;
-    float cam_r1 = rand() * TWO_PI;
-    float cam_r2 = rand() * camera.aperture;
-    vec3 randomAperturePos = (cos(cam_r1) * camera.right + sin(cam_r1) * camera.up) * sqrt(cam_r2);
+	vec3 randomAperturePos = vec3(0);
+	
+	if(camera.aperture > 0.0f) {
+		float cam_r1 = rand() * TWO_PI;
+		float cam_r2 = rand() * camera.aperture;
+		randomAperturePos = (cos(cam_r1) * camera.right + sin(cam_r1) * camera.up) * sqrt(cam_r2);
+	}
+	
     vec3 finalRayDir = normalize(focalPoint - randomAperturePos);
-
+	
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
     vec3 pixelColor = PathTrace(ray);

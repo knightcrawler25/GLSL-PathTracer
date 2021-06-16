@@ -40,10 +40,10 @@ namespace GLSLPT
         scene->camera->aperture = 1e-6f; 
         scene->camera->focalDist = 0.262f;
 
-        int mesh_id1 = scene->AddMesh("./assets/Figurine/head.obj");
-        int mesh_id2 = scene->AddMesh("./assets/Figurine/body.obj");
-        int mesh_id3 = scene->AddMesh("./assets/Figurine/base.obj");
-        int mesh_id4 = scene->AddMesh("./assets/Figurine/background.obj");
+        int mesh_id1 = scene->AddMesh("../assets/Figurine/head.obj");
+        int mesh_id2 = scene->AddMesh("../assets/Figurine/body.obj");
+        int mesh_id3 = scene->AddMesh("../assets/Figurine/base.obj");
+        int mesh_id4 = scene->AddMesh("../assets/Figurine/background.obj");
 
         Material head;
         Material body;
@@ -52,14 +52,14 @@ namespace GLSLPT
         Material gold;
         Material red_plastic;
 
-        int headAlbedo = scene->AddTexture("./assets/Figurine/textures/01_Head_Base_Color.png");
-        int bodyAlbedo = scene->AddTexture("./assets/Figurine/textures/02_Body_Base_Color.png");
-        int baseAlbedo = scene->AddTexture("./assets/Figurine/textures/03_Base_Base_Color.png");
-        int bgAlbedo   = scene->AddTexture("./assets/Figurine/textures/grid.jpg");
+        int headAlbedo = scene->AddTexture("../assets/Figurine/textures/01_Head_Base_Color.png");
+        int bodyAlbedo = scene->AddTexture("../assets/Figurine/textures/02_Body_Base_Color.png");
+        int baseAlbedo = scene->AddTexture("../assets/Figurine/textures/03_Base_Base_Color.png");
+        int bgAlbedo   = scene->AddTexture("../assets/Figurine/textures/grid.jpg");
 
-        int headMatRgh = scene->AddTexture("./assets/Figurine/textures/01_Head_MetallicRoughness.png");
-        int bodyMatRgh = scene->AddTexture("./assets/Figurine/textures/02_Body_MetallicRoughness.png");
-        int baseMatRgh = scene->AddTexture("./assets/Figurine/textures/03_Base_MetallicRoughness.png");
+        int headMatRgh = scene->AddTexture("../assets/Figurine/textures/01_Head_MetallicRoughness.png");
+        int bodyMatRgh = scene->AddTexture("../assets/Figurine/textures/02_Body_MetallicRoughness.png");
+        int baseMatRgh = scene->AddTexture("../assets/Figurine/textures/03_Base_MetallicRoughness.png");
 
         head.albedoTexID = headAlbedo;
         head.metallicRoughnessTexID = headMatRgh;

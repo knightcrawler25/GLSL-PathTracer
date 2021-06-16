@@ -24,6 +24,12 @@
 
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
+
+#define INV_PI        0.31830988618379067153776752674503
+#define INV_TWO_PI    0.15915494309189533576888376337251
+
+#define TWO_PI_PI    19.739208802178717237668981999752
+
 #define INFINITY  1000000.0
 #define EPS 0.0001
 
@@ -76,6 +82,8 @@ struct Camera
     vec3 forward;
     vec3 position;
     float fov;
+    float fovTAN;
+    float fovTAN1;
     float focalDist;
     float aperture;
 };

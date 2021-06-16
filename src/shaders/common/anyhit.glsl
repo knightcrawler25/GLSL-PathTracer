@@ -57,7 +57,7 @@ bool AnyHit(Ray r, float maxDist)
         // Intersect spherical area light
         if (type == SPHERE_LIGHT)
         {
-            float d = SphereIntersect(radius, position, r);
+            float d = SphereIntersect(u.x, position, r); //precalculated
             if (d > 0.0 && d < maxDist)
                 return true;
         }

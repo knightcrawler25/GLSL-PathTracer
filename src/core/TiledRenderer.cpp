@@ -28,6 +28,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include <string>
+#include <ctime>
 
 namespace GLSLPT
 {
@@ -71,6 +72,8 @@ namespace GLSLPT
         sampleCounter = 1;
         currentBuffer = 0;
         frameCounter = 1;
+		
+		startRenderTime = clock();
 
         numTilesX = ceil((float)screenSize.x / tileWidth);
         numTilesY = ceil((float)screenSize.y / tileHeight);
@@ -217,6 +220,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution1"), 2.0f / float(screenSize.x), 2.0f / float(screenSize.y));
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1f(glGetUniformLocation(shaderObject, "invNumTilesX"), 1.0f / ((float)screenSize.x / tileWidth));
         glUniform1f(glGetUniformLocation(shaderObject, "invNumTilesY"), 1.0f / ((float)screenSize.y / tileHeight));
@@ -241,6 +245,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution1"), 2.0f / float(screenSize.x), 2.0f / float(screenSize.y));
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
         glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
@@ -416,6 +421,11 @@ namespace GLSLPT
         return sampleCounter;
     }
 
+    float TiledRenderer::GetRenderTime() const
+    {
+        return ((float)(clock() - startRenderTime)) / ((float)CLOCKS_PER_SEC);
+    }
+
     void TiledRenderer::Update(float secondsElapsed)
     {
         Renderer::Update(secondsElapsed);
@@ -461,6 +471,8 @@ namespace GLSLPT
             sampleCounter = 1;
             denoised = false;
             frameCounter = 1;
+		
+			startRenderTime = clock();
 
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
             glViewport(0, 0, screenSize.x, screenSize.y);
@@ -514,6 +526,8 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "camera.fov"), scene->camera->fov);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
+        glUniform1f(glGetUniformLocation(shaderObject, "camera.fovTAN"), tan(scene->camera->fov * 0.5));
+        glUniform1f(glGetUniformLocation(shaderObject, "camera.fovTAN1"), float(screenSize.y) / float(screenSize.x) * tan(scene->camera->fov * 0.5));
         glUniform3f(glGetUniformLocation(shaderObject, "randomVector"), r1, r2, r3);
         glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);

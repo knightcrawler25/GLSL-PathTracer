@@ -173,6 +173,7 @@ namespace GLSLPT
                 {
                     light.type = LightType::SphereLight;
                     light.area = 4.0f * PI * light.radius * light.radius;
+					light.u.x = light.radius * light.radius;	//precalculated
                 }
 
                 scene->AddLight(light);

@@ -70,7 +70,7 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         // Intersect spherical area light
         if (type == 1.) 
         {
-            d = SphereIntersect(radius, position, r);
+            d = SphereIntersect(u.x, position, r); //precalculated
             if (d < 0.)
                 d = INFINITY;
             if (d < t)

@@ -25,10 +25,13 @@
 //-----------------------------------------------------------------------
 void Onb(in vec3 N, inout vec3 T, inout vec3 B)
 //-----------------------------------------------------------------------
-{
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
-    T = normalize(cross(UpVector, N));
-    B = cross(N, T);
+{	
+	float sgn = (N.z > 0.0f) ? 1.0f : -1.0f;
+	float aa = - 1.0f / (sgn + N.z);
+	float bb = N.x * N.y * aa;	
+	
+	T = vec3(1.0f + sgn * N.x * N.x * aa, sgn * bb, -sgn * N.x);
+	B = vec3(bb, sgn + N.y * N.y * aa, -N.y);
 }
 
 //-----------------------------------------------------------------------
@@ -45,12 +48,12 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 
     state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
 
-    vec3 normal = normalize(n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
+    vec3 normal = (n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
 
     mat3 normalMatrix = transpose(inverse(mat3(transform)));
     normal = normalize(normalMatrix * normal);
     state.normal = normal;
-    state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : normal * -1.0;
+    state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : -normal;
 
     Onb(state.ffnormal, state.tangent, state.bitangent);
 }
@@ -115,7 +118,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     if (int(mat.texIDs.z) >= 0)
     {
         vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
-        nrm = normalize(nrm * 2.0 - 1.0);
+        nrm = (nrm + nrm - 1.0);
 
         // Orthonormal Basis
         vec3 T, B;
@@ -123,7 +126,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
         nrm = T * nrm.x + B * nrm.y + state.ffnormal * nrm.z;
         state.normal = normalize(nrm);
-        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
+        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : -state.normal;
 
         Onb(state.ffnormal, state.tangent, state.bitangent);
     }
@@ -246,7 +249,7 @@ vec3 PathTrace(Ray r)
 #ifdef ENVMAP
             {
                 float misWeight = 1.0f;
-                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), acos(r.direction.y) * (1.0 / PI));
+                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
 
                 if (depth > 0 && !state.specularBounce)
                 {

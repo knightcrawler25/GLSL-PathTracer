@@ -100,7 +100,7 @@ float GTR1(float NDotH, float a)
 //-----------------------------------------------------------------------
 {
     if (a >= 1.0)
-        return (1.0 / PI);
+        return INV_PI;
     float a2 = a * a;
     float t = 1.0 + (a2 - 1.0) * NDotH * NDotH;
     return (a2 - 1.0) / (PI * log(a2) * t);
@@ -228,10 +228,10 @@ void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
 float EnvPdf(in Ray r)
 //-----------------------------------------------------------------------
 {
-    float theta = acos(clamp(r.direction.y, -1.0, 1.0));
-    vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), theta * (1.0 / PI));
+	float theta = acos(r.direction.y);
+    vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI);
     float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, vec2(uv.y, 0.)).y;
-    return (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta));
+    return (pdf * hdrResolution) / (TWO_PI_PI * sin(theta));
 }
 
 //-----------------------------------------------------------------------
@@ -249,11 +249,13 @@ vec4 EnvSample(inout vec3 color)
 
     float phi = u * TWO_PI;
     float theta = v * PI;
+	
+	float sinTheta = -sin(theta);
 
-    if (sin(theta) == 0.0)
+    if (sinTheta == 0.0)
         pdf = 0.0;
 
-    return vec4(-sin(theta) * cos(phi), cos(theta), -sin(theta) * sin(phi), (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta)));
+    return vec4(sinTheta * cos(phi), cos(theta), sinTheta * sin(phi), (pdf * hdrResolution) / (- TWO_PI_PI * sinTheta));
 }
 
 #endif

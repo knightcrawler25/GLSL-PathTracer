@@ -26,6 +26,7 @@ uniform bool isCameraMoving;
 uniform bool useEnvMap;
 uniform vec3 randomVector;
 uniform vec2 screenResolution;
+uniform vec2 screenResolution1;
 uniform float hdrTexSize;
 uniform int tileX;
 uniform int tileY;

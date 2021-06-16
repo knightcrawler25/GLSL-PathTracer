@@ -37,15 +37,15 @@ in vec2 TexCoords;
 uniform sampler2D pathTraceTexture;
 uniform float invSampleCounter;
 
-vec4 ToneMap(in vec4 c, float limit)
+vec4 ToneMap(in vec4 c, float limit1)
 {
     float luminance = 0.3*c.x + 0.6*c.y + 0.1*c.z;
 
-    return c * 1.0 / (1.0 + luminance / limit);
+    return c / (1.0 + luminance * limit1);
 }
 
 void main()
 {
     color = texture(pathTraceTexture, TexCoords) * invSampleCounter;
-    color = pow(ToneMap(color, 1.5), vec4(1.0 / 2.2));
+    color = pow(ToneMap(color, 0.66666666666666666666666666666667), vec4(0.45454545454545454545454545454545));
 }

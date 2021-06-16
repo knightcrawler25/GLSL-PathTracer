@@ -39,9 +39,11 @@
 #include "imgui_impl_opengl3.h"
 
 #include "Loader.h"
-#include "boyTestScene.h"
 #include "ajaxTestScene.h"
+
+#include "boyTestScene.h"
 #include "cornellTestScene.h"
+
 #include "ImGuizmo.h"
 #include "tinydir.h"
 
@@ -69,6 +71,9 @@ std::string shadersDir = "../src/shaders/";
 std::string assetsDir = "../assets/";
 
 RenderOptions renderOptions;
+
+int maxSPP = -1;
+float maxRenderTime = -1.0f;
 
 struct LoopData
 {
@@ -267,8 +272,19 @@ void MainLoop(void* arg)
     ImGuizmo::BeginFrame();
     {
         ImGui::Begin("Settings");
+		
+		int samplesNow = renderer->GetSampleCount();
+		float renderTimeNow = renderer->GetRenderTime();
 
-        ImGui::Text("Samples: %d ", renderer->GetSampleCount());
+        ImGui::Text("Samples: %d ", samplesNow);
+        ImGui::Text("Render time: %.1fs", renderTimeNow);
+		
+		if( maxSPP == samplesNow || (renderTimeNow > maxRenderTime && maxRenderTime>0.0f))
+		{
+			printf("%d samples. render time: %.1fs\n", samplesNow, renderTimeNow);
+			SaveFrame("./img_" + to_string(samplesNow) + ".png");
+            done = true;
+		}
 
         ImGui::BulletText("LMB + drag to rotate");
         ImGui::BulletText("MMB + drag to pan");
@@ -431,6 +447,8 @@ int main(int argc, char** argv)
     srand((unsigned int)time(0));
 
     std::string sceneFile;
+    bool testAjax = false;
+    bool testBoy = false;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -439,6 +457,26 @@ int main(int argc, char** argv)
         {
             sceneFile = argv[++i];
         }
+        else 
+        if (arg == "-spp")
+        {
+            maxSPP = atoi(argv[++i]);
+        }
+        else 
+        if (arg == "-time")
+        {
+            maxRenderTime = atof(argv[++i]);
+        }
+        else 
+        if (arg == "-testAjax")
+        {
+            testAjax = true;
+        }
+        else 
+        if (arg == "-testBoy")
+        {
+            testBoy = true;
+        }
         else if (arg[0] == '-')
         {
             printf("Unknown option %s \n'", arg.c_str());
@@ -446,21 +484,36 @@ int main(int argc, char** argv)
         }
     }
 
-    if (!sceneFile.empty())
-    {
-        scene = new Scene();
+	if (testAjax) 
+	{
+			scene = new Scene();
+			loadAjaxTestScene(scene, renderOptions);
 
-        if (!LoadSceneFromFile(sceneFile, scene, renderOptions))
-            exit(0);
+			scene->renderOptions = renderOptions;
+	} else 
+	if (testBoy) 
+	{
+			scene = new Scene();
+			loadBoyTestScene(scene, renderOptions);
 
-        scene->renderOptions = renderOptions;
-        std::cout << "Scene Loaded\n\n";
-    }
-    else
-    {
-        GetSceneFiles();
-        LoadScene(sceneFiles[sampleSceneIndex]);
-    }
+			scene->renderOptions = renderOptions;
+	} else {
+		if (!sceneFile.empty())
+		{
+			scene = new Scene();
+
+			if (!LoadSceneFromFile(sceneFile, scene, renderOptions))
+				exit(0);
+
+			scene->renderOptions = renderOptions;
+			std::cout << "Scene Loaded\n\n";
+		}
+		else
+		{
+			GetSceneFiles();
+			LoadScene(sceneFiles[sampleSceneIndex]);
+		}
+	}
 
     // Setup SDL
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -539,6 +592,8 @@ int main(int argc, char** argv)
     {
         MainLoop(&loopdata);
     }
+	
+	fflush(stdout);
         
     delete renderer;
     delete scene;

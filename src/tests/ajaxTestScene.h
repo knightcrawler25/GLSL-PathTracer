@@ -37,7 +37,7 @@ namespace GLSLPT
         renderOptions.useEnvMap = true;
         scene->AddCamera(Vec3(0.0f, 0.125f, -0.45f), Vec3(0.0f, 0.125f, 0.0f), 60.0f);
 
-        int mesh_id = scene->AddMesh("./assets/ajax/ajax.obj");
+        int mesh_id = scene->AddMesh("../assets/ajax/ajax.obj");
 
         Material black;
         black.albedo = Vec3(0.1f, 0.1f, 0.1f);
@@ -74,7 +74,7 @@ namespace GLSLPT
         scene->AddMeshInstance(instance1);
         scene->AddMeshInstance(instance2);
 
-        scene->AddHDR("./assets/HDR/sunset.hdr");
+        scene->AddHDR("../assets/HDR/sunset.hdr");
 
         scene->CreateAccelerationStructures();
 

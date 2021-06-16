@@ -29,7 +29,7 @@ float SphereIntersect(float rad, vec3 pos, Ray r)
     vec3 op = pos - r.origin;
     float eps = 0.001;
     float b = dot(op, r.direction);
-    float det = b * b - dot(op, op) + rad * rad;
+    float det = b * b - dot(op, op) + rad;
     if (det < 0.0)
         return INFINITY;
 

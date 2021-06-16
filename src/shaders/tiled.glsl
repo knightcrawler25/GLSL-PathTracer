@@ -44,9 +44,9 @@ in vec2 TexCoords;
 #include common/disney.glsl
 #include common/pathtrace.glsl
 
-float map(float value, float low1, float high1, float low2, float high2)
+float map(float value, float low2, float high2)
 {
-    return low2 + ((value - low1) * (high2 - low2)) / (high1 - low1);
+    return low2 + ((value) * (high2 - low2)) ;
 }
 
 void main(void)
@@ -54,36 +54,40 @@ void main(void)
     vec2 coordsTile = TexCoords;
     vec2 coordsFS;
 
-    float xoffset = -1.0 + 2.0 * invNumTilesX * float(tileX);
-    float yoffset = -1.0 + 2.0 * invNumTilesY * float(tileY);
+    float xoffset = -1.0 + invNumTilesX * float(tileX + tileX);
+    float yoffset = -1.0 + invNumTilesY * float(tileY + tileY);
 
-    coordsTile.x = map(coordsTile.x, 0.0, 1.0, xoffset, xoffset + 2.0 * invNumTilesX);
-    coordsTile.y = map(coordsTile.y, 0.0, 1.0, yoffset, yoffset + 2.0 * invNumTilesY);
+    coordsTile.x = map(coordsTile.x, xoffset, xoffset + invNumTilesX + invNumTilesX);
+    coordsTile.y = map(coordsTile.y, yoffset, yoffset + invNumTilesY + invNumTilesY);
 
-    coordsFS.x = map(TexCoords.x, 0.0, 1.0, invNumTilesX * float(tileX), invNumTilesX * float(tileX) + invNumTilesX);
-    coordsFS.y = map(TexCoords.y, 0.0, 1.0, invNumTilesY * float(tileY), invNumTilesY * float(tileY) + invNumTilesY);
+    coordsFS.x = map(TexCoords.x, invNumTilesX * float(tileX), invNumTilesX * float(tileX) + invNumTilesX);
+    coordsFS.y = map(TexCoords.y, invNumTilesY * float(tileY), invNumTilesY * float(tileY) + invNumTilesY);
 
     seed = coordsFS;
 
-    float r1 = 2.0 * rand();
-    float r2 = 2.0 * rand();
+    float r1 = rand();
+    float r2 = rand();
 
     vec2 jitter;
-    jitter.x = r1 < 1.0 ? sqrt(r1) - 1.0 : 1.0 - sqrt(2.0 - r1);
-    jitter.y = r2 < 1.0 ? sqrt(r2) - 1.0 : 1.0 - sqrt(2.0 - r2);
+    jitter.x = r1 < 1.0 ? sqrt(r1 + r1) - 1.0 : 1.0 - sqrt(2.0 - r1 - r1);
+    jitter.y = r2 < 1.0 ? sqrt(r2 + r2) - 1.0 : 1.0 - sqrt(2.0 - r2 - r2);
 
-    jitter /= (screenResolution * 0.5);
+    jitter *= screenResolution1;
     vec2 d = coordsTile + jitter;
 
-    float scale = tan(camera.fov * 0.5);
-    d.y *= screenResolution.y / screenResolution.x * scale;
-    d.x *= scale;
+    d.y *= camera.fovTAN1;
+    d.x *= camera.fovTAN;
     vec3 rayDir = normalize(d.x * camera.right + d.y * camera.up + camera.forward);
 
     vec3 focalPoint = camera.focalDist * rayDir;
+    vec3 randomAperturePos = vec3(0);
+	
+    if(camera.aperture > 0.0f) {
     float cam_r1 = rand() * TWO_PI;
     float cam_r2 = rand() * camera.aperture;
-    vec3 randomAperturePos = (cos(cam_r1) * camera.right + sin(cam_r1) * camera.up) * sqrt(cam_r2);
+    randomAperturePos = (cos(cam_r1) * camera.right + sin(cam_r1) * camera.up) * sqrt(cam_r2);
+	}
+	
     vec3 finalRayDir = normalize(focalPoint - randomAperturePos);
 
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
