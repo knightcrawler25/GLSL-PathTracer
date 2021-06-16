@@ -215,7 +215,7 @@ vec3 DirectLight(in Ray r, in State state)
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0) {
-					float lightPdf = (lightDist * lightDist * lightDist) / (light.area * abs(dotL));
+					float lightPdf = - (lightDist * lightDist * lightDist) / (light.area * dotL);
                     Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
 				}
             }
@@ -294,11 +294,13 @@ vec3 PathTrace(Ray r)
 		float dotL = dot(state.ffnormal, bsdfSampleRec.L);
 
         // Set absorption only if the ray is currently inside the object.
-        if (dotL < 0.0)
+        if (dotL < 0.0) {
             absorption = -log(state.mat.extinction) / state.mat.atDistance;
+			dotL = - dotL;
+		}
 
         if (bsdfSampleRec.pdf > 0.0)
-            throughput *= bsdfSampleRec.f * abs(dotL) / bsdfSampleRec.pdf;
+            throughput *= bsdfSampleRec.f * dotL / bsdfSampleRec.pdf;
         else
             break;
 

@@ -56,7 +56,7 @@ void main(void)
     jitter.y = r2 < 1.0 ? sqrt(r2 + r2) - 1.0 : 1.0 - sqrt(2.0 - r2 - r2);
 
     jitter *= screenResolution1;
-    vec2 d = (TexCoords + TexCoords - 1.0) + jitter;
+    vec2 d = (TexCoords + TexCoords - 1.0) + jitter;    
 
     d.y *= camera.fovTAN1;
     d.x *= camera.fovTAN;
@@ -72,7 +72,7 @@ void main(void)
 #endif
 	
     vec3 finalRayDir = normalize(focalPoint - randomAperturePos);
-	
+
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
     vec3 pixelColor = PathTrace(ray);

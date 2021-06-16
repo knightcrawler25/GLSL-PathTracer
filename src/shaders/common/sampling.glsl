@@ -172,7 +172,7 @@ vec3 UniformSampleHemisphere(float r1, float r2)
 vec3 UniformSampleSphere(float r1, float r2)
 //-----------------------------------------------------------------------
 {
-    float z = 1.0 - 2.0 * r1;
+    float z = 1.0 - r1 - r1;
     float r = sqrt(max(0.0, 1.0 - z * z));
     float phi = TWO_PI * r2;
 
