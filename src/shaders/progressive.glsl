@@ -65,11 +65,11 @@ void main(void)
     vec3 focalPoint = camera.focalDist * rayDir;
 	vec3 randomAperturePos = vec3(0);
 	
-	if(camera.aperture > 0.0f) {
+#ifdef CAMERA_APERTURE
 		float cam_r1 = rand() * TWO_PI;
 		float cam_r2 = rand() * camera.aperture;
 		randomAperturePos = (cos(cam_r1) * camera.right + sin(cam_r1) * camera.up) * sqrt(cam_r2);
-	}
+#endif
 	
     vec3 finalRayDir = normalize(focalPoint - randomAperturePos);
 	

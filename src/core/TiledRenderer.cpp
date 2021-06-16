@@ -104,6 +104,9 @@ namespace GLSLPT
             defines += "#define RR\n";
             defines += "#define RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
         }
+        if (scene->camera->aperture > 0.0f)
+            defines += "#define CAMERA_APERTURE\n";
+		
         if (scene->renderOptions.useConstantBg)
             defines += "#define CONSTANT_BG\n";
 

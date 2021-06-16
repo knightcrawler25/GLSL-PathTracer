@@ -62,16 +62,16 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 void GetMaterialsAndTextures(inout State state, in Ray r)
 //-----------------------------------------------------------------------
 {
-    int index = state.matID;
+    int index7 = state.matID * 7;
     Material mat;
 
-    vec4 param1 = texelFetch(materialsTex, ivec2(index * 7 + 0, 0), 0);
-    vec4 param2 = texelFetch(materialsTex, ivec2(index * 7 + 1, 0), 0);
-    vec4 param3 = texelFetch(materialsTex, ivec2(index * 7 + 2, 0), 0);
-    vec4 param4 = texelFetch(materialsTex, ivec2(index * 7 + 3, 0), 0);
-    vec4 param5 = texelFetch(materialsTex, ivec2(index * 7 + 4, 0), 0);
-    vec4 param6 = texelFetch(materialsTex, ivec2(index * 7 + 5, 0), 0);
-    vec4 param7 = texelFetch(materialsTex, ivec2(index * 7 + 6, 0), 0);
+    vec4 param1 = texelFetch(materialsTex, ivec2(index7, 0), 0);
+    vec4 param2 = texelFetch(materialsTex, ivec2(index7 + 1, 0), 0);
+    vec4 param3 = texelFetch(materialsTex, ivec2(index7 + 2, 0), 0);
+    vec4 param4 = texelFetch(materialsTex, ivec2(index7 + 3, 0), 0);
+    vec4 param5 = texelFetch(materialsTex, ivec2(index7 + 4, 0), 0);
+    vec4 param6 = texelFetch(materialsTex, ivec2(index7 + 5, 0), 0);
+    vec4 param7 = texelFetch(materialsTex, ivec2(index7 + 6, 0), 0);
 
     mat.albedo         = param1.xyz;
     mat.specular       = param1.w;
@@ -183,14 +183,14 @@ vec3 DirectLight(in Ray r, in State state)
         Light light;
 
         //Pick a light to sample
-        int index = int(rand() * float(numOfLights));
+        int index5 = int(rand() * float(numOfLights)) * 5;
 
         // Fetch light Data
-        vec3 position = texelFetch(lightsTex, ivec2(index * 5 + 0, 0), 0).xyz;
-        vec3 emission = texelFetch(lightsTex, ivec2(index * 5 + 1, 0), 0).xyz;
-        vec3 u        = texelFetch(lightsTex, ivec2(index * 5 + 2, 0), 0).xyz; // u vector for rect
-        vec3 v        = texelFetch(lightsTex, ivec2(index * 5 + 3, 0), 0).xyz; // v vector for rect
-        vec3 params   = texelFetch(lightsTex, ivec2(index * 5 + 4, 0), 0).xyz;
+        vec3 position = texelFetch(lightsTex, ivec2(index5, 0), 0).xyz;
+        vec3 emission = texelFetch(lightsTex, ivec2(index5 + 1, 0), 0).xyz;
+        vec3 u        = texelFetch(lightsTex, ivec2(index5 + 2, 0), 0).xyz; // u vector for rect
+        vec3 v        = texelFetch(lightsTex, ivec2(index5 + 3, 0), 0).xyz; // v vector for rect
+        vec3 params   = texelFetch(lightsTex, ivec2(index5 + 4, 0), 0).xyz;
         float radius  = params.x;
         float area    = params.y;
         float type    = params.z; // 0->rect, 1->sphere
@@ -199,22 +199,26 @@ vec3 DirectLight(in Ray r, in State state)
         sampleLight(light, lightSampleRec);
 
         vec3 lightDir = lightSampleRec.surfacePos - surfacePos;
-        float lightDist = length(lightDir);
-        float lightDistSq = lightDist * lightDist;
-        lightDir /= lightDist;
+		
+		float dotL = dot(lightDir, lightSampleRec.normal);
 
-        if (dot(lightDir, lightSampleRec.normal) < 0.0)
+        if (dotL < 0.0)
         {
+			float lightDist = length(lightDir);
+			
+			lightDir /= lightDist;
+			
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
             if (!inShadow)
-            {
+            {				
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
-                float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
 
-                if (bsdfSampleRec.pdf > 0.0)
+                if (bsdfSampleRec.pdf > 0.0) {					
+					float lightPdf = - lightDist * lightDist / (light.area * dotL);
                     Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
+				}
             }
         }
     }
@@ -287,13 +291,15 @@ vec3 PathTrace(Ray r)
         radiance += DirectLight(r, state) * throughput;
 
         bsdfSampleRec.f = DisneySample(state, -r.direction, state.ffnormal, bsdfSampleRec.L, bsdfSampleRec.pdf);
+		
+		float dotL = dot(state.ffnormal, bsdfSampleRec.L);
 
         // Set absorption only if the ray is currently inside the object.
-        if (dot(state.ffnormal, bsdfSampleRec.L) < 0.0)
+        if (dotL < 0.0)
             absorption = -log(state.mat.extinction) / state.mat.atDistance;
 
         if (bsdfSampleRec.pdf > 0.0)
-            throughput *= bsdfSampleRec.f * abs(dot(state.ffnormal, bsdfSampleRec.L)) / bsdfSampleRec.pdf;
+            throughput *= bsdfSampleRec.f * abs(dotL) / bsdfSampleRec.pdf;
         else
             break;
 
