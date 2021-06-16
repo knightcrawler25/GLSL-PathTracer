@@ -52,6 +52,7 @@ namespace GLSLPT
         Vec3 emission;
         Vec3 u;
         Vec3 v;
+        //Vec3 normal;
         float radius;
         float area;
         float type;

@@ -201,7 +201,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
             L = CosineSampleHemisphere(r1, r2);
             L = state.tangent * L.x + state.bitangent * L.y + N * L.z;
 
-            vec3 H = (L + V);
+            vec3 H = normalize(L + V);
 
             f = EvalDiffuse(state, Csheen, V, N, L, H, dot(N, L), pdf);
             pdf *= diffuseRatio;
@@ -217,10 +217,10 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
                 vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
                 H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
-			if ( dot(V, H) < 0.0) {
-				H = -H;
-			}
-
+				if ( dot(V, H) < 0.0) {
+					H = -H;
+				}
+			
                 L = (reflect(-V, H));
 
                 f = EvalSpecular(state, Cspec0, V, N, L, H, dot(N, L), pdf);
@@ -234,7 +234,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
 				if (dot(V, H) < 0.0) {
 					H = -H;
 				}
-
+				
                 L = (reflect(-V, H));
 
                 f = EvalClearcoat(state, V, N, L, H, dot(N, L), pdf);

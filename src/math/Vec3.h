@@ -169,7 +169,7 @@ namespace GLSLPT
 
     inline Vec3 Vec3::Normalize(const Vec3& a)
     {
-        float l = Length(a);
-        return Vec3(a.x / l, a.y / l, a.z / l);
+        float l = 1.0f / Length(a);
+        return Vec3(a.x * l, a.y * l, a.z * l);
     };
 }

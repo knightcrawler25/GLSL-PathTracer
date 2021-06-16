@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------
 void Onb(in vec3 N, inout vec3 T, inout vec3 B)
 //-----------------------------------------------------------------------
-{	
+{
 	float sgn = (N.z > 0.0f) ? 1.0f : -1.0f;
 	float aa = - 1.0f / (sgn + N.z);
 	float bb = N.x * N.y * aa;	
@@ -205,18 +205,17 @@ vec3 DirectLight(in Ray r, in State state)
         if (dotL < 0.0)
         {
 			float lightDist = length(lightDir);
-			
 			lightDir /= lightDist;
-			
+		
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
             if (!inShadow)
-            {				
+            {
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
 
-                if (bsdfSampleRec.pdf > 0.0) {					
-					float lightPdf = - lightDist * lightDist / (light.area * dotL);
+                if (bsdfSampleRec.pdf > 0.0) {
+					float lightPdf = (lightDist * lightDist * lightDist) / (light.area * abs(dotL));
                     Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
 				}
             }
@@ -291,7 +290,7 @@ vec3 PathTrace(Ray r)
         radiance += DirectLight(r, state) * throughput;
 
         bsdfSampleRec.f = DisneySample(state, -r.direction, state.ffnormal, bsdfSampleRec.L, bsdfSampleRec.pdf);
-		
+
 		float dotL = dot(state.ffnormal, bsdfSampleRec.L);
 
         // Set absorption only if the ray is currently inside the object.
