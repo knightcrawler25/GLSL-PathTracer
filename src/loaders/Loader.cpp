@@ -32,6 +32,8 @@ freely, subject to the following restrictions:
 #include <algorithm>
 #include <stdio.h>
 
+#include <ctime>
+
 namespace GLSLPT
 {
     static const int kMaxLineLength = 2048;
@@ -39,6 +41,13 @@ namespace GLSLPT
 
     bool LoadSceneFromFile(const std::string &filename, Scene *scene, RenderOptions& renderOptions)
     {
+		clock_t time1, time2;
+
+        const size_t buf_sz = 32 * 1024;
+        char buf[buf_sz];
+		
+		time1 = clock();
+		
         FILE* file;
         file = fopen(filename.c_str(), "r");
 
@@ -49,6 +58,8 @@ namespace GLSLPT
         }
 
         Log("Loading Scene..\n");
+
+        setvbuf(file, buf, _IOLBF, buf_sz);
 
         struct MaterialData
         {
@@ -320,6 +331,9 @@ namespace GLSLPT
 
         if (!cameraAdded)
             scene->AddCamera(Vec3(0.0f, 0.0f, 10.0f), Vec3(0.0f, 0.0f, -10.0f), 35.0f);
+		
+		time2 = clock();
+		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
 
         scene->CreateAccelerationStructures();
 

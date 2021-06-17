@@ -27,6 +27,8 @@
 #include "Scene.h"
 #include "Camera.h"
 
+#include <ctime>
+
 namespace GLSLPT
 {
     void Scene::AddCamera(Vec3 pos, Vec3 lookAt, float fov)
@@ -46,7 +48,8 @@ namespace GLSLPT
         id = meshes.size();
 
         Mesh* mesh = new Mesh;
-
+		
+        printf("Loading %s ...\n", filename.c_str());
         if (mesh->LoadFromFile(filename))
         {
             meshes.push_back(mesh);
@@ -90,6 +93,11 @@ namespace GLSLPT
     void Scene::AddHDR(const std::string& filename)
     {
         delete hdrData;
+		
+		clock_t time1, time2;
+		
+		time1 = clock();
+		
         hdrData = HDRLoader::load(filename.c_str());
         if (hdrData == nullptr)
             printf("Unable to load HDR\n");
@@ -98,6 +106,9 @@ namespace GLSLPT
             printf("HDR %s loaded\n", filename.c_str());
             renderOptions.useEnvMap = true;
         }
+		
+		time2 = clock();
+		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
     }
 
     int Scene::AddMeshInstance(const MeshInstance &meshInstance)
@@ -119,6 +130,8 @@ namespace GLSLPT
         // Loop through all the mesh Instances and build a Top Level BVH
         std::vector<RadeonRays::bbox> bounds;
         bounds.resize(meshInstances.size());
+		
+		printf("mesh Instances %ld\n", meshInstances.size());
 
         #pragma omp parallel for
         for (int i = 0; i < meshInstances.size(); i++)
@@ -158,13 +171,17 @@ namespace GLSLPT
 
     void Scene::createBLAS()
     {
+		totalTris = 0;
+		
         // Loop through all meshes and build BVHs
         #pragma omp parallel for
         for (int i = 0; i < meshes.size(); i++)
         {
             printf("Building BVH for %s\n", meshes[i]->name.c_str());
-            meshes[i]->BuildBVH();
-        }
+            totalTris += meshes[i]->BuildBVH();
+        }	
+		
+		printf("Total %ld tris loaded\n", totalTris);
     }
     
     void Scene::RebuildInstances()
@@ -184,6 +201,10 @@ namespace GLSLPT
 
     void Scene::CreateAccelerationStructures()
     {
+		clock_t time1, time2;
+		
+		time1 = clock();
+		
         createBLAS();
 
         printf("Building scene BVH\n");
@@ -204,9 +225,10 @@ namespace GLSLPT
             for (int j = 0; j < numIndices; j++)
             {
                 int index = triIndices[j];
-                int v1 = (index * 3 + 0) + verticesCnt;
-                int v2 = (index * 3 + 1) + verticesCnt;
-                int v3 = (index * 3 + 2) + verticesCnt;
+                int index3 = index + index + index;
+                int v1 = (index3) + verticesCnt;
+                int v2 = (index3 + 1) + verticesCnt;
+                int v3 = (index3 + 2) + verticesCnt;
 
                 vertIndices.push_back(Indices{ v1, v2, v3 });
             }
@@ -231,5 +253,8 @@ namespace GLSLPT
             int texSize = texWidth * texHeight;
             textureMapsArray.insert(textureMapsArray.end(), &textures[i]->texData[0], &textures[i]->texData[texSize * 3]);
         }
+		
+		time2 = clock();
+		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
     }
 }

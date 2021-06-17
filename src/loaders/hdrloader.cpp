@@ -69,59 +69,86 @@ void HDRLoader::buildDistributions(HDRData* res)
     res->conditionalDistData = new Vec2[width*height];
 
     float colWeightSum = 0.0f;
+	
+	long jw = 0;
+	long jw3 = 0;
+	long i3;	
+	
+	float invSum;
 
     for (int j = 0; j < height; j++)
     {
         float rowWeightSum = 0.0f;
 
+		i3 = 0;
         for (int i = 0; i < width; ++i)
         {
-            float weight = Luminance(Vec3(res->cols[j*width * 3 + i * 3 + 0], res->cols[j*width * 3 + i * 3 + 1], res->cols[j*width * 3 + i * 3 + 2]));
+            float weight = Luminance(Vec3(res->cols[jw3 + i3], res->cols[jw3 + i3 + 1], res->cols[jw3 + i3 + 2]));
 
             rowWeightSum += weight;
 
-            pdf2D[j*width + i] = weight;
-            cdf2D[j*width + i] = rowWeightSum;
+            pdf2D[jw + i] = weight;
+            cdf2D[jw + i] = rowWeightSum;
+			
+			i3 += 3;
         }
+		
+		invSum = 1.0f / rowWeightSum;
 
         /* Convert to range 0,1 */
         for (int i = 0; i < width; i++)
         {
-            pdf2D[j*width + i] /= rowWeightSum;
-            cdf2D[j*width + i] /= rowWeightSum;
+            pdf2D[j*width + i] *= invSum;
+            cdf2D[j*width + i] *= invSum;
         }
 
         colWeightSum += rowWeightSum;
 
         pdf1D[j] = rowWeightSum;
         cdf1D[j] = colWeightSum;
+		
+		jw += width;
+		jw3 += width*3;
     }
+	
+	invSum = 1.0f / colWeightSum;
     
     /* Convert to range 0,1 */
     for (int j = 0; j < height; j++)
     {
-        cdf1D[j] /= colWeightSum;
-        pdf1D[j] /= colWeightSum;
+        cdf1D[j] *= invSum;
+        pdf1D[j] *= invSum;
     }
 
+	float invHeight = 0.0f;
+	invSum = 1.0f / (float)height;
+	
     /* Precalculate row and col to avoid binary search during lookup in the shader */
     for (int i = 0; i < height; i++)
     {
-        float invHeight = (float)(i+1) / height;
+        invHeight += invSum;
         int row = LowerBound(cdf1D, 0, height, invHeight);
-        res->marginalDistData[i].x = row / (float)height;
+        res->marginalDistData[i].x = row * invSum;
         res->marginalDistData[i].y = pdf1D[i];
     }
 
+	float invWidth;
+	invSum = 1.0f / (float)width;
+	
+	jw = 0;
+	
     for (int j = 0; j < height; j++)
     {
+		invWidth = 0.0f;
         for (int i = 0; i < width; i++)
         {
-            float invWidth = (float)(i+1) / width;
-            int col = LowerBound(cdf2D, j*width, (j + 1)*width, invWidth) - j * width;
-            res->conditionalDistData[j*width + i].x = col / (float)width;
-            res->conditionalDistData[j*width + i].y = pdf2D[j*width + i];
+            invWidth += invSum;
+            int col = LowerBound(cdf2D, jw, jw + width, invWidth) - jw;
+            res->conditionalDistData[jw + i].x = col * invSum;
+            res->conditionalDistData[jw + i].y = pdf2D[jw + i];
         }
+		
+		jw += width;
     }
 
     delete[] pdf2D;
@@ -133,12 +160,18 @@ void HDRLoader::buildDistributions(HDRData* res)
 HDRData* HDRLoader::load(const char *fileName)
 {
     int i;
-    char str[200];
+    char str[200];	
+	
+	const size_t buf_sz = 32*1024;
+    char buf[buf_sz];	
+	
     FILE *file;
 
     file = fopen(fileName, "rb");
     if (!file)
         return nullptr;
+	
+	setvbuf(file, buf, _IOLBF, buf_sz);
 
     HDRData *res = new HDRData;
 
@@ -203,9 +236,11 @@ HDRData* HDRLoader::load(const char *fileName)
     return res;
 }
 
+float one256 = 1.0f / 256.0f;
+
 float convertComponent(int expo, int val)
 {
-    float v = val / 256.0f;
+    float v = val * one256;
     float d = (float) pow(2, expo);
     return v * d;
 }

@@ -32,6 +32,10 @@ namespace GLSLPT
 {
     bool Mesh::LoadFromFile(const std::string &filename)
     {
+		clock_t time1, time2;
+		
+		time1 = clock();
+		
         name = filename;
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
@@ -59,19 +63,23 @@ namespace GLSLPT
                 {
                     // access to vertex
                     tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                    tinyobj::real_t vx = attrib.vertices[3 * idx.vertex_index + 0];
-                    tinyobj::real_t vy = attrib.vertices[3 * idx.vertex_index + 1];
-                    tinyobj::real_t vz = attrib.vertices[3 * idx.vertex_index + 2];
-                    tinyobj::real_t nx = attrib.normals[3 * idx.normal_index + 0];
-                    tinyobj::real_t ny = attrib.normals[3 * idx.normal_index + 1];
-                    tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
+					
+                    size_t idx3 = idx.vertex_index + idx.vertex_index + idx.vertex_index;
+                    tinyobj::real_t vx = attrib.vertices[idx3];
+                    tinyobj::real_t vy = attrib.vertices[idx3 + 1];
+                    tinyobj::real_t vz = attrib.vertices[idx3 + 2];
+					
+					idx3 = idx.normal_index + idx.normal_index + idx.normal_index;
+                    tinyobj::real_t nx = attrib.normals[idx3];
+                    tinyobj::real_t ny = attrib.normals[idx3 + 1];
+                    tinyobj::real_t nz = attrib.normals[idx3 + 2];
 
                     tinyobj::real_t tx, ty;
                     
                     // temporary fix
                     if (!attrib.texcoords.empty())
                     {
-                        tx = attrib.texcoords[2 * idx.texcoord_index + 0];
+                        tx = attrib.texcoords[2 * idx.texcoord_index];
                         ty = attrib.texcoords[2 * idx.texcoord_index + 1];
                     }
                     else
@@ -86,27 +94,46 @@ namespace GLSLPT
                 index_offset += fv;
             }
         }
+		
+		time2 = clock();
+		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
 
         return true;
     }
 
-    void Mesh::BuildBVH()
-    {
-        const int numTris = verticesUVX.size() / 3;
+    size_t Mesh::BuildBVH()
+    {		
+		clock_t time1, time2;
+		
+		time1 = clock();
+		
+        const size_t numTris = verticesUVX.size() / 3;
+		
+		printf("%ld tris\n", numTris);
+		
         std::vector<RadeonRays::bbox> bounds(numTris);
+		
+		size_t i3 = 0;
 
         #pragma omp parallel for
-        for (int i = 0; i < numTris; ++i)
+        for (size_t i = 0; i < numTris; ++i)
         {
-            const Vec3 v1 = Vec3(verticesUVX[i * 3 + 0]);
-            const Vec3 v2 = Vec3(verticesUVX[i * 3 + 1]);
-            const Vec3 v3 = Vec3(verticesUVX[i * 3 + 2]);
+            const Vec3 v1 = Vec3(verticesUVX[i3]);
+            const Vec3 v2 = Vec3(verticesUVX[i3 + 1]);
+            const Vec3 v3 = Vec3(verticesUVX[i3 + 2]);
 
             bounds[i].grow(v1);
             bounds[i].grow(v2);
             bounds[i].grow(v3);
+			
+			i3 += 3;
         }
 
-        bvh->Build(&bounds[0], numTris);
+        bvh->Build(&bounds[0], numTris);		
+		
+		time2 = clock();
+		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
+
+        return numTris;
     }
 }

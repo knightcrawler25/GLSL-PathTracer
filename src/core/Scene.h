@@ -118,6 +118,8 @@ namespace GLSLPT
         std::vector<unsigned char> textureMapsArray;
         int texWidth;
         int texHeight; // TODO: allow textures of different sizes
+		
+		size_t totalTris;
 
     private:
         RadeonRays::Bvh *sceneBvh;
