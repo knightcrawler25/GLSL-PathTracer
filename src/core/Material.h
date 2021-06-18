@@ -35,13 +35,13 @@ namespace GLSLPT
         Material()
         {
             albedo   = Vec3(1.0f, 1.0f, 1.0f);
-            specular = 0.5f;
+            specular = 0.0f;
 
             emission    = Vec3(0.0f, 0.0f, 0.0f);
             anisotropic = 0.0f;
 
             metallic     = 0.0f;
-            roughness    = 0.5f;
+            roughness    = 0.0f;
             subsurface   = 0.0f;
             specularTint = 0.0f;
             

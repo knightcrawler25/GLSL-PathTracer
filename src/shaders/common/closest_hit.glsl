@@ -168,11 +168,13 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         else if (leaf < 0) // Leaf node of TLAS
         {
             idx = leftIndex;
+			
+			int leaf4 = (-leaf - 1) * 4;
 
-            vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
-            vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
-            vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
-            vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
+            vec4 r1 = texelFetch(transformsTex, ivec2(leaf4, 0), 0).xyzw;
+            vec4 r2 = texelFetch(transformsTex, ivec2(leaf4 + 1, 0), 0).xyzw;
+            vec4 r3 = texelFetch(transformsTex, ivec2(leaf4 + 2, 0), 0).xyzw;
+            vec4 r4 = texelFetch(transformsTex, ivec2(leaf4 + 3, 0), 0).xyzw;
 
             temp_transform = mat4(r1, r2, r3, r4);
 
@@ -186,8 +188,8 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         }
         else
         {
-            leftHit  = AABBIntersect(texelFetch(BVH, leftIndex  * 3 + 0).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, r_trans);
-            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r_trans);
+            leftHit  = AABBIntersect(texelFetch(BVH, leftIndex  * 3).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, r_trans);
+            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r_trans);
 
             if (leftHit > 0.0 && rightHit > 0.0)
             {
