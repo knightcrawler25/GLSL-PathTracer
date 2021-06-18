@@ -207,7 +207,7 @@ void sampleRectLight(in Light light, inout LightSampleRec lightSampleRec)
     float r2 = rand();
 
     lightSampleRec.surfacePos = light.position + light.u * r1 + light.v * r2;
-    lightSampleRec.normal = normalize(cross(light.u, light.v));
+    lightSampleRec.normal = light.nrm;
     lightSampleRec.emission = light.emission * float(numOfLights);
 }
 

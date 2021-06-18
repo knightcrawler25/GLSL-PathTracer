@@ -94,6 +94,9 @@ struct Light
     vec3 emission;
     vec3 u;
     vec3 v;
+	vec3 nrm;
+	vec3 uu;
+	vec3 vv;
     float radius;
     float area;
     float type;

@@ -178,8 +178,12 @@ namespace GLSLPT
                     light.type = LightType::RectLight;
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
-                    //light.normal = Vec3::Cross(light.u, light.v);
-                    //light.normal = Vec3::Normalize(light.normal);
+                    light.normal = Vec3::Cross(light.u, light.v);
+                    light.normal = Vec3::Normalize(light.normal);
+					
+					light.uu = light.u * (1.0f / Vec3::Dot(light.u, light.u));
+					light.vv = light.v * (1.0f / Vec3::Dot(light.v, light.v));
+					
                     light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
                 }
                 else if (strcmp(light_type, "Sphere") == 0)

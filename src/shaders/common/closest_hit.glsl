@@ -33,12 +33,16 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
     // Intersect Emitters
     for (int i = 0; i < numOfLights; i++)
     {
+        int indexx = i * 8;
         // Fetch light Data
-        vec3 position = texelFetch(lightsTex, ivec2(i * 5 + 0, 0), 0).xyz;
-        vec3 emission = texelFetch(lightsTex, ivec2(i * 5 + 1, 0), 0).xyz;
-        vec3 u        = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
-        vec3 v        = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
-        vec3 params   = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
+        vec3 position = texelFetch(lightsTex, ivec2(indexx, 0), 0).xyz;
+        vec3 emission = texelFetch(lightsTex, ivec2(indexx + 1, 0), 0).xyz;
+        vec3 u        = texelFetch(lightsTex, ivec2(indexx + 2, 0), 0).xyz;
+        vec3 v        = texelFetch(lightsTex, ivec2(indexx + 3, 0), 0).xyz;
+        vec3 normal   = texelFetch(lightsTex, ivec2(indexx + 4, 0), 0).xyz;
+        vec3 uu       = texelFetch(lightsTex, ivec2(indexx + 5, 0), 0).xyz;
+        vec3 vv       = texelFetch(lightsTex, ivec2(indexx + 6, 0), 0).xyz;
+        vec3 params   = texelFetch(lightsTex, ivec2(indexx + 7, 0), 0).xyz;
         float radius  = params.x;
         float area    = params.y;
         float type    = params.z;
@@ -46,14 +50,11 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         // Intersect rectangular area light
         if (type == 0.) 
         {
-            vec3 normal = normalize(cross(u, v));
             if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
                 continue;
             vec4 plane = vec4(normal, dot(normal, position));
-            u *= 1.0f / dot(u, u);
-            v *= 1.0f / dot(v, v);
 
-            d = RectIntersect(position, u, v, plane, r);
+            d = RectIntersect(position, uu, vv, plane, r);
             if (d < 0.)
                 d = INFINITY;
             if (d < t)

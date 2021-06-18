@@ -41,7 +41,7 @@ namespace GLSLPT
             anisotropic = 0.0f;
 
             metallic     = 0.0f;
-            roughness    = 0.0f;
+            roughness    = 0.5f;
             subsurface   = 0.0f;
             specularTint = 0.0f;
             
@@ -51,7 +51,7 @@ namespace GLSLPT
             clearcoatGloss = 0.0f;
 
             transmission = 0.0f;
-            ior          = 1.45f;
+            ior          = 1.5f;
             atDistance   = 1.0f;
             padding1     = 0.0f;
 
