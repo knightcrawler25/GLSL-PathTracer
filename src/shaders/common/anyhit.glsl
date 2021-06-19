@@ -48,7 +48,7 @@ bool AnyHit(Ray r, float maxDist)
         // Intersect rectangular area light
         if (type == QUAD_LIGHT)
         {
-            vec4 plane = vec4(normal, dot(normal, position));
+            vec4 plane = vec4(normal, radius);
 
             float d = RectIntersect(position, uu, vv, plane, r);
             if (d > 0.0 && d < maxDist)

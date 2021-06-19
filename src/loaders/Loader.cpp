@@ -179,18 +179,21 @@ namespace GLSLPT
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
                     light.normal = Vec3::Cross(light.u, light.v);
-                    light.normal = Vec3::Normalize(light.normal);
+
+                    light.area = Vec3::Length(light.normal);
+
+                    light.normal *= 1.0f / light.area;
 					
 					light.uu = light.u * (1.0f / Vec3::Dot(light.u, light.u));
 					light.vv = light.v * (1.0f / Vec3::Dot(light.v, light.v));
-					
-                    light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
+
+                    light.radius = Vec3::Dot(light.normal, light.position);
                 }
                 else if (strcmp(light_type, "Sphere") == 0)
                 {
                     light.type = LightType::SphereLight;
-                    light.area = 4.0f * PI * light.radius * light.radius;
-					light.u.x = light.radius * light.radius;	//precalculated
+                    light.u.x = light.radius * light.radius;	//precalculated
+                    light.area = 4.0f * PI * light.u.x;
                 }
 
                 scene->AddLight(light);

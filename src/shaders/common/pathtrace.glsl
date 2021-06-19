@@ -48,7 +48,7 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 
     state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
 
-    vec3 normal = (n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
+    vec3 normal = normalize(n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
 
     mat3 normalMatrix = transpose(inverse(mat3(transform)));
     normal = normalize(normalMatrix * normal);
@@ -118,7 +118,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     if (int(mat.texIDs.z) >= 0)
     {
         vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
-        nrm = (nrm + nrm - 1.0);
+        nrm += nrm - 1.0;
 
         // Orthonormal Basis
         vec3 T, B;
@@ -203,13 +203,11 @@ vec3 DirectLight(in Ray r, in State state)
 
         vec3 lightDir = lightSampleRec.surfacePos - surfacePos;
 		
-		float dotL = dot(lightDir, lightSampleRec.normal);
 
-        if (dotL < 0.0)
+        if (dot(lightDir, lightSampleRec.normal) < 0.0)
         {
-			float lightDist = length(lightDir);
-			lightDir /= lightDist;
-		
+          float lightDist = length(lightDir);
+          lightDir /= lightDist;
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
@@ -218,7 +216,7 @@ vec3 DirectLight(in Ray r, in State state)
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0) {
-					float lightPdf = - (lightDist * lightDist * lightDist) / (light.area * dotL);
+		    float lightPdf = - (lightDist * lightDist) / (light.area * dot(lightDir, lightSampleRec.normal));
                     Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
 				}
             }

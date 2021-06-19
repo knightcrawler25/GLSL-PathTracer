@@ -52,16 +52,16 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         {
             if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
                 continue;
-            vec4 plane = vec4(normal, dot(normal, position));
+            vec4 plane = vec4(normal, radius);
+			float dt;
 
-            d = RectIntersect(position, uu, vv, plane, r);
+            d = RectIntersect1(position, uu, vv, plane, r, dt);
             if (d < 0.)
                 d = INFINITY;
             if (d < t)
             {
                 t = d;
-                float cosTheta = dot(-r.direction, normal);
-                float pdf = (t * t) / (area * cosTheta);
+                float pdf = -(d * d) / (area * dt);
                 lightSampleRec.emission = emission;
                 lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
