@@ -27,6 +27,8 @@
 #include <vector>
 #include <Vec3.h>
 
+extern bool oldDefaultMaterial;
+
 namespace GLSLPT
 {
     class Material
@@ -34,15 +36,13 @@ namespace GLSLPT
     public:
         Material()
         {
-            albedo   = Vec3(1.0f, 1.0f, 1.0f);
-            //specular = 0.5f;
+            albedo   = Vec3(1.0f, 1.0f, 1.0f);            
             specular = 0.0f;
 
             emission    = Vec3(0.0f, 0.0f, 0.0f);
             anisotropic = 0.0f;
 
-            metallic     = 0.0f;
-            //roughness    = 0.5f;
+            metallic     = 0.0f;            
             roughness    = 0.0f;
             subsurface   = 0.0f;
             specularTint = 0.0f;
@@ -53,7 +53,6 @@ namespace GLSLPT
             clearcoatGloss = 0.0f;
 
             transmission = 0.0f;
-            //ior          = 1.45f;
             ior          = 1.5f;
             atDistance   = 1.0f;
             padding1     = 0.0f;
@@ -65,6 +64,18 @@ namespace GLSLPT
             metallicRoughnessTexID = -1.0f;
             normalmapTexID         = -1.0f;
             padding3               =  0.0f;
+
+            padding4               =  0.0f;
+
+            if (oldDefaultMaterial) {
+                specular = 0.5f;
+                roughness = 0.5f;
+                ior = 1.45f;
+            }
+
+            extinction1.x = -log(extinction.x) / atDistance;
+            extinction1.y = -log(extinction.y) / atDistance;
+            extinction1.z = -log(extinction.z) / atDistance;
         };
 
         Vec3 albedo;
@@ -95,5 +106,8 @@ namespace GLSLPT
         float metallicRoughnessTexID;
         float normalmapTexID;
         float padding3;
+
+        Vec3 extinction1;
+        float padding4;
     };
 }

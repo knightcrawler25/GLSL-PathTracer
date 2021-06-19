@@ -48,7 +48,7 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 
     state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
 
-    vec3 normal = normalize(n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
+    vec3 normal = (n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
 
     mat3 normalMatrix = transpose(inverse(mat3(transform)));
     normal = normalize(normalMatrix * normal);
@@ -62,7 +62,7 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
 void GetMaterialsAndTextures(inout State state, in Ray r)
 //-----------------------------------------------------------------------
 {
-    int index7 = state.matID * 7;
+    int index7 = state.matID * 8;
     Material mat;
 
     vec4 param1 = texelFetch(materialsTex, ivec2(index7, 0), 0);
@@ -72,6 +72,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     vec4 param5 = texelFetch(materialsTex, ivec2(index7 + 4, 0), 0);
     vec4 param6 = texelFetch(materialsTex, ivec2(index7 + 5, 0), 0);
     vec4 param7 = texelFetch(materialsTex, ivec2(index7 + 6, 0), 0);
+    vec4 param8 = texelFetch(materialsTex, ivec2(index7 + 7, 0), 0);
 
     mat.albedo         = param1.xyz;
     mat.specular       = param1.w;
@@ -97,6 +98,8 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     mat.extinction     = param6.xyz;
 
     mat.texIDs         = param7.xyz;
+	
+    mat.extinction1    = param8.xyz;
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
@@ -206,8 +209,9 @@ vec3 DirectLight(in Ray r, in State state)
 
         if (dot(lightDir, lightSampleRec.normal) < 0.0)
         {
-          float lightDist = length(lightDir);
-          lightDir /= lightDist;
+			float lightDist = length(lightDir);
+			lightDir /= lightDist;
+			
             Ray shadowRay = Ray(surfacePos, lightDir);
             bool inShadow = AnyHit(shadowRay, lightDist - EPS);
 
@@ -216,7 +220,7 @@ vec3 DirectLight(in Ray r, in State state)
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0) {
-		    float lightPdf = - (lightDist * lightDist) / (light.area * dot(lightDir, lightSampleRec.normal));
+					float lightPdf = - (lightDist * lightDist) / (light.area * dot(lightDir, lightSampleRec.normal));
                     Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
 				}
             }
@@ -238,7 +242,10 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
+	bool useAbsorption = false;
+	
     state.specularBounce = false;
+	
     
     for (int depth = 0; depth < maxDepth; depth++)
     {
@@ -272,8 +279,10 @@ vec3 PathTrace(Ray r)
         GetMaterialsAndTextures(state, r);
 
         // Reset absorption when ray is going out of surface
-        if (dot(state.normal, state.ffnormal) > 0.0)
+        if (dot(state.normal, state.ffnormal) > 0.0) {
             absorption = vec3(0.0);
+			useAbsorption = false;
+		}
 
         radiance += state.mat.emission * throughput;
 
@@ -286,7 +295,9 @@ vec3 PathTrace(Ray r)
 #endif
 
         // Add absoption
-        throughput *= exp(-absorption * t);
+        if(useAbsorption) {
+			throughput *= exp(-absorption * t);
+		}
 
         radiance += DirectLight(r, state) * throughput;
 
@@ -296,8 +307,9 @@ vec3 PathTrace(Ray r)
 
         // Set absorption only if the ray is currently inside the object.
         if (dotL < 0.0) {
-            absorption = -log(state.mat.extinction) / state.mat.atDistance;
+            absorption = state.mat.extinction1;
 			dotL = - dotL;
+			useAbsorption = true;
 		}
 
         if (bsdfSampleRec.pdf > 0.0)

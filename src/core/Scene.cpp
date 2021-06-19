@@ -195,6 +195,14 @@ namespace GLSLPT
         //Copy transforms
         for (int i = 0; i < meshInstances.size(); i++)
             transforms[i] = meshInstances[i].transform;
+		
+		//precalc extinction
+        for (int i = 0; i < materials.size(); i++) {            
+				// -log(state.mat.extinction) / state.mat.atDistance
+				materials[i].extinction1.x = -log(materials[i].extinction.x) / materials[i].atDistance;
+				materials[i].extinction1.y = -log(materials[i].extinction.y) / materials[i].atDistance;
+				materials[i].extinction1.z = -log(materials[i].extinction.z) / materials[i].atDistance;
+		}
 
         instancesModified = true;
     }

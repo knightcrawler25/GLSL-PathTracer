@@ -69,6 +69,7 @@ struct Material
     float ior;
     float atDistance;
     vec3 extinction;
+    vec3 extinction1;
     vec3 texIDs;
     // Roughness calculated from anisotropic param
     float ax;

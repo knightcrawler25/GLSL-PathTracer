@@ -75,6 +75,8 @@ RenderOptions renderOptions;
 int maxSPP = -1;
 float maxRenderTime = -1.0f;
 
+bool oldDefaultMaterial = false;
+
 struct LoopData
 {
     SDL_Window*   mWindow    = nullptr;
@@ -478,6 +480,11 @@ int main(int argc, char** argv)
         if (arg == "-testBoy")
         {
             testBoy = true;
+        }
+        else
+        if (arg == "-oldDefaultMaterial")
+        {
+            oldDefaultMaterial = true;
         }
         else if (arg[0] == '-')
         {

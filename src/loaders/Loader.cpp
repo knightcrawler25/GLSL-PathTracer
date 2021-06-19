@@ -140,6 +140,11 @@ namespace GLSLPT
                 // Normal Map Texture
                 if (strcmp(normalTexName, "None") != 0)
                     material.normalmapTexID = scene->AddTexture(path + normalTexName);
+				
+				// -log(state.mat.extinction) / state.mat.atDistance
+				material.extinction1.x = -log(material.extinction.x) / material.atDistance;
+				material.extinction1.y = -log(material.extinction.y) / material.atDistance;
+				material.extinction1.z = -log(material.extinction.z) / material.atDistance;
 
                 // add material to map
                 if (materialMap.find(name) == materialMap.end()) // New material
