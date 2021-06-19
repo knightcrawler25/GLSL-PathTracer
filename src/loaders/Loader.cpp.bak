@@ -140,11 +140,6 @@ namespace GLSLPT
                 // Normal Map Texture
                 if (strcmp(normalTexName, "None") != 0)
                     material.normalmapTexID = scene->AddTexture(path + normalTexName);
-				
-				// -log(state.mat.extinction) / state.mat.atDistance
-				material.extinction1.x = -log(material.extinction.x) / material.atDistance;
-				material.extinction1.y = -log(material.extinction.y) / material.atDistance;
-				material.extinction1.z = -log(material.extinction.z) / material.atDistance;
 
                 // add material to map
                 if (materialMap.find(name) == materialMap.end()) // New material
@@ -183,22 +178,14 @@ namespace GLSLPT
                     light.type = LightType::RectLight;
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
-                    
-					light.normal = Vec3::Cross(light.u, light.v);
-					
-					light.area = Vec3::Length(light.normal);
-					
-                    light.normal = Vec3::Normalize(light.normal);
-
-					light.uu = light.u * (1.0f / Vec3::Dot(light.u, light.u));
-					light.vv = light.v * (1.0f / Vec3::Dot(light.v, light.v));
-
-                    light.radius = Vec3::Dot(light.normal, light.position);
+                    //light.normal = Vec3::Cross(light.u, light.v);
+                    //light.normal = Vec3::Normalize(light.normal);
+                    light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
                 }
                 else if (strcmp(light_type, "Sphere") == 0)
                 {
                     light.type = LightType::SphereLight;
-                    light.u.x = light.radius * light.radius;	//precalculated
+					light.u.x = light.radius * light.radius;	//precalculated
                     light.area = 4.0f * PI * light.u.x;
                 }
 

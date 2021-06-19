@@ -207,7 +207,7 @@ void sampleRectLight(in Light light, inout LightSampleRec lightSampleRec)
     float r2 = rand();
 
     lightSampleRec.surfacePos = light.position + light.u * r1 + light.v * r2;
-    lightSampleRec.normal = light.nrm;
+    lightSampleRec.normal = normalize(cross(light.u, light.v));
     lightSampleRec.emission = light.emission * float(numOfLights);
 }
 
@@ -228,9 +228,10 @@ void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
 float EnvPdf(in Ray r)
 //-----------------------------------------------------------------------
 {
-	vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
+	float theta = acos(r.direction.y);
+    vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI);
     float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, vec2(uv.y, 0.)).y;
-    return (pdf * hdrResolution) / (TWO_PI_PI * sqrt( 1.0 - r.direction.y*r.direction.y));
+    return (pdf * hdrResolution) / (TWO_PI_PI * sin(theta));
 }
 
 //-----------------------------------------------------------------------

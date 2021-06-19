@@ -52,16 +52,17 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         {
             if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
                 continue;
-            vec4 plane = vec4(normal, radius);
+            
+			vec4 plane = vec4(normal, radius);
+			
 			float dt;
-
             d = RectIntersect1(position, uu, vv, plane, r, dt);
             if (d < 0.)
                 d = INFINITY;
             if (d < t)
             {
                 t = d;
-                float pdf = -(d * d) / (area * dt);
+                float pdf = - (t * t) / (area * dt);
                 lightSampleRec.emission = emission;
                 lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
@@ -168,8 +169,8 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         else if (leaf < 0) // Leaf node of TLAS
         {
             idx = leftIndex;
-			
-			int leaf4 = (-leaf - 1) * 4;
+
+	    int leaf4 = (-leaf - 1) * 4;
 
             vec4 r1 = texelFetch(transformsTex, ivec2(leaf4, 0), 0).xyzw;
             vec4 r2 = texelFetch(transformsTex, ivec2(leaf4 + 1, 0), 0).xyzw;

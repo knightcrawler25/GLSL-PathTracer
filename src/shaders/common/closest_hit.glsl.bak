@@ -23,45 +23,64 @@
  */
 
 //-----------------------------------------------------------------------
-bool AnyHit(Ray r, float maxDist)
+float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
+    float t = INFINITY;
+    float d;
 
 #ifdef LIGHTS
     // Intersect Emitters
     for (int i = 0; i < numOfLights; i++)
     {
-        int indexx = i * 8;
         // Fetch light Data
-        vec3 position = texelFetch(lightsTex, ivec2(indexx, 0), 0).xyz;
-        vec3 emission = texelFetch(lightsTex, ivec2(indexx + 1, 0), 0).xyz;
-        vec3 u = texelFetch(lightsTex, ivec2(indexx + 2, 0), 0).xyz;
-        vec3 v = texelFetch(lightsTex, ivec2(indexx + 3, 0), 0).xyz;
-        vec3 normal = texelFetch(lightsTex, ivec2(indexx + 4, 0), 0).xyz;
-        vec3 uu = texelFetch(lightsTex, ivec2(indexx + 5, 0), 0).xyz;
-        vec3 vv = texelFetch(lightsTex, ivec2(indexx + 6, 0), 0).xyz;
-        vec3 params = texelFetch(lightsTex, ivec2(indexx + 7, 0), 0).xyz;
-        float radius = params.x;
-        float area = params.y;
-        float type = params.z;
+        vec3 position = texelFetch(lightsTex, ivec2(i * 5 + 0, 0), 0).xyz;
+        vec3 emission = texelFetch(lightsTex, ivec2(i * 5 + 1, 0), 0).xyz;
+        vec3 u        = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
+        vec3 v        = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
+        vec3 params   = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
+        float radius  = params.x;
+        float area    = params.y;
+        float type    = params.z;
 
         // Intersect rectangular area light
-        if (type == QUAD_LIGHT)
+        if (type == 0.) 
         {
-            vec4 plane = vec4(normal, radius);			
-			
-			float d = RectIntersect(position, uu, vv, plane, r);
+            vec3 normal = normalize(cross(u, v));
+            if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
+                continue;
+            vec4 plane = vec4(normal, dot(normal, position));
+            u *= 1.0f / dot(u, u);
+            v *= 1.0f / dot(v, v);
 
-            if (d > 0.0 && d < maxDist)
-                return true;
+            d = RectIntersect(position, u, v, plane, r);
+            if (d < 0.)
+                d = INFINITY;
+            if (d < t)
+            {
+                t = d;
+                float cosTheta = dot(-r.direction, normal);
+                float pdf = (t * t) / (area * cosTheta);
+                lightSampleRec.emission = emission;
+                lightSampleRec.pdf = pdf;
+                state.isEmitter = true;
+            }
         }
 
         // Intersect spherical area light
-        if (type == SPHERE_LIGHT)
+        if (type == 1.) 
         {
-            float d = SphereIntersect(u.x, position, r); //precalculated
-            if (d > 0.0 && d < maxDist)
-                return true;
+            d = SphereIntersect(u.x, position, r); //precalculated
+            if (d < 0.)
+                d = INFINITY;
+            if (d < t)
+            {
+                t = d;
+                float pdf = (t * t) / area;
+                lightSampleRec.emission = emission;
+                lightSampleRec.pdf = pdf;
+                state.isEmitter = true;
+            }
         }
     }
 #endif
@@ -131,8 +150,18 @@ bool AnyHit(Ray r, float maxDist)
                 uvt.xyz = uvt.xyz / det;
                 uvt.w = 1.0 - uvt.x - uvt.y;
 
-                if (all(greaterThanEqual(uvt, vec4(0.0))) && uvt.z < maxDist)
-                    return true;
+                if (all(greaterThanEqual(uvt, vec4(0.0))) && uvt.z < t)
+                {
+                    t = uvt.z;
+                    state.isEmitter = false;
+                    state.triID = vert_indices;
+                    state.matID = currMatID;
+                    state.fhp = r_trans.origin + r_trans.direction * t;
+                    state.bary = uvt.wxy;
+                    tempTexCoords = vec3(v0.w, v1.w, v2.w);
+                    state.fhp = vec3(temp_transform * vec4(state.fhp, 1.0));
+                    transform = temp_transform;
+                }
             }
         }
         else if (leaf < 0) // Leaf node of TLAS
@@ -158,7 +187,7 @@ bool AnyHit(Ray r, float maxDist)
         }
         else
         {
-            leftHit =  AABBIntersect(texelFetch(BVH, leftIndex  * 3).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, r_trans);
+            leftHit  = AABBIntersect(texelFetch(BVH, leftIndex  * 3).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, r_trans);
             rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r_trans);
 
             if (leftHit > 0.0 && rightHit > 0.0)
@@ -192,5 +221,6 @@ bool AnyHit(Ray r, float maxDist)
         idx = stack[--ptr];
     }
 
-    return false;
+    state.hitDist = t;
+    return t;
 }
