@@ -225,12 +225,11 @@ void sampleLight(in Light light, inout LightSampleRec lightSampleRec)
 #ifndef CONSTANT_BG
 
 //-----------------------------------------------------------------------
-float EnvPdf(in Ray r)
+float EnvPdf(in Ray r, in vec2 uv)
 //-----------------------------------------------------------------------
 {
-	vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
     float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, vec2(uv.y, 0.)).y;
-    return (pdf * hdrResolution) / (TWO_PI_PI * sqrt( 1.0 - r.direction.y*r.direction.y));
+    return (pdf * hdrResolution) / (TWO_PI_PI * sqrt(1.0f - r.direction.y * r.direction.y));
 }
 
 //-----------------------------------------------------------------------
@@ -244,17 +243,20 @@ vec4 EnvSample(inout vec3 color)
     float u = texture(hdrCondDistTex, vec2(r2, v)).x;
 
     color = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
-    float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, vec2(v, 0.)).y;
-
-    float phi = u * TWO_PI;
     float theta = v * PI;
 	
-	float sinTheta = -sin(theta);
+	float sinTheta = - sin(theta);
 
     if (sinTheta == 0.0)
-        pdf = 0.0;
+	{
+		return vec4(0.0f, 1.0f, 0.0f, 0.0f);
+	}
+	
+    float phi = u * TWO_PI;
+	
+    float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, vec2(v, 0.)).y;
 
-    return vec4(sinTheta * cos(phi), cos(theta), sinTheta * sin(phi), (pdf * hdrResolution) / (- TWO_PI_PI * sinTheta));
+    return vec4(sinTheta * cos(phi), cos(theta), sinTheta * sin(phi), - (pdf * hdrResolution) / (TWO_PI_PI * sinTheta));
 }
 
 #endif

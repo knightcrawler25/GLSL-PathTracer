@@ -44,9 +44,11 @@ bool AnyHit(Ray r, float maxDist)
         float radius = params.x;
         float area = params.y;
         float type = params.z;
+		
+		int itype = int(type);
 
         // Intersect rectangular area light
-        if (type == QUAD_LIGHT)
+        if (itype == QUAD_LIGHT)
         {
             vec4 plane = vec4(normal, radius);			
 			
@@ -54,15 +56,15 @@ bool AnyHit(Ray r, float maxDist)
 
             if (d > 0.0 && d < maxDist)
                 return true;
-        }
-
-        // Intersect spherical area light
-        if (type == SPHERE_LIGHT)
-        {
-            float d = SphereIntersect(u.x, position, r); //precalculated
-            if (d > 0.0 && d < maxDist)
-                return true;
-        }
+        } else {
+			// Intersect spherical area light
+			if (itype == SPHERE_LIGHT)
+			{
+				float d = SphereIntersect(u.x, position, r); //precalculated
+				if (d > 0.0 && d < maxDist)
+					return true;
+			}
+		}
     }
 #endif
 

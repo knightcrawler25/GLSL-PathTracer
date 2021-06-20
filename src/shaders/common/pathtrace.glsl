@@ -23,7 +23,7 @@
  */
 
 //-----------------------------------------------------------------------
-void Onb(in vec3 N, inout vec3 T, inout vec3 B)
+void Onb(in vec3 N, out vec3 T, out vec3 B)
 //-----------------------------------------------------------------------
 {
 	float sgn = (N.z > 0.0f) ? 1.0f : -1.0f;
@@ -120,8 +120,7 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     // Normal Map
     if (int(mat.texIDs.z) >= 0)
     {
-        vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
-        nrm = (nrm + nrm - 1.0);
+        vec3 nrm = normalize(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz - 0.5);
 
         // Orthonormal Basis
         vec3 T, B;
@@ -241,7 +240,7 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
-	bool useAbsorption = false;
+	
     state.specularBounce = false;
     
     for (int depth = 0; depth < maxDepth; depth++)
@@ -262,7 +261,7 @@ vec3 PathTrace(Ray r)
                 if (depth > 0 && !state.specularBounce)
                 {
                     // TODO: Fix NaNs when using certain HDRs
-                    float lightPdf = EnvPdf(r);
+                    float lightPdf = EnvPdf(r, uv);
                     misWeight = powerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
                 radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
@@ -275,12 +274,6 @@ vec3 PathTrace(Ray r)
         GetNormalsAndTexCoord(state, r);
         GetMaterialsAndTextures(state, r);
 
-        // Reset absorption when ray is going out of surface
-        if (dot(state.normal, state.ffnormal) > 0.0) {
-            absorption = vec3(0.0);
-			useAbsorption = false;
-		}
-
         radiance += state.mat.emission * throughput;
 
 #ifdef LIGHTS
@@ -291,9 +284,12 @@ vec3 PathTrace(Ray r)
         }
 #endif
 
-        // Add absoption
-        if(useAbsorption) 
+		// Reset absorption when ray is going out of surface
+        if (dot(state.normal, state.ffnormal) > 0.0) {
+            absorption = vec3(0.0);
+		} else
 		{
+			// Add absoption
 			throughput *= exp(-absorption * t);
 		}
 
@@ -305,10 +301,8 @@ vec3 PathTrace(Ray r)
 
         // Set absorption only if the ray is currently inside the object.
         if (dotL < 0.0) {
-            //absorption = -log(state.mat.extinction) / state.mat.atDistance;
             absorption = state.mat.extinction1;
 			dotL = - dotL;
-			useAbsorption = true;
 		}
 
         if (bsdfSampleRec.pdf > 0.0)

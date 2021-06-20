@@ -46,9 +46,11 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         float radius  = params.x;
         float area    = params.y;
         float type    = params.z;
+		
+		int itype = int(type);
 
         // Intersect rectangular area light
-        if (type == 0.) 
+        if (itype == QUAD_LIGHT) 
         {
             if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
                 continue;
@@ -67,23 +69,24 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
                 lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
             }
-        }
-
-        // Intersect spherical area light
-        if (type == 1.) 
-        {
-            d = SphereIntersect(u.x, position, r); //precalculated
-            if (d < 0.)
-                d = INFINITY;
-            if (d < t)
-            {
-                t = d;
-                float pdf = (t * t) / area;
-                lightSampleRec.emission = emission;
-                lightSampleRec.pdf = pdf;
-                state.isEmitter = true;
-            }
-        }
+        } else 
+		{
+			// Intersect spherical area light
+			if (itype == SPHERE_LIGHT) 
+			{
+				d = SphereIntersect(u.x, position, r); //precalculated
+				if (d < 0.)
+					d = INFINITY;
+				if (d < t)
+				{
+					t = d;
+					float pdf = (t * t) / area;
+					lightSampleRec.emission = emission;
+					lightSampleRec.pdf = pdf;
+					state.isEmitter = true;
+				}
+			}
+		}
     }
 #endif
 
