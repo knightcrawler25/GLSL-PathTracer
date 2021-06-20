@@ -169,9 +169,12 @@ vec3 UniformSampleHemisphere(float r1, float r2)
 }
 
 //-----------------------------------------------------------------------
-vec3 UniformSampleSphere(float r1, float r2)
+vec3 UniformSampleSphere()
 //-----------------------------------------------------------------------
 {
+    float r1 = rand();
+    float r2 = rand();
+
     float z = 1.0 - r1 - r1;
     float r = sqrt(max(0.0, 1.0 - z * z));
     float phi = TWO_PI * r2;
@@ -191,10 +194,7 @@ float powerHeuristic(float a, float b)
 void sampleSphereLight(in Light light, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
-    float r1 = rand();
-    float r2 = rand();
-
-    lightSampleRec.surfacePos = light.position + UniformSampleSphere(r1, r2) * light.radius;
+    lightSampleRec.surfacePos = light.position + UniformSampleSphere() * light.radius;
     lightSampleRec.normal = normalize(lightSampleRec.surfacePos - light.position);
     lightSampleRec.emission = light.emission * float(numOfLights);
 }

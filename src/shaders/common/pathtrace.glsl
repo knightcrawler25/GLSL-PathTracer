@@ -284,10 +284,11 @@ vec3 PathTrace(Ray r)
         }
 #endif
 
-		// Reset absorption when ray is going out of surface
+        // Reset absorption when ray is going out of surface
         if (dot(state.normal, state.ffnormal) > 0.0) {
             absorption = vec3(0.0);
-		} else
+		}
+		else 
 		{
 			// Add absoption
 			throughput *= exp(-absorption * t);
