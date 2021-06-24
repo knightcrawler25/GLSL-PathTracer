@@ -173,7 +173,7 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         {
             idx = leftIndex;
 
-	    int leaf4 = (-leaf - 1) * 4;
+			int leaf4 = (-leaf - 1) * 4;
 
             vec4 r1 = texelFetch(transformsTex, ivec2(leaf4, 0), 0).xyzw;
             vec4 r2 = texelFetch(transformsTex, ivec2(leaf4 + 1, 0), 0).xyzw;

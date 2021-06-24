@@ -271,9 +271,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
         H = -H;
 		dotVH = - dotVH;
 	}
-
-    float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
-    float primarySpecRatio = 1.0 / (1.0 + state.mat.clearcoat);
+	
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
     vec3 brdf = vec3(0.0);
@@ -305,9 +303,12 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
         vec3 Cspec0 = mix(state.mat.specular * 0.08 * mix(vec3(1.0), Ctint, state.mat.specularTint), Cdlin, state.mat.metallic);
         vec3 Csheen = mix(vec3(1.0), Ctint, state.mat.sheenTint);
 
+		float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);		
+		float primarySpecRatio = 1.0 / (1.0 + state.mat.clearcoat);
+
         // Diffuse
         brdf += EvalDiffuse(state, Csheen, V, N, L, H, dotNL, m_pdf);
-        brdfPdf += m_pdf * diffuseRatio;
+        brdfPdf += m_pdf * diffuseRatio;		
             
         // Specular
         brdf += EvalSpecular(state, Cspec0, V, N, L, H, dotNL, m_pdf);

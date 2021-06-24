@@ -51,11 +51,8 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
     vec3 normal = (n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
 
     mat3 normalMatrix = transpose(inverse(mat3(transform)));
-    normal = normalize(normalMatrix * normal);
-    state.normal = normal;
-    state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : -normal;
-
-    Onb(state.ffnormal, state.tangent, state.bitangent);
+   
+    state.normal = normalize(normalMatrix * normal);
 }
 
 //-----------------------------------------------------------------------
@@ -124,14 +121,16 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
         // Orthonormal Basis
         vec3 T, B;
+		
+		state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : -state.normal;
         Onb(state.ffnormal, T, B);
 
         nrm = T * nrm.x + B * nrm.y + state.ffnormal * nrm.z;
         state.normal = normalize(nrm);
-        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : -state.normal;
-
-        Onb(state.ffnormal, state.tangent, state.bitangent);
     }
+	
+    state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : -state.normal;
+	Onb(state.ffnormal, state.tangent, state.bitangent);
 
     // Calculate anisotropic roughness along the tangent and bitangent directions
     float aspect = sqrt(1.0 - mat.anisotropic * 0.9);

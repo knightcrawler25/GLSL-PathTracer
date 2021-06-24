@@ -172,6 +172,11 @@ void Update(float secondsElapsed)
         }
         scene->camera->isMoving = true;
     }
+	
+	/*
+	if (g.IO.KeyCtrl && IsKeyPressedMap(ImGuiKey_C))
+                LogToClipboard();
+	*/
 
     renderer->Update(secondsElapsed);
 }

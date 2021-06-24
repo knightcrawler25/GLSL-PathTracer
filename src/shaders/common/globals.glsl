@@ -33,10 +33,6 @@
 #define INFINITY  1000000.0
 #define EPS 0.0001
 
-#define REFL 0
-#define REFR 1
-#define SUBS 2
-
 #define QUAD_LIGHT 0
 #define SPHERE_LIGHT 1
 
