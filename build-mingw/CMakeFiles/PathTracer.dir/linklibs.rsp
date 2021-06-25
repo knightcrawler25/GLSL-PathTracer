@@ -1,1 +1,0 @@
-  -L/C/msys64/home/User/GLSL-PathTracer-my/GLSL-PathTracer/thirdparty/SDL2/lib/x64 -Lc:\\msys64\\home\\User\\GLSL-PathTracer-my\\GLSL-PathTracer\\thirdparty\\oidn\\lib\\  -lopengl32 -lglu32 -lSDL2 -lSDL2main -lOpenImageDenoise -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 -m64 -static  -static-libgcc -static-libstdc++

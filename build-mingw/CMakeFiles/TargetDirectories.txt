@@ -1,3 +1,0 @@
-C:/msys64/home/User/GLSL-PathTracer-my/GLSL-PathTracer/build-mingw/CMakeFiles/PathTracer.dir
-C:/msys64/home/User/GLSL-PathTracer-my/GLSL-PathTracer/build-mingw/CMakeFiles/edit_cache.dir
-C:/msys64/home/User/GLSL-PathTracer-my/GLSL-PathTracer/build-mingw/CMakeFiles/rebuild_cache.dir
