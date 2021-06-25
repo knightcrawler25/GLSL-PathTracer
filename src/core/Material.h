@@ -73,9 +73,11 @@ namespace GLSLPT
                 ior = 1.45f;
             }
 
-            extinction1.x = -log(extinction.x) / atDistance;
-            extinction1.y = -log(extinction.y) / atDistance;
-            extinction1.z = -log(extinction.z) / atDistance;
+            float atDist1 = 1.0f / atDistance;
+
+            extinction1.x = -log(extinction.x) * atDist1;
+            extinction1.y = -log(extinction.y) * atDist1;
+            extinction1.z = -log(extinction.z) * atDist1;
         };
 
         Vec3 albedo;

@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <ctime>
 #include <vector>
 #include "split_bvh.h"
 
