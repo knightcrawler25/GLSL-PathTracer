@@ -45,11 +45,12 @@ vec3 EvalDielectricReflection(State state, vec3 V, vec3 N, vec3 H, float dotNL, 
 
     float F = DielectricFresnel(dotVH, state.eta);
     float D = GTR2(dotNH, state.mat.roughness);
+    float FD = F * D;
     
-    pdf = D * dotNH * F / (4.0 * abs(dotVH));
+    pdf = FD * dotNH / (4.0 * abs(dotVH));
 
     float G = SmithG_GGX((dotNL), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
-    return state.mat.albedo * F * D * G;
+    return state.mat.albedo * FD * G;
 }
 
 //-----------------------------------------------------------------------
@@ -67,10 +68,11 @@ vec3 EvalDielectricRefraction(State state, vec3 V, vec3 N, vec3 L, vec3 H, float
     float D = GTR2(dotNH, state.mat.roughness);
 
     float denomSqrt = dotLH + dotVH * state.eta;
-    pdf = D * dotNH * (1.0 - F) * abs(dotLH) / (denomSqrt * denomSqrt);
+    float FD = D * (1.0 - F) * abs(dotLH) / (denomSqrt * denomSqrt);
+    pdf = FD * dotNH;
 
     float G = SmithG_GGX(-(dotNL), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
-    return state.mat.albedo * (1.0 - F) * D * G * abs(dotVH * dotLH) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
+    return state.mat.albedo * FD * G * abs(dotVH) * 4.0 * state.eta * state.eta;
 }
 
 //-----------------------------------------------------------------------
@@ -86,8 +88,7 @@ vec3 EvalSpecular(State state, vec3 Cspec0, vec3 V, vec3 N, vec3 L, vec3 H, floa
     float D = GTR2(dotNH, state.mat.roughness);
     pdf = D * dotNH / (4.0 * dot(V, H));
 
-    float FH = SchlickFresnel(dot(L, H));
-    vec3 F = mix(Cspec0, vec3(1.0), FH);
+    vec3 F = mix(Cspec0, vec3(1.0), SchlickFresnel(dot(L, H)));
     float G = SmithG_GGX((dotNL), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
     return F * D * G;
 }
@@ -105,8 +106,7 @@ vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, float dotNL, ino
     float D = GTR1(dotNH, mix(0.1, 0.001, state.mat.clearcoatGloss));
     pdf = D * dotNH / (4.0 * dot(V, H));
 
-    float FH = SchlickFresnel(dot(L, H));
-    float F = mix(0.04, 1.0, FH);
+    float F = mix(0.04, 1.0, SchlickFresnel(dot(L, H)));
     float G = SmithG_GGX(dotNL, 0.25) * SmithG_GGX(dot(N, V), 0.25);
     return vec3(0.25 * state.mat.clearcoat * F * D * G);
 }
@@ -128,7 +128,6 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, float
     // Diffuse
     float FL = SchlickFresnel(dotNL);
     float FV = SchlickFresnel(dotNV);
-    float FH = SchlickFresnel(dotLH);
 	
 	float Fss90 = dotLH * dotLH * state.mat.roughness;
 	
@@ -139,7 +138,7 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, float
     float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
     float ss = 1.25 * (Fss * (1.0 / (dotNL + dotNV) - 0.5) + 0.5);
 
-    vec3 Fsheen = FH * state.mat.sheen * Csheen;
+    vec3 Fsheen = SchlickFresnel(dotLH) * state.mat.sheen * Csheen;
     return ((INV_PI) * mix(Fd, ss, state.mat.subsurface) * state.mat.albedo + Fsheen) * (1.0 - state.mat.metallic);
 }
 
@@ -153,7 +152,6 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     float r1 = rand();
     float r2 = rand();
 
-    float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
     float transWeight = (1.0 - state.mat.metallic) * state.mat.specTrans;
 
     vec3 Cdlin = state.mat.albedo;
@@ -198,6 +196,8 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     }
     else
     {
+		float diffuseRatio = 0.5 * (1.0 - state.mat.metallic);
+		
         if (rrand < diffuseRatio)
         { 
             L = CosineSampleHemisphere(r1, r2);

@@ -56,7 +56,7 @@ bool AnyHit(Ray r, float maxDist)
 
             if (d > 0.0 && d < maxDist)
                 return true;
-        } else {
+        } else 
 			// Intersect spherical area light
 			if (itype == SPHERE_LIGHT)
 			{
@@ -64,7 +64,6 @@ bool AnyHit(Ray r, float maxDist)
 				if (d > 0.0 && d < maxDist)
 					return true;
 			}
-		}
     }
 #endif
 
@@ -141,7 +140,7 @@ bool AnyHit(Ray r, float maxDist)
         {
             idx = leftIndex;
 
-			int leaf4 = (-leaf - 1) * 4;
+			int leaf4 = (-leaf - 1) << 2;
 
             vec4 r1 = texelFetch(transformsTex, ivec2(leaf4, 0), 0).xyzw;
             vec4 r2 = texelFetch(transformsTex, ivec2(leaf4 + 1, 0), 0).xyzw;
