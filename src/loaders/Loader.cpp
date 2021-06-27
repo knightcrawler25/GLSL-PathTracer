@@ -242,6 +242,7 @@ namespace GLSLPT
             {
                 char envMap[200] = "None";
                 char enableRR[10] = "None";
+                char *subString, *p;
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -261,8 +262,19 @@ namespace GLSLPT
 
                 if (strcmp(envMap, "None") != 0)
                 {
-                    scene->AddHDR(path + envMap);
-                    renderOptions.useEnvMap = true;
+                    subString = strrchr(envMap, '.');
+					p = subString;
+					for ( ; *p; ++p) *p = tolower(*p);
+					
+					if(subString != NULL) {
+                        if (strcmp(subString, ".hdr") == 0) {
+                            scene->AddHDR(path + envMap);
+                        }
+                        else if (strcmp(subString, ".exr") == 0) {
+                            scene->AddEXR(path + envMap);
+                        }
+						renderOptions.useEnvMap = true;
+					}
                 }
 
                 if (strcmp(enableRR, "False") == 0)

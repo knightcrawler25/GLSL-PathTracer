@@ -91,16 +91,38 @@ namespace GLSLPT
         light.type = LightType::RectLight;
         light.position = Vec3(-0.103555f, 0.284840f, 0.606827f);
         light.u = Vec3(-0.103555f, 0.465656f, 0.521355f) - light.position;
-        light.v = Vec3(0.096445f, 0.284840f, 0.606827f) - light.position;
-        light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
+        light.v = Vec3(0.096445f, 0.284840f, 0.606827f) - light.position;		
+                    
+					light.normal = Vec3::Cross(light.u, light.v);
+					
+					light.area = Vec3::Length(light.normal);
+					
+                    light.normal = Vec3::Normalize(light.normal);
+
+					light.uu = light.u * (1.0f / Vec3::Dot(light.u, light.u));
+					light.vv = light.v * (1.0f / Vec3::Dot(light.v, light.v));
+
+                    light.radius = Vec3::Dot(light.normal, light.position);
+		
         light.emission = Vec3(40, 41, 41);
 
         Light light2;
         light2.type = LightType::RectLight;
         light2.position = Vec3(0.303145f, 0.461806f, -0.450967f);
         light2.u = Vec3(0.362568f, 0.280251f, -0.510182f) - light2.position;
-        light2.v = Vec3(0.447143f, 0.461806f, -0.306465f) - light2.position;
-        light2.area = Vec3::Length(Vec3::Cross(light2.u, light2.v));
+        light2.v = Vec3(0.447143f, 0.461806f, -0.306465f) - light2.position;        
+                    
+					light2.normal = Vec3::Cross(light2.u, light2.v);
+					
+					light2.area = Vec3::Length(light2.normal);
+					
+                    light2.normal = Vec3::Normalize(light2.normal);
+
+					light2.uu = light2.u * (1.0f / Vec3::Dot(light2.u, light2.u));
+					light2.vv = light2.v * (1.0f / Vec3::Dot(light2.v, light2.v));
+
+                    light2.radius = Vec3::Dot(light2.normal, light2.position);
+		
         light2.emission = Vec3(40, 41, 41);
 
         int light1_id = scene->AddLight(light);

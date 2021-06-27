@@ -81,6 +81,7 @@ namespace GLSLPT
 
         void AddCamera(Vec3 eye, Vec3 lookat, float fov);
         void AddHDR(const std::string &filename);
+        void AddEXR(const std::string &filename);
 
         void CreateAccelerationStructures();
         void RebuildInstances();

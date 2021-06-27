@@ -111,6 +111,27 @@ namespace GLSLPT
 		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
     }
 
+    void Scene::AddEXR(const std::string& filename)
+    {
+        delete hdrData;
+		
+		clock_t time1, time2;
+		
+		time1 = clock();
+		
+        hdrData = EXRLoader::load(filename.c_str());
+        if (hdrData == nullptr)
+            printf("Unable to load EXR\n");
+        else
+        {
+            printf("EXR %s loaded\n", filename.c_str());
+            renderOptions.useEnvMap = true;
+        }
+		
+		time2 = clock();
+		printf("%.1fs\n", (float)(time2-time1)/(float)CLOCKS_PER_SEC);
+    }
+
     int Scene::AddMeshInstance(const MeshInstance &meshInstance)
     {
         int id = meshInstances.size();

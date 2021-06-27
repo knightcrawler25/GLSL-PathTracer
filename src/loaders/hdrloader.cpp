@@ -26,6 +26,7 @@ typedef unsigned char RGBE[4];
 #define  MINELEN    8                // minimum scanline length for encoding
 #define  MAXELEN    0x7fff            // maximum scanline length for encoding
 
+static void RGBAtoRBG(float *image, int len, float *cols);
 static void workOnRGBE(RGBE *scan, int len, float *cols);
 static bool decrunch(RGBE *scanline, int len, FILE *file);
 static bool oldDecrunch(RGBE *scanline, int len, FILE *file);
@@ -212,6 +213,8 @@ HDRData* HDRLoader::load(const char *fileName)
     res->width = w;
     res->height = h;
 
+    printf("HDR width %d, height %d\n", w, h);
+
     float *cols = new float[w * h * 3];
     res->cols = cols;
 
@@ -236,6 +239,52 @@ HDRData* HDRLoader::load(const char *fileName)
     return res;
 }
 
+
+
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
+
+HDRData* EXRLoader::load(const char *fileName)
+{
+  int width, height;
+  float* image;
+  const char* err = NULL;
+
+  int ret = IsEXR(fileName);
+  if (ret != TINYEXR_SUCCESS) {
+    fprintf(stderr, "EXR: Header err. code %d\n", ret);
+    return nullptr;
+  }
+
+  //image is RGBA
+  ret = LoadEXR(&image, &width, &height, fileName, &err);
+  if (ret != TINYEXR_SUCCESS) {
+    if (err) {
+      fprintf(stderr, "Load EXR err: %s(code %d)\n", err, ret);
+    } else {
+      fprintf(stderr, "Load EXR err: code = %d\n", ret);
+    }
+    FreeEXRErrorMessage(err);
+    return nullptr;
+  }
+
+    HDRData* res = new HDRData;
+
+    res->width = width;
+    res->height = height;
+
+	printf("EXR width %d, height %d\n", width, height);
+	float *cols = new float[width * height * 3];
+	
+    res->cols = cols;
+	RGBAtoRBG(image, width * height, cols);
+	
+    free(image);
+	
+    buildDistributions(res);
+    return res;
+}
+
 float one256 = 1.0f / 256.0f;
 
 float convertComponent(int expo, int val)
@@ -254,6 +303,17 @@ void workOnRGBE(RGBE *scan, int len, float *cols)
         cols[2] = convertComponent(expo, scan[0][B]);
         cols += 3;
         scan++;
+    }
+}
+
+void RGBAtoRBG(float *image, int len, float *cols)
+{
+    while (len-- > 0) {
+        cols[0] = image[0];
+        cols[1] = image[1];
+        cols[2] = image[2];
+        cols += 3;
+        image += 4;
     }
 }
 

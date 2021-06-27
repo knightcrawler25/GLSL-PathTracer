@@ -117,8 +117,8 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     // Normal Map
     if (int(mat.texIDs.z) >= 0)
     {
-        vec3 nrm = normalize(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz - 0.5);
-
+        vec3 nrm = normalize(2.0 * texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz - 1.0);
+				
         // Orthonormal Basis
         vec3 T, B;
 		

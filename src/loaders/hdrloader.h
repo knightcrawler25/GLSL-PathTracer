@@ -28,8 +28,12 @@ public:
 };
 
 class HDRLoader {
-private:
+public:
+    static HDRData* load(const char *fileName);
     static void buildDistributions(HDRData* res);
+};
+
+class EXRLoader:HDRLoader {
 public:
     static HDRData* load(const char *fileName);
 };
