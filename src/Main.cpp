@@ -132,6 +132,40 @@ void SaveFrame(const std::string filename)
     delete data;
 }
 
+
+#include "tinyexr.h"
+
+void SaveRawFrame(const std::string filename)
+{
+	printf("SaveRawFrame start...\n");
+    float* data = nullptr;
+    int w, h;
+    renderer->GetRawOutputBuffer(&data, w, h);	
+	
+	printf("SaveRawFrame try to save exr...\n");
+	
+	const char* err = NULL;
+	int ret;
+	
+	ret = SaveEXR(data, w, h, 4 // =RGBA
+					,
+					1 // = save as fp16 format, else fp32 bit
+					, 
+					filename.c_str(), &err);
+	
+	printf("Save EXR err: %s(code %d)\n", err, ret);
+					
+	  if (ret != TINYEXR_SUCCESS) {
+		if (err) {
+		  fprintf(stderr, "Save EXR err: %s(code %d)\n", err, ret);
+		} else {
+		  fprintf(stderr, "Failed to save EXR image. code = %d\n", ret);
+		}
+	}
+	
+    delete data;
+}
+
 void Render()
 {
     auto io = ImGui::GetIO();
@@ -290,6 +324,7 @@ void MainLoop(void* arg)
 		{
 			printf("%d samples. render time: %.1fs\n", samplesNow, renderTimeNow);
 			SaveFrame("./img_" + to_string(samplesNow) + ".png");
+			SaveRawFrame("./img_" + to_string(samplesNow) + ".exr");
             done = true;
 		}
 
@@ -300,6 +335,7 @@ void MainLoop(void* arg)
         if (ImGui::Button("Save Screenshot"))
         {
             SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".png");
+            SaveRawFrame("./img_" + to_string(renderer->GetSampleCount()) + ".exr");
         }
 
         std::vector<const char*> scenes;

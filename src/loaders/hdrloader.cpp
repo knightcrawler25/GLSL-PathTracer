@@ -26,7 +26,7 @@ typedef unsigned char RGBE[4];
 #define  MINELEN    8                // minimum scanline length for encoding
 #define  MAXELEN    0x7fff            // maximum scanline length for encoding
 
-static void RGBAtoRBG(float *image, int len, float *cols);
+static void RGBAtoRGB(float *image, int len, float *cols);
 static void workOnRGBE(RGBE *scan, int len, float *cols);
 static bool decrunch(RGBE *scanline, int len, FILE *file);
 static bool oldDecrunch(RGBE *scanline, int len, FILE *file);
@@ -277,7 +277,7 @@ HDRData* EXRLoader::load(const char *fileName)
 	float *cols = new float[width * height * 3];
 	
     res->cols = cols;
-	RGBAtoRBG(image, width * height, cols);
+	RGBAtoRGB(image, width * height, cols);
 	
     free(image);
 	
@@ -306,7 +306,7 @@ void workOnRGBE(RGBE *scan, int len, float *cols)
     }
 }
 
-void RGBAtoRBG(float *image, int len, float *cols)
+void RGBAtoRGB(float *image, int len, float *cols)
 {
     while (len-- > 0) {
         cols[0] = image[0];

@@ -39,6 +39,7 @@ namespace GLSLPT
         GLuint pathTraceFBOLowRes;
         GLuint accumFBO;
         GLuint outputFBO;
+        GLuint rawFBO;
 
         // Shaders
         Program* pathTraceShader;
@@ -46,11 +47,13 @@ namespace GLSLPT
         Program* accumShader;
         Program* outputShader;
         Program* tonemapShader;
+        Program* rawfbShader;
 
         // Textures
         GLuint pathTraceTexture;
         GLuint pathTraceTextureLowRes;
         GLuint accumTexture;
+        GLuint rawTexture;
         GLuint tileOutputTexture[2];
         GLuint denoisedTexture;
 
@@ -87,5 +90,6 @@ namespace GLSLPT
         int GetSampleCount() const;
         float GetRenderTime() const;
         void GetOutputBuffer(unsigned char**, int &w, int &h);
+		void GetRawOutputBuffer(float** data, int &w, int &h);
     };
 }
