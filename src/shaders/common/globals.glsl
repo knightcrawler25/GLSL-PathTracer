@@ -27,12 +27,9 @@
 #define INFINITY  1000000.0
 #define EPS 0.0001
 
-#define REFL 0
-#define REFR 1
-#define SUBS 2
-
 #define QUAD_LIGHT 0
 #define SPHERE_LIGHT 1
+#define DISTANT_LIGHT 2
 
 mat4 transform;
 
@@ -122,9 +119,10 @@ struct BsdfSampleRec
 
 struct LightSampleRec
 {
-    vec3 surfacePos;
     vec3 normal;
     vec3 emission;
+    vec3 direction;
+    float dist;
     float pdf;
 };
 

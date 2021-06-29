@@ -52,23 +52,23 @@ void GetNormalsAndTexCoord(inout State state, inout Ray r)
     state.normal = normal;
     state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : normal * -1.0;
 
-    Onb(state.ffnormal, state.tangent, state.bitangent);
+    Onb(state.normal, state.tangent, state.bitangent);
 }
 
 //-----------------------------------------------------------------------
 void GetMaterialsAndTextures(inout State state, in Ray r)
 //-----------------------------------------------------------------------
 {
-    int index = state.matID;
+    int index = state.matID * 7;
     Material mat;
 
-    vec4 param1 = texelFetch(materialsTex, ivec2(index * 7 + 0, 0), 0);
-    vec4 param2 = texelFetch(materialsTex, ivec2(index * 7 + 1, 0), 0);
-    vec4 param3 = texelFetch(materialsTex, ivec2(index * 7 + 2, 0), 0);
-    vec4 param4 = texelFetch(materialsTex, ivec2(index * 7 + 3, 0), 0);
-    vec4 param5 = texelFetch(materialsTex, ivec2(index * 7 + 4, 0), 0);
-    vec4 param6 = texelFetch(materialsTex, ivec2(index * 7 + 5, 0), 0);
-    vec4 param7 = texelFetch(materialsTex, ivec2(index * 7 + 6, 0), 0);
+    vec4 param1 = texelFetch(materialsTex, ivec2(index + 0, 0), 0);
+    vec4 param2 = texelFetch(materialsTex, ivec2(index + 1, 0), 0);
+    vec4 param3 = texelFetch(materialsTex, ivec2(index + 2, 0), 0);
+    vec4 param4 = texelFetch(materialsTex, ivec2(index + 3, 0), 0);
+    vec4 param5 = texelFetch(materialsTex, ivec2(index + 4, 0), 0);
+    vec4 param6 = texelFetch(materialsTex, ivec2(index + 5, 0), 0);
+    vec4 param7 = texelFetch(materialsTex, ivec2(index + 6, 0), 0);
 
     mat.albedo         = param1.xyz;
     mat.specular       = param1.w;
@@ -106,9 +106,10 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     if (int(mat.texIDs.y) >= 0)
     {
         vec2 matRgh;
+        // TODO: Change metallic roughness maps in repo to linear space and remove gamma correction
         matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
         mat.metallic = matRgh.x;
-        mat.roughness = matRgh.y;
+        mat.roughness = max(matRgh.y, 0.001);
     }
 
     // Normal Map
@@ -117,21 +118,21 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
         vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
         nrm = normalize(nrm * 2.0 - 1.0);
 
-        // Orthonormal Basis
         vec3 T, B;
-        Onb(state.ffnormal, T, B);
+        Onb(state.normal, T, B);
 
-        nrm = T * nrm.x + B * nrm.y + state.ffnormal * nrm.z;
+        nrm = T * nrm.x + B * nrm.y + state.normal * nrm.z;
         state.normal = normalize(nrm);
         state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
 
-        Onb(state.ffnormal, state.tangent, state.bitangent);
+        Onb(state.normal, state.tangent, state.bitangent);
     }
 
+    // Commented out the following as anisotropic param is temporarily unused.
     // Calculate anisotropic roughness along the tangent and bitangent directions
-    float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
-    mat.ax = max(0.001, mat.roughness / aspect);
-    mat.ay = max(0.001, mat.roughness * aspect);
+    // float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
+    // mat.ax = max(0.001, mat.roughness / aspect);
+    // mat.ay = max(0.001, mat.roughness * aspect);
 
     state.mat = mat;
     state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / mat.ior) : mat.ior;
@@ -180,38 +181,36 @@ vec3 DirectLight(in Ray r, in State state)
         Light light;
 
         //Pick a light to sample
-        int index = int(rand() * float(numOfLights));
+        int index = int(rand() * float(numOfLights)) * 5;
 
         // Fetch light Data
-        vec3 position = texelFetch(lightsTex, ivec2(index * 5 + 0, 0), 0).xyz;
-        vec3 emission = texelFetch(lightsTex, ivec2(index * 5 + 1, 0), 0).xyz;
-        vec3 u        = texelFetch(lightsTex, ivec2(index * 5 + 2, 0), 0).xyz; // u vector for rect
-        vec3 v        = texelFetch(lightsTex, ivec2(index * 5 + 3, 0), 0).xyz; // v vector for rect
-        vec3 params   = texelFetch(lightsTex, ivec2(index * 5 + 4, 0), 0).xyz;
+        vec3 position = texelFetch(lightsTex, ivec2(index + 0, 0), 0).xyz;
+        vec3 emission = texelFetch(lightsTex, ivec2(index + 1, 0), 0).xyz;
+        vec3 u        = texelFetch(lightsTex, ivec2(index + 2, 0), 0).xyz; // u vector for rect
+        vec3 v        = texelFetch(lightsTex, ivec2(index + 3, 0), 0).xyz; // v vector for rect
+        vec3 params   = texelFetch(lightsTex, ivec2(index + 4, 0), 0).xyz;
         float radius  = params.x;
         float area    = params.y;
-        float type    = params.z; // 0->rect, 1->sphere
+        float type    = params.z; // 0->Rect, 1->Sphere, 2->Distant
 
         light = Light(position, emission, u, v, radius, area, type);
-        sampleLight(light, lightSampleRec);
+        sampleOneLight(light, surfacePos, lightSampleRec);
 
-        vec3 lightDir = lightSampleRec.surfacePos - surfacePos;
-        float lightDist = length(lightDir);
-        float lightDistSq = lightDist * lightDist;
-        lightDir /= lightDist;
-
-        if (dot(lightDir, lightSampleRec.normal) < 0.0)
+        if (dot(lightSampleRec.direction, lightSampleRec.normal) < 0.0)
         {
-            Ray shadowRay = Ray(surfacePos, lightDir);
-            bool inShadow = AnyHit(shadowRay, lightDist - EPS);
+            Ray shadowRay = Ray(surfacePos, lightSampleRec.direction);
+            bool inShadow = AnyHit(shadowRay, lightSampleRec.dist - EPS);
 
             if (!inShadow)
             {
-                bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSampleRec.pdf);
-                float lightPdf = lightDistSq / (light.area * abs(dot(lightSampleRec.normal, lightDir)));
+                bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightSampleRec.direction, bsdfSampleRec.pdf);
+
+                float weight = 1.0;
+                if(light.area > 0.0)
+                    weight = powerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0)
-                    Li += powerHeuristic(lightPdf, bsdfSampleRec.pdf) * bsdfSampleRec.f * abs(dot(state.ffnormal, lightDir)) * lightSampleRec.emission / lightPdf;
+                    Li += weight * bsdfSampleRec.f * abs(dot(state.ffnormal, lightSampleRec.direction)) * lightSampleRec.emission / lightSampleRec.pdf;
             }
         }
     }

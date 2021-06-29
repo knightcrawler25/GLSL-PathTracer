@@ -43,7 +43,8 @@ namespace GLSLPT
     enum LightType
     {
         RectLight,
-        SphereLight
+        SphereLight,
+        DistantLight
     };
 
     struct Light
