@@ -191,7 +191,7 @@ float powerHeuristic(float a, float b)
 void sampleSphereLight(in Light light, in vec3 surfacePos, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
-    //TODO: Pick a point only on the visible surface of the sphere
+    // TODO: Pick a point only on the visible surface of the sphere
 
     float r1 = rand();
     float r2 = rand();
@@ -201,7 +201,6 @@ void sampleSphereLight(in Light light, in vec3 surfacePos, inout LightSampleRec 
     lightSampleRec.dist = length(lightSampleRec.direction);
     float distSq = lightSampleRec.dist * lightSampleRec.dist;
     lightSampleRec.direction /= lightSampleRec.dist;
-    lightSampleRec.direction / lightSampleRec.direction;
     lightSampleRec.normal = normalize(lightSurfacePos - light.position);
     lightSampleRec.emission = light.emission * float(numOfLights);
     lightSampleRec.pdf = distSq / (light.area * abs(dot(lightSampleRec.normal, lightSampleRec.direction)));
