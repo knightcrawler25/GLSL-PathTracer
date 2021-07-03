@@ -3,7 +3,7 @@ GLSL-PathTracer
 ==========
 A physically based path tracer that runs in a GLSL fragment shader.
 
-![Mustang](./screenshots/Mustang.jpg)
+![RenderMan Swatch](./screenshots/Renderman_swatch.png)
 
 ![Stormtrooper](./screenshots/stormtrooper.jpg)
 
@@ -18,9 +18,9 @@ Features
 - Disney BSDF
 - OpenImageDenoise
 - Texture Mapping (Albedo, Metallic-Roughness, Normal)
-- Spherical and Rectangular Area Lights
-- IBL with importance sampling
-- Progressive + Tiled Rendering (Reduces GPU usage and timeout when depth/scene complexity is high)
+- Analytic Lights (Sphere, Rect, Directional) with MIS
+- IBL
+- Progressive + Tiled Rendering
 
 Build Instructions
 --------
@@ -34,6 +34,8 @@ https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
 Gallery
 --------
 ![Mustang_red](./screenshots/Mustang_Red.jpg)
+--------
+![Mustang](./screenshots/Mustang.jpg)
 --------
 ![Hyperion](./screenshots/hyperion.jpg)
 --------
