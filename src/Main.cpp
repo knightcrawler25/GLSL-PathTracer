@@ -248,7 +248,8 @@ void MainLoop(void* arg)
         {
             if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
             {
-                scene->renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
+                renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
+                scene->renderOptions = renderOptions;
                 InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
             }
 
