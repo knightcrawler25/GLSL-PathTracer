@@ -107,12 +107,13 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
     {
         vec2 matRgh;
         // TODO: Change metallic roughness maps in repo to linear space and remove gamma correction
-        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).zy, vec2(2.2));
+        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).xy, vec2(2.2));
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y, 0.001);
     }
 
     // Normal Map
+    // FIXME: Output when using a normal map doesn't match up with Cycles (Blender) output
     if (int(mat.texIDs.z) >= 0)
     {
         vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
