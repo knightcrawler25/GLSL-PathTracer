@@ -94,7 +94,7 @@ vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
         return vec3(0.0);
 
     float D = GTR1(dot(N, H), mix(0.1, 0.001, state.mat.clearcoatGloss));
-    pdf = D * dot(N, H) / (4.0 * dot(V, H));
+    pdf = D * dot(N, H) / (4.0 * dot(L, H));
 
     float FH = SchlickFresnel(dot(L, H));
     float F = mix(0.04, 1.0, FH);
