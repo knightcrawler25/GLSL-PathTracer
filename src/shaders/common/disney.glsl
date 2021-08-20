@@ -77,7 +77,7 @@ vec3 EvalSpecular(State state, vec3 Cspec0, vec3 V, vec3 N, vec3 L, vec3 H, inou
         return vec3(0.0);
 
     float D = GTR2(dot(N, H), state.mat.roughness);
-    pdf = D * dot(N, H) / (4.0 * dot(V, H));
+    pdf = D * dot(N, H) / (4.0 * dot(L, H));
 
     float FH = SchlickFresnel(dot(L, H));
     vec3 F = mix(Cspec0, vec3(1.0), FH);
