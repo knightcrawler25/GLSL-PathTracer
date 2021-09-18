@@ -398,8 +398,6 @@ namespace GLSLPT
     {
         Renderer::Update(secondsElapsed);
 
-        float r1, r2, r3;
-
         // Denoise Image
         if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTilesX * numTilesY)) == 0)
         {
