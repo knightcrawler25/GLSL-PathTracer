@@ -4,15 +4,15 @@ Instructions for building:
 
   * git clone https://github.com/knightcrawler25/GLSL-PathTracer.git
 
-  * cd GLSL-PathTracer
+  * OpenImageDenoise: Copy linux64 libraries from https://github.com/OpenImageDenoise/oidn/releases/tag/v1.2.4 to thirdparty/oidn/lib folder
 
   * mkdir build
+
+  * cd build
 
   * cmake ..
 
   * make
-
-  * cd build
 
   * To run the program: ./PathTracer
 
