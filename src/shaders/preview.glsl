@@ -23,14 +23,6 @@
  */
 
 #version 330
-#define PROGRESSIVE
-
-precision highp float;
-precision highp int;
-precision highp sampler2D;
-precision highp samplerCube;
-precision highp isampler2D;
-precision highp sampler2DArray;
 
 out vec3 color;
 in vec2 TexCoords;
@@ -46,7 +38,7 @@ in vec2 TexCoords;
 
 void main(void)
 {
-    seed = TexCoords;
+    InitRNG(gl_FragCoord.xy, 1);
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();

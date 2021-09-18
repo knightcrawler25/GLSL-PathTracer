@@ -23,14 +23,6 @@
  */
 
 #version 330
-#define TILED
-
-precision highp float;
-precision highp int;
-precision highp sampler2D;
-precision highp samplerCube;
-precision highp isampler2D;
-precision highp sampler2DArray;
 
 out vec3 color;
 in vec2 TexCoords;
@@ -63,7 +55,7 @@ void main(void)
     coordsFS.x = map(TexCoords.x, 0.0, 1.0, invNumTilesX * float(tileX), invNumTilesX * float(tileX) + invNumTilesX);
     coordsFS.y = map(TexCoords.y, 0.0, 1.0, invNumTilesY * float(tileY), invNumTilesY * float(tileY) + invNumTilesY);
 
-    seed = coordsFS;
+    InitRNG(coordsFS * screenResolution, frame);
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();
@@ -89,9 +81,6 @@ void main(void)
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
     vec3 accumColor = texture(accumTexture, coordsFS).xyz;
-
-    if (isCameraMoving)
-        accumColor = vec3(0.);
 
     vec3 pixelColor = PathTrace(ray);
 

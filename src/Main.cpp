@@ -114,7 +114,6 @@ bool InitRenderer()
     return true;
 }
 
-// TODO: Fix occassional crashes when saving screenshot
 void SaveFrame(const std::string filename)
 {
     unsigned char* data = nullptr;
@@ -122,6 +121,7 @@ void SaveFrame(const std::string filename)
     renderer->GetOutputBuffer(&data, w, h);
     stbi_flip_vertically_on_write(true);
     stbi_write_png(filename.c_str(), w, h, 3, data, w*3);
+    printf("Frame saved: %s\n", filename.c_str());
     delete data;
 }
 

@@ -25,15 +25,13 @@
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
 #define INFINITY  1000000.0
-#define EPS 0.0001
+#define EPS 0.001
 
 #define QUAD_LIGHT 0
 #define SPHERE_LIGHT 1
 #define DISTANT_LIGHT 2
 
 mat4 transform;
-
-vec2 seed;
 vec3 tempTexCoords;
 
 struct Ray
@@ -101,7 +99,6 @@ struct State
     vec3 bitangent;
 
     bool isEmitter;
-    bool specularBounce;
 
     vec2 texCoord;
     vec3 bary;
@@ -128,10 +125,29 @@ struct LightSampleRec
 
 uniform Camera camera;
 
+//RNG from code by Moroz Mykhailo (https://www.shadertoy.com/view/wltcRS)
+
+//internal RNG state 
+uvec4 seed;
+ivec2 pixel;
+
+void InitRNG(vec2 p, int frame)
+{
+    pixel = ivec2(p);
+    seed = uvec4(p, uint(frame), uint(p.x) + uint(p.y));
+}
+
+void pcg4d(inout uvec4 v)
+{
+    v = v * 1664525u + 1013904223u;
+    v.x += v.y * v.w; v.y += v.z * v.x; v.z += v.x * v.y; v.w += v.y * v.z;
+    v = v ^ (v >> 16u);
+    v.x += v.y * v.w; v.y += v.z * v.x; v.z += v.x * v.y; v.w += v.y * v.z;
+}
+
 float rand()
 {
-    seed -= randomVector.xy;
-    return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453);
+    pcg4d(seed); return float(seed.x) / float(0xffffffffu);
 }
 
 vec3 FaceForward(vec3 a, vec3 b)

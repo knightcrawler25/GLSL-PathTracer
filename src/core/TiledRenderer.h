@@ -42,7 +42,6 @@ namespace GLSLPT
         // Shaders
         Program* pathTraceShader;
         Program* pathTraceShaderLowRes;
-        Program* accumShader;
         Program* outputShader;
         Program* tonemapShader;
 

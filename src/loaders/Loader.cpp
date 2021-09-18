@@ -96,7 +96,6 @@ namespace GLSLPT
                     if (strchr(line, '}'))
                         break;
 
-                    sscanf(line, " name %s", name);
                     sscanf(line, " color %f %f %f", &material.albedo.x, &material.albedo.y, &material.albedo.z);
                     sscanf(line, " emission %f %f %f", &material.emission.x, &material.emission.y, &material.emission.z);
                     sscanf(line, " metallic %f", &material.metallic);

@@ -24,13 +24,6 @@
 
 #version 330
 
-precision highp float;
-precision highp int;
-precision highp sampler2D;
-precision highp samplerCube;
-precision highp isampler2D;
-precision highp sampler2DArray;
-
 layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 texCoords;
 

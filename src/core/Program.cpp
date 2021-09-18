@@ -34,7 +34,6 @@ namespace GLSLPT
             glAttachShader(object, shaders[i].getObject());
 
         glLinkProgram(object);
-        printf("Linking program %d\n", int(object));
         for (unsigned i = 0; i < shaders.size(); i++)
             glDetachShader(object, shaders[i].getObject());
         GLint success = 0;

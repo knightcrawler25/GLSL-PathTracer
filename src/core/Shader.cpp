@@ -32,7 +32,7 @@ namespace GLSLPT
     Shader::Shader(const ShaderInclude::ShaderSource& sourceObj, GLenum shaderType)
     {
         object = glCreateShader(shaderType);
-        printf("Compiling Shader %s -> %d\n", sourceObj.path.c_str(), int(object));
+        printf("Compiling Shader %s\n", sourceObj.path.c_str());
         const GLchar *src = (const GLchar *)sourceObj.src.c_str();
         glShaderSource(object, 1, &src, 0);
         glCompileShader(object);

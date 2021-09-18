@@ -231,7 +231,6 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
-    state.specularBounce = false;
     
     for (int depth = 0; depth < maxDepth; depth++)
     {
@@ -248,7 +247,7 @@ vec3 PathTrace(Ray r)
                 float misWeight = 1.0f;
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), acos(r.direction.y) * (1.0 / PI));
 
-                if (depth > 0 && !state.specularBounce)
+                if (depth > 0)
                 {
                     // TODO: Fix NaNs when using certain HDRs
                     float lightPdf = EnvPdf(r);
