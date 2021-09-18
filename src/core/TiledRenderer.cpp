@@ -167,7 +167,7 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &accumTexture);
         glBindTexture(GL_TEXTURE_2D, accumTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, GLsizei(screenSize.x), GLsizei(screenSize.y), 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -319,6 +319,7 @@ namespace GLSLPT
         
         if (scene->camera->isMoving || scene->instancesModified)
         {
+            // Renders a low res preview if camera/instances are modified
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
             glViewport(0, 0, screenSize.x * pixelRatio, screenSize.y * pixelRatio);
             quad->Draw(pathTraceShaderLowRes);
@@ -326,16 +327,21 @@ namespace GLSLPT
         }
         else
         {
+            // Renders to pathTraceTexture while using previously accumulated samples from accumTexture
+            // Rendering is done a tile per frame, so if a 500x500 is rendered with a tileWidth and tileHeight of 250 then, all tiles (for a single sample) get rendered after 4 frames
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBO);
             glViewport(0, 0, tileWidth, tileHeight);
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(pathTraceShader);
 
+            // pathTraceTexture is copied to accumTexture and re-used as input for the first step.
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
             glViewport(tileWidth * tileX, tileHeight * tileY, tileWidth, tileHeight);
             glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
             quad->Draw(outputShader);
 
+            // Here we render to tileOutputTexture[currentBuffer] but display tileOutputTexture[1-currentBuffer] until all tiles are done rendering
+            // When all tiles are rendered, we flip the bound texture and start rendering to the other one
             glBindFramebuffer(GL_FRAMEBUFFER, outputFBO);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tileOutputTexture[currentBuffer], 0);
             glViewport(0, 0, screenSize.x, screenSize.y);
@@ -351,6 +357,7 @@ namespace GLSLPT
 
         glActiveTexture(GL_TEXTURE0);
 
+        // For the first sample or if the camera is moving, we do not have an image ready with all the tiles rendered, so we display a low res preview.
         if (scene->camera->isMoving || sampleCounter == 1)
         {
             glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
@@ -423,6 +430,7 @@ namespace GLSLPT
             if (device.getError(errorMessage) != oidn::Error::None)
                 std::cout << "Error: " << errorMessage << std::endl;
 
+            // Copy the denoised data to denoisedTexture
             glBindTexture(GL_TEXTURE_2D, denoisedTexture);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
 
@@ -437,11 +445,9 @@ namespace GLSLPT
             denoised = false;
             frameCounter = 1;
 
+            // Clear out the accumulated texture for rendering a new image
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
-            glViewport(0, 0, screenSize.x, screenSize.y);
             glClear(GL_COLOR_BUFFER_BIT);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
         else
         {
@@ -453,6 +459,7 @@ namespace GLSLPT
                 tileY--;
                 if (tileY < 0)
                 {
+                    // If we've reached here, it means all the tiles have been rendered (for a single sample) and the image can now be displayed.
                     tileX = 0;
                     tileY = numTilesY - 1;
                     sampleCounter++;
