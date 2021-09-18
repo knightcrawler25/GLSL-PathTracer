@@ -328,7 +328,8 @@ namespace GLSLPT
         else
         {
             // Renders to pathTraceTexture while using previously accumulated samples from accumTexture
-            // Rendering is done a tile per frame, so if a 500x500 is rendered with a tileWidth and tileHeight of 250 then, all tiles (for a single sample) get rendered after 4 frames
+            // Rendering is done a tile per frame, so if a 500x500 image is rendered with a tileWidth and tileHeight of 250 then, all tiles (for a single sample) 
+            // get rendered after 4 frames
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBO);
             glViewport(0, 0, tileWidth, tileHeight);
             glBindTexture(GL_TEXTURE_2D, accumTexture);
