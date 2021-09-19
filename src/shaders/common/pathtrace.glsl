@@ -188,7 +188,7 @@ vec3 DirectLight(in Ray r, in State state)
         light = Light(position, emission, u, v, radius, area, type);
         sampleOneLight(light, surfacePos, lightSampleRec);
 
-        if (dot(lightSampleRec.direction, lightSampleRec.normal) < 0.0)
+        if (dot(lightSampleRec.direction, lightSampleRec.normal) < 0.0) // Required for quad lights with single sided emission
         {
             Ray shadowRay = Ray(surfacePos, lightSampleRec.direction);
             bool inShadow = AnyHit(shadowRay, lightSampleRec.dist - EPS);
@@ -197,7 +197,9 @@ vec3 DirectLight(in Ray r, in State state)
             {
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightSampleRec.direction, bsdfSampleRec.pdf);
 
-                float weight = powerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
+                float weight = 1.0;
+                if(light.area > 0.0) // No MIS for distant light
+                    weight = powerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0)
                     Li += weight * bsdfSampleRec.f * abs(dot(state.ffnormal, lightSampleRec.direction)) * lightSampleRec.emission / lightSampleRec.pdf;
