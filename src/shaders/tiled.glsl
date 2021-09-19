@@ -36,26 +36,17 @@ in vec2 TexCoords;
 #include common/disney.glsl
 #include common/pathtrace.glsl
 
-float map(float value, float low1, float high1, float low2, float high2)
-{
-    return low2 + ((value - low1) * (high2 - low2)) / (high1 - low1);
-}
-
 void main(void)
 {
-    vec2 coordsTile = TexCoords;
-    vec2 coordsFS;
+    vec2 coordsTile;
 
-    float xoffset = -1.0 + 2.0 * invNumTilesX * float(tileX);
-    float yoffset = -1.0 + 2.0 * invNumTilesY * float(tileY);
+    float xoffset = invNumTilesX * float(tileX);
+    float yoffset = invNumTilesY * float(tileY);
 
-    coordsTile.x = map(coordsTile.x, 0.0, 1.0, xoffset, xoffset + 2.0 * invNumTilesX);
-    coordsTile.y = map(coordsTile.y, 0.0, 1.0, yoffset, yoffset + 2.0 * invNumTilesY);
+    coordsTile.x = mix(xoffset, xoffset + invNumTilesX, TexCoords.x);
+    coordsTile.y = mix(yoffset, yoffset + invNumTilesY, TexCoords.y);
 
-    coordsFS.x = map(TexCoords.x, 0.0, 1.0, invNumTilesX * float(tileX), invNumTilesX * float(tileX) + invNumTilesX);
-    coordsFS.y = map(TexCoords.y, 0.0, 1.0, invNumTilesY * float(tileY), invNumTilesY * float(tileY) + invNumTilesY);
-
-    InitRNG(coordsFS * screenResolution, frame);
+    InitRNG(coordsTile * screenResolution, frame);
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();
@@ -65,7 +56,7 @@ void main(void)
     jitter.y = r2 < 1.0 ? sqrt(r2) - 1.0 : 1.0 - sqrt(2.0 - r2);
 
     jitter /= (screenResolution * 0.5);
-    vec2 d = coordsTile + jitter;
+    vec2 d = (coordsTile * 2.0 - 1.0) + jitter;
 
     float scale = tan(camera.fov * 0.5);
     d.y *= screenResolution.y / screenResolution.x * scale;
@@ -80,7 +71,7 @@ void main(void)
 
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
-    vec3 accumColor = texture(accumTexture, coordsFS).xyz;
+    vec3 accumColor = texture(accumTexture, coordsTile).xyz;
 
     vec3 pixelColor = PathTrace(ray);
 
