@@ -43,8 +43,7 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         float area    = params.y;
         float type    = params.z;
 
-        // Intersect rectangular area light
-        if (type == 0.) 
+        if (type == QUAD_LIGHT)
         {
             vec3 normal = normalize(cross(u, v));
             if (dot(normal, r.direction) > 0.) // Hide backfacing quad light
@@ -60,15 +59,13 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
             {
                 t = d;
                 float cosTheta = dot(-r.direction, normal);
-                float pdf = (t * t) / (area * cosTheta);
+                lightSampleRec.pdf = (t * t) / (area * cosTheta);
                 lightSampleRec.emission = emission;
-                lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
             }
         }
 
-        // Intersect spherical area light
-        if (type == 1.) 
+        if (type == SPHERE_LIGHT)
         {
             d = SphereIntersect(radius, position, r);
             if (d < 0.)
@@ -76,9 +73,11 @@ float ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
             if (d < t)
             {
                 t = d;
-                float pdf = (t * t) / area;
+                vec3 hitPt = r.origin + t * r.direction;
+                float cosTheta = dot(-r.direction, normalize(hitPt - position));
+                // TODO: Fix this. Currently assumes the light will be hit only from the outside
+                lightSampleRec.pdf = (t * t) / (area * cosTheta * 0.5);
                 lightSampleRec.emission = emission;
-                lightSampleRec.pdf = pdf;
                 state.isEmitter = true;
             }
         }

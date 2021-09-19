@@ -177,8 +177,8 @@ mesh
 
 light
 {
-	emission 80.0 80.0 80.0
-	position 0 390.0 -439.0
-	radius 60.0
+	emission 80 80 80
+	position 0 39.0 -43.9
+	radius 6.0
 	type Sphere
 }

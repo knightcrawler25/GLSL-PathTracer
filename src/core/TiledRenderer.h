@@ -52,10 +52,9 @@ namespace GLSLPT
         GLuint tileOutputTexture[2];
         GLuint denoisedTexture;
 
-        int tileX;
-        int tileY;
-        int numTilesX;
-        int numTilesY;
+        iVec2 tile;
+        iVec2 numTiles;
+        Vec2 invNumTiles;
         int tileWidth;
         int tileHeight;
 

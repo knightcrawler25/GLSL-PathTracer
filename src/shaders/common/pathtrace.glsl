@@ -23,15 +23,6 @@
  */
 
 //-----------------------------------------------------------------------
-void Onb(in vec3 N, inout vec3 T, inout vec3 B)
-//-----------------------------------------------------------------------
-{
-    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
-    T = normalize(cross(UpVector, N));
-    B = cross(N, T);
-}
-
-//-----------------------------------------------------------------------
 void GetNormalsAndTexCoord(inout State state, inout Ray r)
 //-----------------------------------------------------------------------
 {
@@ -206,9 +197,7 @@ vec3 DirectLight(in Ray r, in State state)
             {
                 bsdfSampleRec.f = DisneyEval(state, -r.direction, state.ffnormal, lightSampleRec.direction, bsdfSampleRec.pdf);
 
-                float weight = 1.0;
-                if(light.area > 0.0)
-                    weight = powerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
+                float weight = powerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0)
                     Li += weight * bsdfSampleRec.f * abs(dot(state.ffnormal, lightSampleRec.direction)) * lightSampleRec.emission / lightSampleRec.pdf;

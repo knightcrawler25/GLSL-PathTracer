@@ -188,22 +188,42 @@ float powerHeuristic(float a, float b)
 }
 
 //-----------------------------------------------------------------------
+void Onb(in vec3 N, inout vec3 T, inout vec3 B)
+//-----------------------------------------------------------------------
+{
+    vec3 UpVector = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
+    T = normalize(cross(UpVector, N));
+    B = cross(N, T);
+}
+
+//-----------------------------------------------------------------------
 void sampleSphereLight(in Light light, in vec3 surfacePos, inout LightSampleRec lightSampleRec)
 //-----------------------------------------------------------------------
 {
-    // TODO: Pick a point only on the visible surface of the sphere
-
     float r1 = rand();
     float r2 = rand();
 
-    vec3 lightSurfacePos = light.position + UniformSampleSphere(r1, r2) * light.radius;
+    vec3 sphereCentertoSurface = surfacePos - light.position;
+    float distToSphereCenter = length(sphereCentertoSurface);
+    vec3 sampledDir;
+
+    // TODO: Fix this. Currently assumes the light will be hit only from the outside
+    sphereCentertoSurface /= distToSphereCenter;
+    sampledDir = UniformSampleHemisphere(r1, r2);
+    vec3 T, B;
+    Onb(sphereCentertoSurface, T, B);
+    sampledDir = T * sampledDir.x + B * sampledDir.y + sphereCentertoSurface * sampledDir.z;
+
+    vec3 lightSurfacePos = light.position + sampledDir * light.radius;
+
     lightSampleRec.direction = lightSurfacePos - surfacePos;
     lightSampleRec.dist = length(lightSampleRec.direction);
     float distSq = lightSampleRec.dist * lightSampleRec.dist;
+
     lightSampleRec.direction /= lightSampleRec.dist;
     lightSampleRec.normal = normalize(lightSurfacePos - light.position);
     lightSampleRec.emission = light.emission * float(numOfLights);
-    lightSampleRec.pdf = distSq / (light.area * abs(dot(lightSampleRec.normal, lightSampleRec.direction)));
+    lightSampleRec.pdf = distSq / (light.area * 0.5 * abs(dot(lightSampleRec.normal, lightSampleRec.direction)));
 }
 
 //-----------------------------------------------------------------------

@@ -47,10 +47,8 @@ namespace GLSLPT
         , pathTraceTextureLowRes(0)
         , accumTexture(0)
         , tileOutputTexture()
-        , tileX(-1)
-        , tileY(-1)
-        , numTilesX(5)
-        , numTilesY(5)
+        , tile(0,0)
+        , numTiles(0,0)
         , currentBuffer(0)
         , sampleCounter(0)
     {
@@ -71,12 +69,16 @@ namespace GLSLPT
         currentBuffer = 0;
         frameCounter = 1;
 
-        numTilesX = ceil((float)screenSize.x / tileWidth);
-        numTilesY = ceil((float)screenSize.y / tileHeight);
+        invNumTiles.x = (float)tileWidth / screenSize.x;
+        invNumTiles.y = (float)tileHeight / screenSize.y;
+
+        numTiles.x = ceil((float)screenSize.x / tileWidth);
+        numTiles.y = ceil((float)screenSize.y / tileHeight);
+
         pixelRatio = 0.25f;
 
-        tileX = -1;
-        tileY = numTilesY - 1;
+        tile.x = -1;
+        tile.y = numTiles.y - 1;
 
         //----------------------------------------------------------
         // Shaders
@@ -215,7 +217,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
-        glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), 1.0f / numTilesX, 1.0f / numTilesY);
+        glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), invNumTiles.x, invNumTiles.y);
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
         glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
@@ -336,7 +338,7 @@ namespace GLSLPT
 
             // pathTraceTexture is copied to accumTexture and re-used as input for the first step.
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
-            glViewport(tileWidth * tileX, tileHeight * tileY, tileWidth, tileHeight);
+            glViewport(tileWidth * tile.x, tileHeight * tile.y, tileWidth, tileHeight);
             glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
             quad->Draw(outputShader);
 
@@ -376,7 +378,7 @@ namespace GLSLPT
 
     float TiledRenderer::GetProgress() const
     {
-        return float((numTilesY - tileY - 1) * numTilesX + tileX) / float(numTilesX * numTilesY);
+        return float((numTiles.y - tile.y - 1) * numTiles.x + tile.x) / float(numTiles.x * numTiles.y);
     }
 
     void TiledRenderer::GetOutputBuffer(unsigned char** data, int &w, int &h)
@@ -406,7 +408,7 @@ namespace GLSLPT
         Renderer::Update(secondsElapsed);
 
         // Denoise Image
-        if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTilesX * numTilesY)) == 0)
+        if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0)
         {
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
@@ -439,8 +441,8 @@ namespace GLSLPT
 
         if (scene->camera->isMoving || scene->instancesModified)
         {
-            tileX = -1;
-            tileY = numTilesY - 1;
+            tile.x = -1;
+            tile.y = numTiles.y - 1;
             sampleCounter = 1;
             denoised = false;
             frameCounter = 1;
@@ -452,16 +454,16 @@ namespace GLSLPT
         else
         {
             frameCounter++;
-            tileX++;
-            if (tileX >= numTilesX)
+            tile.x++;
+            if (tile.x >= numTiles.x)
             {
-                tileX = 0;
-                tileY--;
-                if (tileY < 0)
+                tile.x = 0;
+                tile.y--;
+                if (tile.y < 0)
                 {
                     // If we've reached here, it means all the tiles have been rendered (for a single sample) and the image can now be displayed.
-                    tileX = 0;
-                    tileY = numTilesY - 1;
+                    tile.x = 0;
+                    tile.y = numTiles.y - 1;
                     sampleCounter++;
                     currentBuffer = 1 - currentBuffer;
                 }
@@ -482,7 +484,7 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
-        glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tileX / numTilesX, (float)tileY / numTilesY);
+        glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tile.x * invNumTiles.x, (float)tile.y * invNumTiles.y);
         glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
         glUniform1i(glGetUniformLocation(shaderObject, "frame"), frameCounter);
         pathTraceShader->StopUsing();

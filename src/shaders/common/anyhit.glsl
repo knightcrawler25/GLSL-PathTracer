@@ -34,12 +34,12 @@ bool AnyHit(Ray r, float maxDist)
         // Fetch light Data
         vec3 position = texelFetch(lightsTex, ivec2(i * 5 + 0, 0), 0).xyz;
         vec3 emission = texelFetch(lightsTex, ivec2(i * 5 + 1, 0), 0).xyz;
-        vec3 u = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
-        vec3 v = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
-        vec3 params = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
-        float radius = params.x;
-        float area = params.y;
-        float type = params.z;
+        vec3 u        = texelFetch(lightsTex, ivec2(i * 5 + 2, 0), 0).xyz;
+        vec3 v        = texelFetch(lightsTex, ivec2(i * 5 + 3, 0), 0).xyz;
+        vec3 params   = texelFetch(lightsTex, ivec2(i * 5 + 4, 0), 0).xyz;
+        float radius  = params.x;
+        float area    = params.y;
+        float type    = params.z;
 
         // Intersect rectangular area light
         if (type == QUAD_LIGHT)

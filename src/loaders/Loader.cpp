@@ -161,7 +161,7 @@ namespace GLSLPT
                     sscanf(line, " type %s", light_type);
                 }
 
-               if (strcmp(light_type, "Quad") == 0)
+                if (strcmp(light_type, "Quad") == 0)
                 {
                     light.type = LightType::RectLight;
                     light.u = v1 - light.position;
