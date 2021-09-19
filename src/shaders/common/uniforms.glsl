@@ -27,10 +27,8 @@ uniform bool useEnvMap;
 uniform vec3 randomVector;
 uniform vec2 screenResolution;
 uniform float hdrTexSize;
-uniform int tileX;
-uniform int tileY;
-uniform float invNumTilesX;
-uniform float invNumTilesY;
+uniform vec2 tileOffset;
+uniform vec2 invNumTiles;
 
 uniform sampler2D accumTexture;
 uniform samplerBuffer BVH;

@@ -38,13 +38,7 @@ in vec2 TexCoords;
 
 void main(void)
 {
-    vec2 coordsTile;
-
-    float xoffset = invNumTilesX * float(tileX);
-    float yoffset = invNumTilesY * float(tileY);
-
-    coordsTile.x = mix(xoffset, xoffset + invNumTilesX, TexCoords.x);
-    coordsTile.y = mix(yoffset, yoffset + invNumTilesY, TexCoords.y);
+    vec2 coordsTile = mix(tileOffset, tileOffset + invNumTiles, TexCoords);
 
     InitRNG(coordsTile * screenResolution, frame);
 

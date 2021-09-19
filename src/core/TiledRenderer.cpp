@@ -215,9 +215,8 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), 1.0f / numTilesX, 1.0f / numTilesY);
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
-        glUniform1f(glGetUniformLocation(shaderObject, "invNumTilesX"), 1.0f / ((float)screenSize.x / tileWidth));
-        glUniform1f(glGetUniformLocation(shaderObject, "invNumTilesY"), 1.0f / ((float)screenSize.y / tileHeight));
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
         glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
         glUniform1i(glGetUniformLocation(shaderObject, "vertexIndicesTex"), 2);
@@ -483,8 +482,7 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
-        glUniform1i(glGetUniformLocation(shaderObject, "tileX"), tileX);
-        glUniform1i(glGetUniformLocation(shaderObject, "tileY"), tileY);
+        glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tileX / numTilesX, (float)tileY / numTilesY);
         glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
         glUniform1i(glGetUniformLocation(shaderObject, "frame"), frameCounter);
         pathTraceShader->StopUsing();
