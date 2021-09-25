@@ -69,62 +69,45 @@ bool AnyHit(Ray r, float maxDist)
     int ptr = 0;
     stack[ptr++] = -1;
 
-    int idx = topBVHIndex;
+    int index = topBVHIndex;
     float leftHit = 0.0;
     float rightHit = 0.0;
 
-    int currMatID = 0;
-    bool meshBVH = false;
+    bool BLAS = false;
 
-    Ray r_trans;
-    mat4 temp_transform;
-    r_trans.origin = r.origin;
-    r_trans.direction = r.direction;
+    Ray rTrans;
+    rTrans.origin = r.origin;
+    rTrans.direction = r.direction;
 
-    while (idx > -1 || meshBVH)
+    while (index != -1)
     {
-        int n = idx;
-
-        if (meshBVH && idx < 0)
-        {
-            meshBVH = false;
-
-            idx = stack[--ptr];
-
-            r_trans.origin = r.origin;
-            r_trans.direction = r.direction;
-            continue;
-        }
-
-        int index = n;
         ivec3 LRLeaf = ivec3(texelFetch(BVH, index * 3 + 2).xyz);
 
-        int leftIndex = int(LRLeaf.x);
+        int leftIndex  = int(LRLeaf.x);
         int rightIndex = int(LRLeaf.y);
-        int leaf = int(LRLeaf.z);
+        int leaf       = int(LRLeaf.z);
 
         if (leaf > 0) // Leaf node of BLAS
         {
             for (int i = 0; i < rightIndex; i++) // Loop through tris
             {
-                int index = leftIndex + i;
-                ivec3 vert_indices = ivec3(texelFetch(vertexIndicesTex, index).xyz);
+                ivec3 vertIndices = ivec3(texelFetch(vertexIndicesTex, leftIndex + i).xyz);
 
-                vec4 v0 = texelFetch(verticesTex, vert_indices.x);
-                vec4 v1 = texelFetch(verticesTex, vert_indices.y);
-                vec4 v2 = texelFetch(verticesTex, vert_indices.z);
+                vec4 v0 = texelFetch(verticesTex, vertIndices.x);
+                vec4 v1 = texelFetch(verticesTex, vertIndices.y);
+                vec4 v2 = texelFetch(verticesTex, vertIndices.z);
 
                 vec3 e0 = v1.xyz - v0.xyz;
                 vec3 e1 = v2.xyz - v0.xyz;
-                vec3 pv = cross(r_trans.direction, e1);
+                vec3 pv = cross(rTrans.direction, e1);
                 float det = dot(e0, pv);
 
-                vec3 tv = r_trans.origin - v0.xyz;
+                vec3 tv = rTrans.origin - v0.xyz;
                 vec3 qv = cross(tv, e0);
 
                 vec4 uvt;
                 uvt.x = dot(tv, pv);
-                uvt.y = dot(r_trans.direction, qv);
+                uvt.y = dot(rTrans.direction, qv);
                 uvt.z = dot(e1, qv);
                 uvt.xyz = uvt.xyz / det;
                 uvt.w = 1.0 - uvt.x - uvt.y;
@@ -135,39 +118,39 @@ bool AnyHit(Ray r, float maxDist)
         }
         else if (leaf < 0) // Leaf node of TLAS
         {
-            idx = leftIndex;
-
             vec4 r1 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 0, 0), 0).xyzw;
             vec4 r2 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 1, 0), 0).xyzw;
             vec4 r3 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 2, 0), 0).xyzw;
             vec4 r4 = texelFetch(transformsTex, ivec2((-leaf - 1) * 4 + 3, 0), 0).xyzw;
 
-            temp_transform = mat4(r1, r2, r3, r4);
+            mat4 transform = mat4(r1, r2, r3, r4);
 
-            r_trans.origin = vec3(inverse(temp_transform) * vec4(r.origin, 1.0));
-            r_trans.direction = vec3(inverse(temp_transform) * vec4(r.direction, 0.0));
+            rTrans.origin    = vec3(inverse(transform) * vec4(r.origin, 1.0));
+            rTrans.direction = vec3(inverse(transform) * vec4(r.direction, 0.0));
 
+            // Add a marker. We'll return to this spot after we've traversed the entire BLAS
             stack[ptr++] = -1;
-            meshBVH = true;
-            currMatID = rightIndex;
+
+            index = leftIndex;
+            BLAS = true;
             continue;
         }
         else
         {
-            leftHit =  AABBIntersect(texelFetch(BVH, leftIndex  * 3 + 0).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, r_trans);
-            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, r_trans);
+            leftHit =  AABBIntersect(texelFetch(BVH, leftIndex  * 3 + 0).xyz, texelFetch(BVH, leftIndex  * 3 + 1).xyz, rTrans);
+            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, rTrans);
 
             if (leftHit > 0.0 && rightHit > 0.0)
             {
                 int deferred = -1;
                 if (leftHit > rightHit)
                 {
-                    idx = rightIndex;
+                    index = rightIndex;
                     deferred = leftIndex;
                 }
                 else
                 {
-                    idx = leftIndex;
+                    index = leftIndex;
                     deferred = rightIndex;
                 }
 
@@ -176,16 +159,28 @@ bool AnyHit(Ray r, float maxDist)
             }
             else if (leftHit > 0.)
             {
-                idx = leftIndex;
+                index = leftIndex;
                 continue;
             }
             else if (rightHit > 0.)
             {
-                idx = rightIndex;
+                index = rightIndex;
                 continue;
             }
         }
-        idx = stack[--ptr];
+        index = stack[--ptr];
+
+        // If we've traversed the entire BLAS then switch to back to TLAS and resume where we left off
+        if (BLAS && index == -1)
+        {
+            BLAS = false;
+
+            index = stack[--ptr];
+
+            rTrans.origin = r.origin;
+            rTrans.direction = r.direction;
+            continue;
+        }
     }
 
     return false;

@@ -31,9 +31,6 @@
 #define SPHERE_LIGHT 1
 #define DISTANT_LIGHT 2
 
-mat4 transform;
-vec3 tempTexCoords;
-
 struct Ray
 {
     vec3 origin;
@@ -58,7 +55,6 @@ struct Material
     float ior;
     float atDistance;
     vec3 extinction;
-    vec3 texIDs;
     // Roughness calculated from anisotropic param
     float ax;
     float ay;
@@ -101,8 +97,6 @@ struct State
     bool isEmitter;
 
     vec2 texCoord;
-    vec3 bary;
-    ivec3 triID;
     int matID;
     Material mat;
 };

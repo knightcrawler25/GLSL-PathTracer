@@ -42,8 +42,8 @@ namespace GLSLPT
         void BuildBVH();
         bool LoadFromFile(const std::string& filename);
         
-        std::vector<Vec4> verticesUVX; // Vertex Data + x coord of uv 
-        std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
+        std::vector<Vec4> verticesUVX; // Vertex + texture Coord (u/s)
+        std::vector<Vec4> normalsUVY;  // Normal + texture Coord (v/t)
 
         RadeonRays::Bvh *bvh;
         std::string name;

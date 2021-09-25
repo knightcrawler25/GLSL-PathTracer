@@ -23,31 +23,7 @@
  */
 
 //-----------------------------------------------------------------------
-void GetNormalsAndTexCoord(inout State state, inout Ray r)
-//-----------------------------------------------------------------------
-{
-    vec4 n1 = texelFetch(normalsTex, state.triID.x);
-    vec4 n2 = texelFetch(normalsTex, state.triID.y);
-    vec4 n3 = texelFetch(normalsTex, state.triID.z);
-
-    vec2 t1 = vec2(tempTexCoords.x, n1.w);
-    vec2 t2 = vec2(tempTexCoords.y, n2.w);
-    vec2 t3 = vec2(tempTexCoords.z, n3.w);
-
-    state.texCoord = t1 * state.bary.x + t2 * state.bary.y + t3 * state.bary.z;
-
-    vec3 normal = normalize(n1.xyz * state.bary.x + n2.xyz * state.bary.y + n3.xyz * state.bary.z);
-
-    mat3 normalMatrix = transpose(inverse(mat3(transform)));
-    normal = normalize(normalMatrix * normal);
-    state.normal = normal;
-    state.ffnormal = dot(normal, r.direction) <= 0.0 ? normal : normal * -1.0;
-
-    Onb(state.normal, state.tangent, state.bitangent);
-}
-
-//-----------------------------------------------------------------------
-void GetMaterialsAndTextures(inout State state, in Ray r)
+void GetMaterials(inout State state, in Ray r)
 //-----------------------------------------------------------------------
 {
     int index = state.matID * 7;
@@ -84,30 +60,30 @@ void GetMaterialsAndTextures(inout State state, in Ray r)
 
     mat.extinction     = param6.xyz;
 
-    mat.texIDs         = param7.xyz;
+    vec3 texIDs        = param7.xyz;
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
 
     // Albedo Map
-    if (int(mat.texIDs.x) >= 0)
-        mat.albedo *= pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.x))).xyz, vec3(2.2));
+    if (int(texIDs.x) >= 0)
+        mat.albedo *= pow(texture(textureMapsArrayTex, vec3(texUV, int(texIDs.x))).xyz, vec3(2.2));
 
     // Metallic Roughness Map
-    if (int(mat.texIDs.y) >= 0)
+    if (int(texIDs.y) >= 0)
     {
         vec2 matRgh;
         // TODO: Change metallic roughness maps in repo to linear space and remove gamma correction
-        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.y))).xy, vec2(2.2));
+        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(texIDs.y))).xy, vec2(2.2));
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y, 0.001);
     }
 
     // Normal Map
     // FIXME: Output when using a normal map doesn't match up with Cycles (Blender) output
-    if (int(mat.texIDs.z) >= 0)
+    if (int(texIDs.z) >= 0)
     {
-        vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(mat.texIDs.z))).xyz;
+        vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(texIDs.z))).xyz;
         nrm = normalize(nrm * 2.0 - 1.0);
 
         vec3 T, B;
@@ -226,9 +202,9 @@ vec3 PathTrace(Ray r)
     for (int depth = 0; depth < maxDepth; depth++)
     {
         state.depth = depth;
-        float t = ClosestHit(r, state, lightSampleRec);
+        bool hit = ClosestHit(r, state, lightSampleRec);
 
-        if (t == INFINITY)
+        if (!hit)
         {
 #ifdef CONSTANT_BG
             radiance += bgColor * throughput;
@@ -251,8 +227,7 @@ vec3 PathTrace(Ray r)
             return radiance;
         }
 
-        GetNormalsAndTexCoord(state, r);
-        GetMaterialsAndTextures(state, r);
+        GetMaterials(state, r);
 
         // Reset absorption when ray is going out of surface
         if (dot(state.normal, state.ffnormal) > 0.0)
@@ -269,7 +244,7 @@ vec3 PathTrace(Ray r)
 #endif
 
         // Add absoption
-        throughput *= exp(-absorption * t);
+        throughput *= exp(-absorption * state.hitDist);
 
         radiance += DirectLight(r, state) * throughput;
 
