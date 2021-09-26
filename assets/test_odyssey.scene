@@ -1,0 +1,46 @@
+Renderer
+{
+	resolution 800 800
+	maxDepth 10
+	tileWidth 200
+	tileHeight 200
+}
+
+Camera
+{
+	position 15 10 16
+	lookAt 0 2 0
+	fov 40
+}
+
+material white
+{
+	color 0.8 0.8 0.8
+	roughness 1.0
+}
+
+mesh
+{
+	name floor
+	file test/floor.obj
+	material white
+	scale 0.6 1 0.5
+}
+
+mesh
+{
+	name cube
+	file test/cube.obj
+	material white
+	position 0 0 0
+	scale 0.4 2 0.6
+}
+
+light
+{
+	type Quad
+	position -6.000000 5.000000 5.000000
+	v1 -6.000000 0.000000 5.000000
+	v2 -6.000000 5.000000 -5.000000
+	emission 2 2 2
+}

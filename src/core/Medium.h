@@ -4,7 +4,7 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this softwareand associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files(the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
  * copies of the Software, and to permit persons to whom the Software is
@@ -22,34 +22,22 @@
  * SOFTWARE.
  */
 
-uniform bool isCameraMoving;
-uniform bool useEnvMap;
-uniform vec3 randomVector;
-uniform vec2 screenResolution;
-uniform float hdrTexSize;
-uniform vec2 tileOffset;
-uniform vec2 invNumTiles;
+#pragma once
 
-uniform sampler2D accumTexture;
-uniform samplerBuffer BVH;
-uniform isamplerBuffer vertexIndicesTex;
-uniform samplerBuffer verticesTex;
-uniform samplerBuffer normalsTex;
-uniform sampler2D materialsTex;
-uniform sampler2D mediumsTex;
-uniform sampler2D transformsTex;
-uniform sampler2D lightsTex;
-uniform sampler2DArray textureMapsArrayTex;
+#include <Vec3.h>
 
-uniform sampler2D hdrTex;
-uniform sampler2D hdrMarginalDistTex;
-uniform sampler2D hdrCondDistTex;
+namespace GLSLPT
+{
+    class Medium
+    {
+    public:
+        Medium()
+        {
+            sigmaA = Vec3(0.0f, 0.0f, 0.0f);
+            sigmaS = Vec3(0.0f, 0.0f, 0.0f);
+        };
 
-uniform float hdrResolution;
-uniform float hdrMultiplier;
-uniform vec3 bgColor;
-uniform int numOfLights;
-uniform int maxDepth;
-uniform int topBVHIndex;
-uniform int vertIndicesSize;
-uniform int frame;
+        Vec3 sigmaA;
+        Vec3 sigmaS;
+    };
+}

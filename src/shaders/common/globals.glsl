@@ -24,8 +24,9 @@
 
 #define PI        3.14159265358979323
 #define TWO_PI    6.28318530717958648
+#define INV_4_PI  0.07957747154594766
 #define INFINITY  1000000.0
-#define EPS 0.001
+#define EPS 0.0001
 
 #define QUAD_LIGHT 0
 #define SPHERE_LIGHT 1
@@ -53,11 +54,17 @@ struct Material
     float clearcoatGloss;
     float specTrans;
     float ior;
-    float atDistance;
-    vec3 extinction;
+    float intMediumID;
+    float extMediumID;
     // Roughness calculated from anisotropic param
     float ax;
     float ay;
+};
+
+struct Medium
+{
+    vec3 sigmaA;
+    vec3 sigmaS;
 };
 
 struct Camera
@@ -88,7 +95,7 @@ struct State
     float eta;
     float hitDist;
 
-    vec3 fhp;
+    vec3 hitPoint;
     vec3 normal;
     vec3 ffnormal;
     vec3 tangent;
@@ -97,11 +104,15 @@ struct State
     bool isEmitter;
 
     vec2 texCoord;
+
     int matID;
     Material mat;
+
+    int mediumID;
+    Medium medium;
 };
 
-struct BsdfSampleRec
+struct ScatteringRec
 {
     vec3 L;
     vec3 f;

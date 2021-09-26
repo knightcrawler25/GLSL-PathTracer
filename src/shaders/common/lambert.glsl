@@ -34,7 +34,7 @@ vec3 LambertSample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float 
 
     pdf = dot(N, L) * (1.0 / PI);
 
-    return (1.0 / PI) * state.mat.albedo;
+    return (1.0 / PI) * state.mat.albedo * abs(dot(N, L));
 }
 
 //-----------------------------------------------------------------------
@@ -43,5 +43,5 @@ vec3 LambertEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
 {
     pdf = dot(N, L) * (1.0 / PI);
 
-    return (1.0 / PI) * state.mat.albedo;
+    return (1.0 / PI) * state.mat.albedo * abs(dot(N, L));
 }

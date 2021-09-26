@@ -282,7 +282,7 @@ float EnvPdf(in Ray r)
 }
 
 //-----------------------------------------------------------------------
-vec4 EnvSample(inout vec3 color)
+vec4 EnvSample(inout vec3 emission)
 //-----------------------------------------------------------------------
 {
     float r1 = rand();
@@ -291,7 +291,7 @@ vec4 EnvSample(inout vec3 color)
     float v = texture(hdrMarginalDistTex, vec2(r1, 0.)).x;
     float u = texture(hdrCondDistTex, vec2(r2, v)).x;
 
-    color = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
+    emission = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
     float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, vec2(v, 0.)).y;
 
     float phi = u * TWO_PI;
@@ -307,7 +307,7 @@ vec4 EnvSample(inout vec3 color)
 #endif
 
 //-----------------------------------------------------------------------
-vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, in BsdfSampleRec bsdfSampleRec)
+vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, in ScatteringRec scatteringRec)
 //-----------------------------------------------------------------------
 {
     vec3 Le;
@@ -315,7 +315,7 @@ vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, i
     if (state.depth == 0)
         Le = lightSampleRec.emission;
     else
-        Le = powerHeuristic(bsdfSampleRec.pdf, lightSampleRec.pdf) * lightSampleRec.emission;
+        Le = powerHeuristic(scatteringRec.pdf, lightSampleRec.pdf) * lightSampleRec.emission;
 
     return Le;
 }

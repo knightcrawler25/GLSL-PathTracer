@@ -35,6 +35,7 @@
 #include "bvh_translator.h"
 #include "Texture.h"
 #include "Material.h"
+#include "Medium.h"
 
 namespace GLSLPT
 {
@@ -74,6 +75,7 @@ namespace GLSLPT
         int AddMesh(const std::string &filename);
         int AddTexture(const std::string &filename);
         int AddMaterial(const Material &material);
+        int AddMedium(const Medium& medium);
         int AddMeshInstance(const MeshInstance &meshInstance);
         int AddLight(const Light &light);
 
@@ -91,12 +93,13 @@ namespace GLSLPT
 
         // Scene Mesh Data 
         std::vector<Indices> vertIndices;
-        std::vector<Vec4> verticesUVX; // Vertex Data + x coord of uv 
-        std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
+        std::vector<Vec4> verticesUVX; // Vertex + texture Coord (u/s)
+        std::vector<Vec4> normalsUVY;  // Normal + texture Coord (v/t)
         std::vector<Mat4> transforms;
 
         //Instances
         std::vector<Material> materials;
+        std::vector<Medium> mediums;
         std::vector<MeshInstance> meshInstances;
         bool instancesModified = false;
 

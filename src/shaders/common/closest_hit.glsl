@@ -221,7 +221,7 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         return false;
 
     state.hitDist = t;
-    state.fhp = r.origin + r.direction * t;
+    state.hitPoint = r.origin + r.direction * t;
 
     // Ray hit a triangle and not a light source
     if (triID.x != -1)

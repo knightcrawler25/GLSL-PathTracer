@@ -1,0 +1,57 @@
+Renderer
+{
+	resolution 1280 720
+	maxDepth 5
+	tileWidth 320
+	tileHeight 180
+}
+
+Camera
+{
+	position -4 5 -4
+	lookAt 0 1 0
+	fov 60
+}
+
+medium blue_medium
+{
+	sigmaS 20 4 2
+	sigmaA 0 0 0
+}
+
+material volume
+{
+	color 1.0 1.0 1.0
+	transmission 1.0
+	roughness 0.5
+	interiorMedium blue_medium
+}
+
+material grey
+{
+	color 0.1 0.1 0.1
+}
+
+mesh
+{
+	name cube
+	file test/cube.obj
+	material volume
+}
+
+mesh
+{
+	name plane
+	file test/floor.obj
+	material grey
+	scale 10 10 10
+	position 0 -0.001 0
+}
+
+light
+{
+	position 5 3 5
+	emission 50 50 50
+	radius 1.0
+	type Sphere
+}

@@ -1,0 +1,36 @@
+Renderer
+{
+	resolution 800 800
+	maxDepth 2
+	tileWidth 200
+	tileHeight 200
+}
+
+Camera
+{
+	position 3 0.25 0
+	lookAt 0 0.5 0
+	fov 40
+}
+
+material white
+{
+	color 1 1 1
+	roughness 1.0
+}
+
+mesh
+{
+	name floor
+	file test/floor.obj
+	material white
+	scale 10 10 10
+}
+
+light
+{
+	emission 1 1 1
+	position 0 1 0
+	radius 10
+	type Sphere
+}

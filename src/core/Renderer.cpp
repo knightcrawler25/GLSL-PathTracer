@@ -43,6 +43,7 @@ namespace GLSLPT
         , verticesTex(0)
         , normalsTex(0)
         , materialsTex(0)
+        , mediumsTex(0)
         , transformsTex(0)
         , lightsTex(0)
         , textureMapsArrayTex(0)
@@ -76,6 +77,7 @@ namespace GLSLPT
         glDeleteTextures(1, &verticesTex);
         glDeleteTextures(1, &normalsTex);
         glDeleteTextures(1, &materialsTex);
+        glDeleteTextures(1, &mediumsTex);
         glDeleteTextures(1, &transformsTex);
         glDeleteTextures(1, &lightsTex);
         glDeleteTextures(1, &textureMapsArrayTex);
@@ -141,6 +143,17 @@ namespace GLSLPT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
+
+        //Create texture for Mediums
+        if (!scene->mediums.empty())
+        {
+            glGenTextures(1, &mediumsTex);
+            glBindTexture(GL_TEXTURE_2D, mediumsTex);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, (sizeof(Medium) / sizeof(Vec3)) * scene->mediums.size(), 1, 0, GL_RGB, GL_FLOAT, &scene->mediums[0]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
 
         //Create texture for Transforms
         glGenTextures(1, &transformsTex);
@@ -210,6 +223,12 @@ namespace GLSLPT
 
             glBindTexture(GL_TEXTURE_2D, materialsTex);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(Vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
+
+            if (!scene->mediums.empty())
+            {
+                glBindTexture(GL_TEXTURE_2D, mediumsTex);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, (sizeof(Material) / sizeof(Vec3)) * scene->mediums.size(), 1, 0, GL_RGB, GL_FLOAT, &scene->mediums[0]);
+            }
 
             int index = scene->bvhTranslator.topLevelIndex;
 

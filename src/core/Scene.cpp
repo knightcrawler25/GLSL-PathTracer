@@ -87,6 +87,13 @@ namespace GLSLPT
         return id;
     }
 
+    int Scene::AddMedium(const Medium& medium)
+    {
+        int id = mediums.size();
+        mediums.push_back(medium);
+        return id;
+    }
+
     void Scene::AddHDR(const std::string& filename)
     {
         delete hdrData;

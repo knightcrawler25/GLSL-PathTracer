@@ -224,7 +224,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
         f *= (1.0 - transWeight);
         pdf *= (1.0 - transWeight);
     }
-    return f;
+    return f * abs(dot(N, L));
 }
 
 //-----------------------------------------------------------------------
@@ -289,5 +289,5 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
     }
 
     pdf = mix(brdfPdf, bsdfPdf, transWeight);
-    return mix(brdf, bsdf, transWeight);
+    return mix(brdf, bsdf, transWeight) * abs(dot(N, L));
 }

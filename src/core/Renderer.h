@@ -50,7 +50,7 @@ namespace GLSLPT
             RRDepth = 2;
             bgColor = Vec3(0.3f, 0.3f, 0.3f);
             denoiserFrameCnt = 20;
-            enableDenoiser = true;
+            enableDenoiser = false;
         }
         iVec2 resolution;
         int maxDepth;
@@ -86,6 +86,7 @@ namespace GLSLPT
         GLuint normalsBuffer;
         GLuint normalsTex;
         GLuint materialsTex;
+        GLuint mediumsTex;
         GLuint transformsTex;
         GLuint lightsTex;
         GLuint textureMapsArrayTex;

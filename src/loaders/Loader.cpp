@@ -21,7 +21,7 @@ freely, subject to the following restrictions:
 */
 
 /* 
-    This is a modified version of the original code 
+    This is a modified version of the original code
     Link to original code: https://github.com/mmacklin/tinsel
 */
 
@@ -44,11 +44,11 @@ namespace GLSLPT
 
         if (!file)
         {
-            Log("Couldn't open %s for reading\n", filename.c_str());
+            printf("Couldn't open %s for reading\n", filename.c_str());
             return false;
         }
 
-        Log("Loading Scene..\n");
+        printf("Loading Scene..\n");
 
         struct MaterialData
         {
@@ -56,7 +56,14 @@ namespace GLSLPT
             int id;
         };
 
+        struct MediumData
+        {
+            Medium med;
+            int id;
+        };
+
         std::map<std::string, MaterialData> materialMap;
+        std::map<std::string, MediumData> mediumMap;
         std::vector<std::string> albedoTex;
         std::vector<std::string> metallicRoughnessTex;
         std::vector<std::string> normalTex;
@@ -81,6 +88,32 @@ namespace GLSLPT
             char name[kMaxLineLength] = { 0 };
 
             //--------------------------------------------
+            // Medium
+
+            if (sscanf(line, " medium %s", name) == 1)
+            {
+                Medium medium;
+                char mediumName[100] = "None";
+
+                while (fgets(line, kMaxLineLength, file))
+                {
+                    // end group
+                    if (strchr(line, '}'))
+                        break;
+
+                    sscanf(line, " sigmaA %f %f %f", &medium.sigmaA.x, &medium.sigmaA.y, &medium.sigmaA.z);
+                    sscanf(line, " sigmaS %f %f %f", &medium.sigmaS.x, &medium.sigmaS.y, &medium.sigmaS.z);
+                }
+
+                // add medium to map
+                if (mediumMap.find(name) == mediumMap.end()) // New material
+                {
+                    int id = scene->AddMedium(medium);
+                    mediumMap[name] = MediumData{ medium, id };
+                }
+            }
+
+            //--------------------------------------------
             // Material
 
             if (sscanf(line, " material %s", name) == 1)
@@ -89,6 +122,8 @@ namespace GLSLPT
                 char albedoTexName[100] = "None";
                 char metallicRoughnessTexName[100] = "None";
                 char normalTexName[100] = "None";
+                char interiorMedName[100] = "None";
+                char exteriorMedName[100] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -110,11 +145,37 @@ namespace GLSLPT
                     sscanf(line, " clearcoatGloss %f", &material.clearcoatGloss);
                     sscanf(line, " transmission %f", &material.transmission);
                     sscanf(line, " ior %f", &material.ior);
-                    sscanf(line, " extinction %f %f %f", &material.extinction.x, &material.extinction.y, &material.extinction.z);
-                    sscanf(line, " atDistance %f", &material.atDistance);
                     sscanf(line, " albedoTexture %s", albedoTexName);
                     sscanf(line, " metallicRoughnessTexture %s", metallicRoughnessTexName);
                     sscanf(line, " normalTexture %s", normalTexName);
+
+                    char medName[100];
+                    // Interior Medium
+                    if (sscanf(line, " interiorMedium %s", medName) == 1)
+                    {
+                        // look up material in dictionary
+                        if (mediumMap.find(medName) != mediumMap.end())
+                        {
+                            material.intMediumID = mediumMap[medName].id;
+                        }
+                        else
+                        {
+                            printf("Could not find medium %s\n", medName);
+                        }
+                    }
+                    // Exterior Medium
+                    if (sscanf(line, " exteriorMedium %s", medName) == 1)
+                    {
+                        // look up material in dictionary
+                        if (mediumMap.find(medName) != mediumMap.end())
+                        {
+                            material.extMediumID = materialMap[medName].id;
+                        }
+                        else
+                        {
+                            printf("Could not find medium %s\n", medName);
+                        }
+                    }
                 }
 
                 // Albedo Texture
@@ -286,7 +347,7 @@ namespace GLSLPT
                         }
                         else
                         {
-                            Log("Could not find material %s\n", matName);
+                            printf("Could not find material %s\n", matName);
                         }
                     }
 
