@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <cstdint>
 #define _USE_MATH_DEFINES
 
 #include <SDL2/SDL.h>
@@ -62,11 +63,15 @@ float mouseSensitivity = 0.01f;
 bool keyPressed        = false;
 int sampleSceneIndex   = 0;
 int selectedInstance   = 0;
+int endRenderAfter     = 0;
 double lastTime        = SDL_GetTicks(); 
+
 bool done = false;
+bool noResolutionChange = false;
 
 std::string shadersDir = "../src/shaders/";
 std::string assetsDir = "../assets/";
+std::string outputImageNamePrefix = "";
 
 RenderOptions renderOptions;
 
@@ -246,7 +251,7 @@ void MainLoop(void* arg)
         }
         if (event.type == SDL_WINDOWEVENT)
         {
-            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && noResolutionChange == false)
             {
                 renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
                 scene->renderOptions = renderOptions;
@@ -275,9 +280,10 @@ void MainLoop(void* arg)
         ImGui::BulletText("MMB + drag to pan");
         ImGui::BulletText("RMB + drag to zoom in/out");
 
-        if (ImGui::Button("Save Screenshot"))
+        if (ImGui::Button("Save Screenshot") || (endRenderAfter > 0 && renderer->GetSampleCount() >= endRenderAfter))
         {
-            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".png");
+            SaveFrame("./" + outputImageNamePrefix + "img_" + to_string(renderer->GetSampleCount()) + ".png");
+            done |= endRenderAfter > 0 && renderer->GetSampleCount() >= endRenderAfter;
         }
 
         std::vector<const char*> scenes;
@@ -439,6 +445,27 @@ int main(int argc, char** argv)
         if (arg == "-s" || arg == "--scene")
         {
             sceneFile = argv[++i];
+        }
+        else if (arg == "--end-after")
+        {
+            endRenderAfter = stoi(argv[++i]);
+        }
+        else if (arg == "--fix-resolution")
+        {
+            noResolutionChange = true;
+        }
+        else if(arg == "--output-name-prefix")
+        {
+            outputImageNamePrefix = argv[++i];
+            outputImageNamePrefix += "_";
+        }
+        else if (arg == "--denoise-frame-count")
+        {
+            int cnt = stoi(argv[++i]);
+            renderOptions.enableDenoiser = cnt > 0;
+            if(cnt > 0){
+                renderOptions.denoiserFrameCnt = cnt;
+            }
         }
         else if (arg[0] == '-')
         {
