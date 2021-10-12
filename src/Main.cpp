@@ -261,7 +261,8 @@ void MainLoop(void* arg)
     }
 
     ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
+    //ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
+    ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
     ImGuizmo::SetOrthographic(false);
 
@@ -342,7 +343,7 @@ void MainLoop(void* arg)
             scene->renderOptions = renderOptions;
             scene->camera->isMoving = true;
         }
-
+        ImGui::Button("WINDOWED", ImVec2(100, 100));
         if (ImGui::CollapsingHeader("Objects"))
         {
             bool objectPropChanged = false;
@@ -494,28 +495,29 @@ int main(int argc, char** argv)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MAXIMIZED);
     loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
-    SDL_SetWindowFullscreen(loopdata.mWindow, SDL_WINDOW_FULLSCREEN);
-
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-
+    
     loopdata.mGLContext = SDL_GL_CreateContext(loopdata.mWindow);
+    gl3wInit();
     if (!loopdata.mGLContext)
     {
         fprintf(stderr, "Failed to initialize GL context!\n");
         return 1;
     }
+
     SDL_GL_SetSwapInterval(0); // Disable vsync
 
     // Initialize OpenGL loader
 #if GL_VERSION_3_2
+    bool err = false;
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
-    bool err = gl3wInit() != 0;
+    err = gl3wInit() != 0;
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
-    bool err = glewInit() != GLEW_OK;
+    err = glewInit() != GLEW_OK;
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
-    bool err = gladLoadGL() == 0;
+    err = gladLoadGL() == 0;
 #endif
     if (err)
     {

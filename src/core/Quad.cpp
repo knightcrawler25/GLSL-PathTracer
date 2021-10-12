@@ -25,11 +25,13 @@
 #include "Config.h"
 #include "Quad.h"
 #include "Program.h"
+#include "GL/gl3w.h"
 
 namespace GLSLPT
 {
     Quad::Quad()
     {
+
         glGenVertexArrays(1, &vao);
         glGenBuffers(1, &vbo);
         glBindVertexArray(vao);
