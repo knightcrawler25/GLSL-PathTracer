@@ -69,6 +69,6 @@ void main(void)
     vec3 accumColor = texture(accumTexture, coordsTile).xyz;
 
     vec3 pixelColor = PathTrace(ray);
-
-    color = pixelColor + accumColor;
+        
+    color = accumColor + pixelColor;
 }

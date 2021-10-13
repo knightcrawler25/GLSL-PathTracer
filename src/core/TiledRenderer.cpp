@@ -42,6 +42,7 @@ namespace GLSLPT
         , pathTraceShader(nullptr)
         , pathTraceShaderLowRes(nullptr)
         , outputShader(nullptr)
+        , realTimeDenoiserShader(nullptr)
         , tonemapShader(nullptr)
         , pathTraceTexture(0)
         , pathTraceTextureLowRes(0)
@@ -84,11 +85,12 @@ namespace GLSLPT
         // Shaders
         //----------------------------------------------------------
 
-        ShaderInclude::ShaderSource vertexShaderSrcObj          = ShaderInclude::load(shadersDirectory + "common/vertex.glsl");
-        ShaderInclude::ShaderSource pathTraceShaderSrcObj       = ShaderInclude::load(shadersDirectory + "tiled.glsl");
-        ShaderInclude::ShaderSource pathTraceShaderLowResSrcObj = ShaderInclude::load(shadersDirectory + "preview.glsl");
-        ShaderInclude::ShaderSource outputShaderSrcObj          = ShaderInclude::load(shadersDirectory + "output.glsl");
-        ShaderInclude::ShaderSource tonemapShaderSrcObj         = ShaderInclude::load(shadersDirectory + "tonemap.glsl");
+        ShaderInclude::ShaderSource vertexShaderSrcObj           = ShaderInclude::load(shadersDirectory + "common/vertex.glsl");
+        ShaderInclude::ShaderSource pathTraceShaderSrcObj        = ShaderInclude::load(shadersDirectory + "tiled.glsl");
+        ShaderInclude::ShaderSource pathTraceShaderLowResSrcObj  = ShaderInclude::load(shadersDirectory + "preview.glsl");
+        ShaderInclude::ShaderSource outputShaderSrcObj           = ShaderInclude::load(shadersDirectory + "output.glsl");
+        ShaderInclude::ShaderSource tonemapShaderSrcObj          = ShaderInclude::load(shadersDirectory + "tonemap.glsl");
+        ShaderInclude::ShaderSource realTimeDenoiserShaderSrcObj = ShaderInclude::load(shadersDirectory + "realTimeDenoiser.glsl");
 
         // Add preprocessor defines for conditional compilation
         std::string defines = "";
@@ -121,10 +123,11 @@ namespace GLSLPT
             pathTraceShaderLowResSrcObj.src.insert(idx + 1, defines);
         }
 
-        pathTraceShader       = LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);
-        pathTraceShaderLowRes = LoadShaders(vertexShaderSrcObj, pathTraceShaderLowResSrcObj);
-        outputShader          = LoadShaders(vertexShaderSrcObj, outputShaderSrcObj);
-        tonemapShader         = LoadShaders(vertexShaderSrcObj, tonemapShaderSrcObj);
+        pathTraceShader        = LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);
+        pathTraceShaderLowRes  = LoadShaders(vertexShaderSrcObj, pathTraceShaderLowResSrcObj);
+        outputShader           = LoadShaders(vertexShaderSrcObj, outputShaderSrcObj);
+        tonemapShader          = LoadShaders(vertexShaderSrcObj, tonemapShaderSrcObj);
+        realTimeDenoiserShader = LoadShaders(vertexShaderSrcObj, realTimeDenoiserShaderSrcObj);
 
         printf("Screen Resolution : %d %d\n", screenSize.x, screenSize.y);
         printf("Preview Resolution : %d %d\n", tileWidth, tileHeight);
@@ -300,6 +303,7 @@ namespace GLSLPT
         delete pathTraceShader;
         delete pathTraceShaderLowRes;
         delete outputShader;
+        delete realTimeDenoiserShader;
         delete tonemapShader;
 
         delete denoiserInputFramePtr;
@@ -310,6 +314,7 @@ namespace GLSLPT
 
     void TiledRenderer::Render()
     {
+        
         if (!initialized)
         {
             printf("Tiled Renderer is not initialized\n");
@@ -336,6 +341,15 @@ namespace GLSLPT
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(pathTraceShader);
 
+            if (scene->renderOptions.enableDenoiser)
+            {
+                //// Result gets denoised by glsl denoiser since OIDN is not meant for real time denoising
+                glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
+                glViewport(0, 0, screenSize.x, screenSize.y);
+                glBindTexture(GL_TEXTURE_2D, accumTexture);
+                quad->Draw(realTimeDenoiserShader);
+            }
+
             // pathTraceTexture is copied to accumTexture and re-used as input for the first step.
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
             glViewport(tileWidth * tile.x, tileHeight * tile.y, tileWidth, tileHeight);
@@ -349,6 +363,7 @@ namespace GLSLPT
             glViewport(0, 0, screenSize.x, screenSize.y);
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(tonemapShader);
+
         }
     }
 
@@ -407,7 +422,7 @@ namespace GLSLPT
     {
         Renderer::Update(secondsElapsed);
 
-        // Denoise Image
+        /*// Denoise Image
         if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0)
         {
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
@@ -437,7 +452,7 @@ namespace GLSLPT
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
 
             denoised = true;
-        }
+        }*/
 
         if (scene->camera->isMoving || scene->instancesModified)
         {
@@ -504,6 +519,16 @@ namespace GLSLPT
         glUniform3f(glGetUniformLocation(shaderObject, "camera.position"), scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
         glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
         pathTraceShaderLowRes->StopUsing();
+        
+        if (scene->renderOptions.enableDenoiser)
+        {
+            realTimeDenoiserShader->Use();
+            shaderObject = realTimeDenoiserShader->getObject();
+            glUniform1f(glGetUniformLocation(shaderObject, "sigma"), sig);
+            glUniform1f(glGetUniformLocation(shaderObject, "kSigma"), ksig);
+            glUniform1f(glGetUniformLocation(shaderObject, "threshold"), thr);
+            realTimeDenoiserShader->StopUsing();
+        }
 
         tonemapShader->Use();
         shaderObject = tonemapShader->getObject();

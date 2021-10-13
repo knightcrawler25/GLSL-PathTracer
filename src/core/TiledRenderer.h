@@ -36,6 +36,7 @@ namespace GLSLPT
         // FBOs
         GLuint pathTraceFBO;
         GLuint pathTraceFBOLowRes;
+        GLuint denoiseFBO;
         GLuint accumFBO;
         GLuint outputFBO;
 
@@ -44,6 +45,7 @@ namespace GLSLPT
         Program* pathTraceShaderLowRes;
         Program* outputShader;
         Program* tonemapShader;
+        Program* realTimeDenoiserShader;
 
         // Textures
         GLuint pathTraceTexture;

@@ -1,32 +1,14 @@
-/*
- * MIT License
- *
- * Copyright(c) 2019-2021 Asif Ali
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this softwareand associated documentation files(the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions :
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 #version 330
 
 out vec4 color;
 in vec2 TexCoords;
+
 uniform sampler2D imgTex;
+
+uniform float sigma = 5;
+uniform float kSigma = 2;
+uniform float threshold = 0.01;
 
 #define INV_SQRT_OF_2PI 0.39894228040143267793994605993439  // 1.0/SQRT_OF_2PI
 #define INV_PI 0.31830988618379067153776752674503
@@ -40,7 +22,7 @@ uniform sampler2D imgTex;
 //  float kSigma >= 0 - sigma coefficient 
 //      kSigma * sigma  -->  radius of the circular kernel
 //  float threshold > 0  - edge sharpening threshold 
-vec4 smartDeNoise(sampler2D tex, vec2 uv, float sigma, float kSigma, float threshold)
+vec4 DeNoise(sampler2D tex, vec2 uv, float sigma, float kSigma, float threshold)
 {
     float radius = round(kSigma * sigma);
     float radQ = radius * radius;
@@ -78,6 +60,5 @@ vec4 smartDeNoise(sampler2D tex, vec2 uv, float sigma, float kSigma, float thres
 
 void main()
 {
-    color = texture(imgTex, TexCoords);
-   // color = smartDeNoise(imgTex, TexCoords, 10.0, 0.5, 0.04);
+    color = DeNoise(imgTex, TexCoords, sigma, kSigma, threshold);
 }

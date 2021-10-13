@@ -23,7 +23,7 @@
  */
 
 #define _USE_MATH_DEFINES
-
+#include "ShaderIncludes.h"
 #include <SDL2/SDL.h>
 #include <GL/gl3w.h>
 
@@ -136,6 +136,8 @@ void Render()
 
     // Rendering
     ImGui::Render();
+    ImGui::UpdatePlatformWindows();
+
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
@@ -232,9 +234,12 @@ void EditTransform(const float* view, const float* projection, float* matrix)
     ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
 }
 
+float sigma = 2.0;
+float KSigma = 2.0;
+float threashhold = 0.01;
 void MainLoop(void* arg)
 {
-    LoopData &loopdata = *(LoopData*)arg;
+    LoopData& loopdata = *(LoopData*)arg;
 
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -256,10 +261,11 @@ void MainLoop(void* arg)
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
             {
                 done = true;
-            }    
+            }
         }
     }
 
+    
     ImGui_ImplOpenGL3_NewFrame();
     //ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
     ImGui_ImplSDL2_NewFrame();
@@ -269,6 +275,14 @@ void MainLoop(void* arg)
     ImGuizmo::BeginFrame();
     {
         ImGui::Begin("Settings");
+
+        ImGui::InputFloat("Sigma", &sigma);
+        ImGui::InputFloat("KSigma", &KSigma);
+        ImGui::InputFloat("Threashold", &threashhold);
+
+        renderer->sig = sigma;
+        renderer->ksig = KSigma;
+        renderer->thr = threashhold;
 
         ImGui::Text("Samples: %d ", renderer->GetSampleCount());
 
@@ -313,7 +327,7 @@ void MainLoop(void* arg)
             optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
-            
+
             if (requiresReload)
             {
                 scene->renderOptions = renderOptions;
@@ -323,7 +337,7 @@ void MainLoop(void* arg)
             scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
             scene->renderOptions.denoiserFrameCnt = renderOptions.denoiserFrameCnt;
         }
-        
+
         if (ImGui::CollapsingHeader("Camera"))
         {
             float fov = Math::Degrees(scene->camera->fov);
@@ -343,8 +357,7 @@ void MainLoop(void* arg)
             scene->renderOptions = renderOptions;
             scene->camera->isMoving = true;
         }
-        ImGui::Button("WINDOWED", ImVec2(100, 100));
-        if (ImGui::CollapsingHeader("Objects"))
+        /*if (ImGui::CollapsingHeader("Objects"))
         {
             bool objectPropChanged = false;
 
@@ -370,12 +383,12 @@ void MainLoop(void* arg)
             ImGui::Text("Materials");
 
             // Material Properties
-            Vec3 *albedo   = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
-            Vec3 *emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
-            Vec3 *extinction = &scene->materials[scene->meshInstances[selectedInstance].materialID].extinction;
+            Vec3* albedo = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
+            Vec3* emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
+            Vec3* extinction = &scene->materials[scene->meshInstances[selectedInstance].materialID].extinction;
 
             objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
-            objectPropChanged |= ImGui::SliderFloat("Metallic",  &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Metallic", &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SpecularTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].specularTint, 0.0f, 1.0f);
@@ -414,10 +427,10 @@ void MainLoop(void* arg)
             {
                 scene->RebuildInstances();
             }
-        }
+        }*/
         ImGui::End();
     }
-
+    
     double presentTime = SDL_GetTicks();
     Update((float)(presentTime - lastTime));
     lastTime = presentTime;
@@ -495,10 +508,11 @@ int main(int argc, char** argv)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MAXIMIZED);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI /*| SDL_WINDOW_MAXIMIZED*/);
     loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
     
+    //Create Context for glGenBuffer()
     loopdata.mGLContext = SDL_GL_CreateContext(loopdata.mWindow);
     gl3wInit();
     if (!loopdata.mGLContext)
@@ -530,11 +544,11 @@ int main(int argc, char** argv)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-
     ImGui_ImplSDL2_InitForOpenGL(loopdata.mWindow, loopdata.mGLContext);
 
     ImGui_ImplOpenGL3_Init(glsl_version);
 
+    //DarkMode
     ImGui::StyleColorsDark();
     if (!InitRenderer())
         return 1;

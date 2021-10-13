@@ -97,6 +97,10 @@ namespace GLSLPT
         bool initialized;
 
     public:
+        float sig;
+        float ksig;
+        float thr;
+
         Renderer(Scene *scene, const std::string& shadersDirectory);
         virtual ~Renderer();
 
