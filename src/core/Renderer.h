@@ -49,7 +49,6 @@ namespace GLSLPT
             useConstantBg = false;
             RRDepth = 2;
             bgColor = Vec3(0.3f, 0.3f, 0.3f);
-            denoiserFrameCnt = 20;
             enableDenoiser = true;
         }
         iVec2 resolution;
@@ -61,7 +60,6 @@ namespace GLSLPT
         bool enableDenoiser;
         bool useConstantBg;
         int RRDepth;
-        int denoiserFrameCnt;
         float hdrMultiplier;
         Vec3 bgColor;
     };
@@ -97,10 +95,6 @@ namespace GLSLPT
         bool initialized;
 
     public:
-        float sig;
-        float ksig;
-        float thr;
-
         Renderer(Scene *scene, const std::string& shadersDirectory);
         virtual ~Renderer();
 
@@ -114,6 +108,8 @@ namespace GLSLPT
         virtual void Update(float secondsElapsed);
         virtual float GetProgress() const = 0;
         virtual int GetSampleCount() const = 0;
+        virtual uint32_t SetViewport(int width, int height) = 0;
+        virtual uint32_t Denoise() = 0;
         virtual void GetOutputBuffer(unsigned char**, int &w, int &h) = 0;
     };
 }

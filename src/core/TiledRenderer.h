@@ -36,7 +36,6 @@ namespace GLSLPT
         // FBOs
         GLuint pathTraceFBO;
         GLuint pathTraceFBOLowRes;
-        GLuint denoiseFBO;
         GLuint accumFBO;
         GLuint outputFBO;
 
@@ -45,14 +44,13 @@ namespace GLSLPT
         Program* pathTraceShaderLowRes;
         Program* outputShader;
         Program* tonemapShader;
-        Program* realTimeDenoiserShader;
 
         // Textures
         GLuint pathTraceTexture;
         GLuint pathTraceTextureLowRes;
+        GLuint denoisedTexture;
         GLuint accumTexture;
         GLuint tileOutputTexture[2];
-        GLuint denoisedTexture;
 
         iVec2 tile;
         iVec2 numTiles;
@@ -66,9 +64,6 @@ namespace GLSLPT
         int sampleCounter;
         float pixelRatio;
 
-        Vec3* denoiserInputFramePtr;
-        Vec3* frameOutputPtr;
-
         bool denoised;
 
     public:
@@ -77,10 +72,11 @@ namespace GLSLPT
         
         void Init();
         void Finish();
-
         void Render();
         void Present() const;
         void Update(float secondsElapsed);
+        uint32_t SetViewport(int width, int height);
+        uint32_t Denoise();
         float GetProgress() const;
         int GetSampleCount() const;
         void GetOutputBuffer(unsigned char**, int &w, int &h);

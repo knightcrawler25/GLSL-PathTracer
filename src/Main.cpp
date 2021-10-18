@@ -69,6 +69,12 @@ std::string shadersDir = "../src/shaders/";
 std::string assetsDir = "../assets/";
 
 RenderOptions renderOptions;
+ImVec2 viewportPanelSize;
+ImVec2 vMin;
+ImVec2 vMax;
+
+uint32_t denoisedTex;
+ImVec2 denoisedTexSize;
 
 struct LoopData
 {
@@ -104,6 +110,8 @@ void LoadScene(std::string sceneName)
     //loadCornellTestScene(scene, renderOptions);
     selectedInstance = 0;
     scene->renderOptions = renderOptions;
+    //scene->renderOptions.resolution.x = viewportPanelSize.x;
+    //scene->renderOptions.resolution.y = viewportPanelSize.y;
 }
 
 bool InitRenderer()
@@ -124,17 +132,48 @@ void SaveFrame(const std::string filename)
     printf("Frame saved: %s\n", filename.c_str());
     delete data;
 }
-
+bool denoised = false;
 void Render()
 {
     auto io = ImGui::GetIO();
     renderer->Render();
     //const glm::ivec2 screenSize = renderer->GetScreenSize();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-    renderer->Present();
-
     // Rendering
+    ImVec2 wsize = io.DisplaySize;
+    ImGui::Begin("Viewport");
+    if (ImGui::IsItemActive)
+    {
+        std::cout << "L\n";
+    }
+    else
+    {
+    }
+    viewportPanelSize = ImGui::GetContentRegionAvail();
+    if (scene->renderOptions.resolution.x != viewportPanelSize.x || scene->renderOptions.resolution.y != viewportPanelSize.y)
+    {
+        scene->renderOptions.resolution.x = viewportPanelSize.x;
+        scene->renderOptions.resolution.y = viewportPanelSize.y;
+        scene->camera->isMoving = true;
+        InitRenderer();
+    }
+    if (scene->camera->isMoving)
+    {
+        renderer->Present();
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
+    uint32_t tex = renderer->SetViewport(10, 10);
+    ImGui::Image((void*)tex, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0)); 
+
+    vMin = ImGui::GetWindowContentRegionMin();
+    vMax = ImGui::GetWindowContentRegionMax();
+
+    vMin.x += ImGui::GetWindowPos().x;
+    vMin.y += ImGui::GetWindowPos().y;
+    vMax.x += ImGui::GetWindowPos().x;
+    vMax.y += ImGui::GetWindowPos().y;
+
+    ImGui::End();
     ImGui::Render();
     ImGui::UpdatePlatformWindows();
 
@@ -144,28 +183,38 @@ void Render()
 void Update(float secondsElapsed)
 {
     keyPressed = false;
-
-    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver() )
+    if (ImGui::IsAnyMouseDown())
     {
-        if (ImGui::IsMouseDown(0))
+        ImVec2 mousePos = ImGui::GetMousePos();
+        if (mousePos.x < vMax.x && mousePos.y < vMax.y && mousePos.x > vMin.x && mousePos.y > vMin.y)
         {
-            ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0, 0);
-            scene->camera->OffsetOrientation(mouseDelta.x, mouseDelta.y);
-            ImGui::ResetMouseDragDelta(0);
+
+            if (ImGui::IsMouseDown(0))
+            {
+                //Rotate Mouse around center
+                ImVec2 mouseDelta = ImGui::GetMouseDragDelta(0, 0);
+                scene->camera->OffsetOrientation(mouseDelta.x, mouseDelta.y);
+                ImGui::ResetMouseDragDelta(0);
+            }
+            else if (ImGui::IsMouseDown(1))
+            {
+                //Move mouse the in Z axis
+                ImVec2 mouseDelta = ImGui::GetMouseDragDelta(1, 0);
+                // if(mouseDelta.y > mouseDelta.x)
+                scene->camera->SetRadius(mouseSensitivity * mouseDelta.y);
+                //   else
+                //       scene->camera->SetRadius(mouseSensitivity * mouseDelta.x);
+                ImGui::ResetMouseDragDelta(1);
+            }
+            else if (ImGui::IsMouseDown(2))
+            {
+                //Move mouse the in the XY Plane
+                ImVec2 mouseDelta = ImGui::GetMouseDragDelta(2, 0);
+                scene->camera->Strafe(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
+                ImGui::ResetMouseDragDelta(2);
+            }
+            scene->camera->isMoving = true;
         }
-        else if (ImGui::IsMouseDown(1))
-        {
-            ImVec2 mouseDelta = ImGui::GetMouseDragDelta(1, 0);
-            scene->camera->SetRadius(mouseSensitivity * mouseDelta.y);
-            ImGui::ResetMouseDragDelta(1);
-        }
-        else if (ImGui::IsMouseDown(2))
-        {
-            ImVec2 mouseDelta = ImGui::GetMouseDragDelta(2, 0);
-            scene->camera->Strafe(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
-            ImGui::ResetMouseDragDelta(2);
-        }
-        scene->camera->isMoving = true;
     }
 
     renderer->Update(secondsElapsed);
@@ -233,10 +282,6 @@ void EditTransform(const float* view, const float* projection, float* matrix)
     ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
 }
-
-float sigma = 2.0;
-float KSigma = 2.0;
-float threashhold = 0.01;
 void MainLoop(void* arg)
 {
     LoopData& loopdata = *(LoopData*)arg;
@@ -251,12 +296,12 @@ void MainLoop(void* arg)
         }
         if (event.type == SDL_WINDOWEVENT)
         {
-            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-            {
-                renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
-                scene->renderOptions = renderOptions;
-                InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
-            }
+            //if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+            //{
+            //    renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
+            //    scene->renderOptions = renderOptions;
+            //    InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
+            //}
 
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
             {
@@ -270,20 +315,12 @@ void MainLoop(void* arg)
     //ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
-    ImGuizmo::SetOrthographic(false);
 
+    ImGuizmo::SetOrthographic(false);
+    ImGui::DockSpaceOverViewport();
     ImGuizmo::BeginFrame();
     {
         ImGui::Begin("Settings");
-
-        ImGui::InputFloat("Sigma", &sigma);
-        ImGui::InputFloat("KSigma", &KSigma);
-        ImGui::InputFloat("Threashold", &threashhold);
-
-        renderer->sig = sigma;
-        renderer->ksig = KSigma;
-        renderer->thr = threashhold;
-
         ImGui::Text("Samples: %d ", renderer->GetSampleCount());
 
         ImGui::BulletText("LMB + drag to rotate");
@@ -304,8 +341,8 @@ void MainLoop(void* arg)
         if (ImGui::Combo("Scene", &sampleSceneIndex, scenes.data(), scenes.size()))
         {
             LoadScene(sceneFiles[sampleSceneIndex]);
-            SDL_RestoreWindow(loopdata.mWindow);
-            SDL_SetWindowSize(loopdata.mWindow, renderOptions.resolution.x, renderOptions.resolution.y);
+           // SDL_RestoreWindow(loopdata.mWindow);
+           // SDL_SetWindowSize(loopdata.mWindow, renderOptions.resolution.x, renderOptions.resolution.y);
             InitRenderer();
         }
 
@@ -313,7 +350,16 @@ void MainLoop(void* arg)
 
         optionsChanged |= ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.01f, 1.0f);
 
-        if (ImGui::CollapsingHeader("Render Settings"))
+        scene->camera->isMoving = false;
+
+        if (optionsChanged)
+        {
+            scene->renderOptions = renderOptions;
+            scene->camera->isMoving = true;
+        }
+        ImGui::End();
+
+        ImGui::Begin("Render Settings");
         {
             bool requiresReload = false;
             Vec3* bgCol = &renderOptions.bgColor;
@@ -326,38 +372,35 @@ void MainLoop(void* arg)
             requiresReload |= ImGui::Checkbox("Enable Constant BG", &renderOptions.useConstantBg);
             optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
-            ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
 
             if (requiresReload)
             {
                 scene->renderOptions = renderOptions;
                 InitRenderer();
             }
+            if (ImGui::Button("Denoise"))
+            {
+                denoisedTex = renderer->Denoise();
+                denoised = true;
+                denoisedTexSize = viewportPanelSize;
+            }
 
-            scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
-            scene->renderOptions.denoiserFrameCnt = renderOptions.denoiserFrameCnt;
+            if (ImGui::CollapsingHeader("Camera"))
+            {
+                float fov = Math::Degrees(scene->camera->fov);
+                float aperture = scene->camera->aperture * 1000.0f;
+                optionsChanged |= ImGui::SliderFloat("Fov", &fov, 10, 90);
+                scene->camera->SetFov(fov);
+                optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
+                scene->camera->aperture = aperture / 1000.0f;
+                optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
+                ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
+            }
+
+            ImGui::End();
         }
 
-        if (ImGui::CollapsingHeader("Camera"))
-        {
-            float fov = Math::Degrees(scene->camera->fov);
-            float aperture = scene->camera->aperture * 1000.0f;
-            optionsChanged |= ImGui::SliderFloat("Fov", &fov, 10, 90);
-            scene->camera->SetFov(fov);
-            optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
-            scene->camera->aperture = aperture / 1000.0f;
-            optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
-            ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
-        }
-
-        scene->camera->isMoving = false;
-
-        if (optionsChanged)
-        {
-            scene->renderOptions = renderOptions;
-            scene->camera->isMoving = true;
-        }
-        /*if (ImGui::CollapsingHeader("Objects"))
+        ImGui::Begin("Objects");
         {
             bool objectPropChanged = false;
 
@@ -368,16 +411,19 @@ void MainLoop(void* arg)
             }
 
             // Object Selection
-            ImGui::ListBoxHeader("Instances");
-            for (int i = 0; i < scene->meshInstances.size(); i++)
+
+            if (ImGui::BeginListBox("Instances"))
             {
-                bool is_selected = selectedInstance == i;
-                if (ImGui::Selectable(listboxItems[i].c_str(), is_selected))
+                for (int i = 0; i < scene->meshInstances.size(); i++)
                 {
-                    selectedInstance = i;
+                    bool is_selected = selectedInstance == i;
+                    if (ImGui::Selectable(listboxItems[i].c_str(), is_selected))
+                    {
+                        selectedInstance = i;
+                    }
                 }
+                ImGui::EndListBox();
             }
-            ImGui::ListBoxFooter();
 
             ImGui::Separator();
             ImGui::Text("Materials");
@@ -427,8 +473,21 @@ void MainLoop(void* arg)
             {
                 scene->RebuildInstances();
             }
-        }*/
-        ImGui::End();
+            ImGui::End();
+        }
+
+        ImGui::Begin("Denoiser");
+        {
+            if (!denoised)
+            {
+                ImGui::Text("NO DENOISED IMAGE TO PREVIEW\nClick Denoise in Render TAB");
+            }
+            else
+            {
+                ImGui::Image((void*)denoisedTex, denoisedTexSize, ImVec2(0, 1), ImVec2(1, 0));
+            }
+            ImGui::End();
+        }
     }
     
     double presentTime = SDL_GetTicks();
@@ -474,7 +533,7 @@ int main(int argc, char** argv)
     else
     {
         GetSceneFiles();
-        LoadScene(sceneFiles[sampleSceneIndex]);
+        LoadScene(sceneFiles[0]);
     }
 
     // Setup SDL
@@ -544,15 +603,21 @@ int main(int argc, char** argv)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui_ImplSDL2_InitForOpenGL(loopdata.mWindow, loopdata.mGLContext);
-
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    ImGui_ImplSDL2_InitForOpenGL(loopdata.mWindow, loopdata.mGLContext);
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     //DarkMode
     ImGui::StyleColorsDark();
     if (!InitRenderer())
         return 1;
-
+    ImGuiStyle& style = ImGui::GetStyle();
+    if (io.ConfigFlags && ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
     while (!done)
     {
         MainLoop(&loopdata);

@@ -42,7 +42,6 @@ namespace GLSLPT
         , pathTraceShader(nullptr)
         , pathTraceShaderLowRes(nullptr)
         , outputShader(nullptr)
-        , realTimeDenoiserShader(nullptr)
         , tonemapShader(nullptr)
         , pathTraceTexture(0)
         , pathTraceTextureLowRes(0)
@@ -90,7 +89,6 @@ namespace GLSLPT
         ShaderInclude::ShaderSource pathTraceShaderLowResSrcObj  = ShaderInclude::load(shadersDirectory + "preview.glsl");
         ShaderInclude::ShaderSource outputShaderSrcObj           = ShaderInclude::load(shadersDirectory + "output.glsl");
         ShaderInclude::ShaderSource tonemapShaderSrcObj          = ShaderInclude::load(shadersDirectory + "tonemap.glsl");
-        ShaderInclude::ShaderSource realTimeDenoiserShaderSrcObj = ShaderInclude::load(shadersDirectory + "realTimeDenoiser.glsl");
 
         // Add preprocessor defines for conditional compilation
         std::string defines = "";
@@ -127,7 +125,6 @@ namespace GLSLPT
         pathTraceShaderLowRes  = LoadShaders(vertexShaderSrcObj, pathTraceShaderLowResSrcObj);
         outputShader           = LoadShaders(vertexShaderSrcObj, outputShaderSrcObj);
         tonemapShader          = LoadShaders(vertexShaderSrcObj, tonemapShaderSrcObj);
-        realTimeDenoiserShader = LoadShaders(vertexShaderSrcObj, realTimeDenoiserShaderSrcObj);
 
         printf("Screen Resolution : %d %d\n", screenSize.x, screenSize.y);
         printf("Preview Resolution : %d %d\n", tileWidth, tileHeight);
@@ -199,11 +196,6 @@ namespace GLSLPT
         glBindTexture(GL_TEXTURE_2D, 0);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tileOutputTexture[currentBuffer], 0);
-
-        //For Denoiser
-        denoiserInputFramePtr = new Vec3[screenSize.x * screenSize.y];
-        frameOutputPtr = new Vec3[screenSize.x * screenSize.y];
-        denoised = false;
 
         glGenTextures(1, &denoisedTexture);
         glBindTexture(GL_TEXTURE_2D, denoisedTexture);
@@ -293,7 +285,7 @@ namespace GLSLPT
         glDeleteTextures(1, &accumTexture);
         glDeleteTextures(1, &tileOutputTexture[0]);
         glDeleteTextures(1, &tileOutputTexture[1]);
-        glDeleteTextures(1, &denoisedTexture);
+       // glDeleteTextures(1, &denoisedTexture);
 
         glDeleteFramebuffers(1, &pathTraceFBO);
         glDeleteFramebuffers(1, &pathTraceFBOLowRes);
@@ -303,11 +295,10 @@ namespace GLSLPT
         delete pathTraceShader;
         delete pathTraceShaderLowRes;
         delete outputShader;
-        delete realTimeDenoiserShader;
         delete tonemapShader;
 
-        delete denoiserInputFramePtr;
-        delete frameOutputPtr;
+        //delete denoiserInputFramePtr;
+        //delete frameOutputPtr;
 
         Renderer::Finish();
     }
@@ -341,15 +332,6 @@ namespace GLSLPT
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(pathTraceShader);
 
-            if (scene->renderOptions.enableDenoiser)
-            {
-                //// Result gets denoised by glsl denoiser since OIDN is not meant for real time denoising
-                glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
-                glViewport(0, 0, screenSize.x, screenSize.y);
-                glBindTexture(GL_TEXTURE_2D, accumTexture);
-                quad->Draw(realTimeDenoiserShader);
-            }
-
             // pathTraceTexture is copied to accumTexture and re-used as input for the first step.
             glBindFramebuffer(GL_FRAMEBUFFER, accumFBO);
             glViewport(tileWidth * tile.x, tileHeight * tile.y, tileWidth, tileHeight);
@@ -380,13 +362,9 @@ namespace GLSLPT
             glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
             quad->Draw(tonemapShader);
         }
-        else
+         else
         {
-            if (scene->renderOptions.enableDenoiser && denoised)
-                glBindTexture(GL_TEXTURE_2D, denoisedTexture);
-            else
-                glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
-
+            glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
             quad->Draw(outputShader);
         }
     }
@@ -405,10 +383,7 @@ namespace GLSLPT
 
         glActiveTexture(GL_TEXTURE0);
 
-        if(scene->renderOptions.enableDenoiser && denoised)
-            glBindTexture(GL_TEXTURE_2D, denoisedTexture);
-        else
-            glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
+        glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
         
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, *data);
     }
@@ -520,19 +495,57 @@ namespace GLSLPT
         glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
         pathTraceShaderLowRes->StopUsing();
         
-        if (scene->renderOptions.enableDenoiser)
-        {
-            realTimeDenoiserShader->Use();
-            shaderObject = realTimeDenoiserShader->getObject();
-            glUniform1f(glGetUniformLocation(shaderObject, "sigma"), sig);
-            glUniform1f(glGetUniformLocation(shaderObject, "kSigma"), ksig);
-            glUniform1f(glGetUniformLocation(shaderObject, "threshold"), thr);
-            realTimeDenoiserShader->StopUsing();
-        }
-
         tonemapShader->Use();
         shaderObject = tonemapShader->getObject();
         glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f / (sampleCounter));
         tonemapShader->StopUsing();
+    }
+
+    uint32_t TiledRenderer::SetViewport(int width, int height)
+    { 
+        if (scene->camera->isMoving || sampleCounter == 1)
+        {
+            glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
+            quad->Draw(tonemapShader);
+            return pathTraceTextureLowRes;
+        }
+        else
+        {
+            return tileOutputTexture[1-currentBuffer];
+        }
+    }
+
+    uint32_t TiledRenderer::Denoise(){
+            ////For Denoiser
+        auto denoiserInputFramePtr = new Vec3[screenSize.x * screenSize.y];
+        auto frameOutputPtr = new Vec3[screenSize.x * screenSize.y];
+
+        glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
+
+        // Create an Intel Open Image Denoise device
+        oidn::DeviceRef device = oidn::newDevice();
+        device.commit();
+
+        // Create a denoising filter
+        oidn::FilterRef filter = device.newFilter("RT"); // generic ray tracing filter
+        filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, screenSize.x, screenSize.y);
+        filter.setImage("output", frameOutputPtr, oidn::Format::Float3, screenSize.x, screenSize.y);
+        filter.set("hdr", false);
+        filter.commit();
+
+        // Filter the image
+        filter.execute();
+
+        // Check for errors
+        const char* errorMessage;
+        if (device.getError(errorMessage) != oidn::Error::None)
+            std::cout << "Error: " << errorMessage << std::endl;
+
+        // Copy the denoised data to denoisedTexture
+        glBindTexture(GL_TEXTURE_2D, denoisedTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
+
+        return denoisedTexture;
     }
 }
