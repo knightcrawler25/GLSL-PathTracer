@@ -53,16 +53,16 @@
 using namespace std;
 using namespace GLSLPT;
 
-Scene* scene       = nullptr;
+Scene* scene = nullptr;
 Renderer* renderer = nullptr;
 
 std::vector<string> sceneFiles;
 
 float mouseSensitivity = 0.01f;
-bool keyPressed        = false;
-int sampleSceneIndex   = 0;
-int selectedInstance   = 0;
-double lastTime        = SDL_GetTicks(); 
+bool keyPressed = false;
+int sampleSceneIndex = 0;
+int selectedInstance = 0;
+double lastTime = SDL_GetTicks();
 bool done = false;
 
 std::string shadersDir = "../src/shaders/";
@@ -78,7 +78,7 @@ ImVec2 denoisedTexSize;
 
 struct LoopData
 {
-    SDL_Window*   mWindow    = nullptr;
+    SDL_Window* mWindow = nullptr;
     SDL_GLContext mGLContext = nullptr;
 };
 
@@ -107,11 +107,8 @@ void LoadScene(std::string sceneName)
     delete scene;
     scene = new Scene();
     LoadSceneFromFile(sceneName, scene, renderOptions);
-    //loadCornellTestScene(scene, renderOptions);
     selectedInstance = 0;
     scene->renderOptions = renderOptions;
-    //scene->renderOptions.resolution.x = viewportPanelSize.x;
-    //scene->renderOptions.resolution.y = viewportPanelSize.y;
 }
 
 bool InitRenderer()
@@ -128,7 +125,7 @@ void SaveFrame(const std::string filename)
     int w, h;
     renderer->GetOutputBuffer(&data, w, h);
     stbi_flip_vertically_on_write(true);
-    stbi_write_png(filename.c_str(), w, h, 3, data, w*3);
+    stbi_write_png(filename.c_str(), w, h, 3, data, w * 3);
     printf("Frame saved: %s\n", filename.c_str());
     delete data;
 }
@@ -137,43 +134,37 @@ void Render()
 {
     auto io = ImGui::GetIO();
     renderer->Render();
-    //const glm::ivec2 screenSize = renderer->GetScreenSize();
-    // Rendering
-    ImVec2 wsize = io.DisplaySize;
+
+    //Viewport Setup
     ImGui::Begin("Viewport");
-    if (ImGui::IsItemActive)
     {
-        std::cout << "L\n";
-    }
-    else
-    {
-    }
-    viewportPanelSize = ImGui::GetContentRegionAvail();
-    if (scene->renderOptions.resolution.x != viewportPanelSize.x || scene->renderOptions.resolution.y != viewportPanelSize.y)
-    {
-        scene->renderOptions.resolution.x = viewportPanelSize.x;
-        scene->renderOptions.resolution.y = viewportPanelSize.y;
-        scene->camera->isMoving = true;
-        InitRenderer();
-    }
-    if (scene->camera->isMoving)
-    {
-        renderer->Present();
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
-    uint32_t tex = renderer->SetViewport(10, 10);
-    ImGui::Image((void*)tex, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0)); 
+        viewportPanelSize = ImGui::GetContentRegionAvail();
+        if (scene->renderOptions.resolution.x != viewportPanelSize.x || scene->renderOptions.resolution.y != viewportPanelSize.y)
+        {
+            scene->renderOptions.resolution.x = viewportPanelSize.x;
+            scene->renderOptions.resolution.y = viewportPanelSize.y;
+            scene->camera->isMoving = true;
+            InitRenderer();
+        }
+        if (scene->camera->isMoving)
+        {
+            renderer->Present();
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, viewportPanelSize.x, viewportPanelSize.y);
+        uint32_t tex = renderer->SetViewport(10, 10);
+        ImGui::Image((void*)tex, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0));
 
-    vMin = ImGui::GetWindowContentRegionMin();
-    vMax = ImGui::GetWindowContentRegionMax();
+        vMin = ImGui::GetWindowContentRegionMin();
+        vMax = ImGui::GetWindowContentRegionMax();
 
-    vMin.x += ImGui::GetWindowPos().x;
-    vMin.y += ImGui::GetWindowPos().y;
-    vMax.x += ImGui::GetWindowPos().x;
-    vMax.y += ImGui::GetWindowPos().y;
+        vMin.x += ImGui::GetWindowPos().x;
+        vMin.y += ImGui::GetWindowPos().y;
+        vMax.x += ImGui::GetWindowPos().x;
+        vMax.y += ImGui::GetWindowPos().y;
 
-    ImGui::End();
+        ImGui::End();
+    }
     ImGui::Render();
     ImGui::UpdatePlatformWindows();
 
@@ -186,7 +177,7 @@ void Update(float secondsElapsed)
     if (ImGui::IsAnyMouseDown())
     {
         ImVec2 mousePos = ImGui::GetMousePos();
-        if (mousePos.x < vMax.x && mousePos.y < vMax.y && mousePos.x > vMin.x && mousePos.y > vMin.y)
+        if (mousePos.x < vMax.x && mousePos.y < vMax.y && mousePos.x > vMin.x && mousePos.y > vMin.y) //Chech if mouse is on viewport TODO(PIXEL): Window mouse picking
         {
 
             if (ImGui::IsMouseDown(0))
@@ -200,10 +191,7 @@ void Update(float secondsElapsed)
             {
                 //Move mouse the in Z axis
                 ImVec2 mouseDelta = ImGui::GetMouseDragDelta(1, 0);
-                // if(mouseDelta.y > mouseDelta.x)
                 scene->camera->SetRadius(mouseSensitivity * mouseDelta.y);
-                //   else
-                //       scene->camera->SetRadius(mouseSensitivity * mouseDelta.x);
                 ImGui::ResetMouseDragDelta(1);
             }
             else if (ImGui::IsMouseDown(2))
@@ -220,6 +208,7 @@ void Update(float secondsElapsed)
     renderer->Update(secondsElapsed);
 }
 
+//Gizmos Are TODO to make the suite the path tracer
 void EditTransform(const float* view, const float* projection, float* matrix)
 {
     static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
@@ -296,13 +285,6 @@ void MainLoop(void* arg)
         }
         if (event.type == SDL_WINDOWEVENT)
         {
-            //if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-            //{
-            //    renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
-            //    scene->renderOptions = renderOptions;
-            //    InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
-            //}
-
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
             {
                 done = true;
@@ -310,9 +292,8 @@ void MainLoop(void* arg)
         }
     }
 
-    
+
     ImGui_ImplOpenGL3_NewFrame();
-    //ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
@@ -341,8 +322,6 @@ void MainLoop(void* arg)
         if (ImGui::Combo("Scene", &sampleSceneIndex, scenes.data(), scenes.size()))
         {
             LoadScene(sceneFiles[sampleSceneIndex]);
-           // SDL_RestoreWindow(loopdata.mWindow);
-           // SDL_SetWindowSize(loopdata.mWindow, renderOptions.resolution.x, renderOptions.resolution.y);
             InitRenderer();
         }
 
@@ -411,7 +390,6 @@ void MainLoop(void* arg)
             }
 
             // Object Selection
-
             if (ImGui::BeginListBox("Instances"))
             {
                 for (int i = 0; i < scene->meshInstances.size(); i++)
@@ -489,7 +467,7 @@ void MainLoop(void* arg)
             ImGui::End();
         }
     }
-    
+
     double presentTime = SDL_GetTicks();
     Update((float)(presentTime - lastTime));
     lastTime = presentTime;
@@ -570,7 +548,7 @@ int main(int argc, char** argv)
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI /*| SDL_WINDOW_MAXIMIZED*/);
     loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
-    
+
     //Create Context for glGenBuffer()
     loopdata.mGLContext = SDL_GL_CreateContext(loopdata.mWindow);
     gl3wInit();
@@ -622,7 +600,7 @@ int main(int argc, char** argv)
     {
         MainLoop(&loopdata);
     }
-        
+
     delete renderer;
     delete scene;
 
@@ -636,4 +614,3 @@ int main(int argc, char** argv)
     SDL_Quit();
     return 0;
 }
-
