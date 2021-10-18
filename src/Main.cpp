@@ -35,6 +35,7 @@
 #include "TiledRenderer.h"
 #include "Camera.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
@@ -70,8 +71,8 @@ std::string assetsDir = "../assets/";
 
 RenderOptions renderOptions;
 ImVec2 viewportPanelSize;
-ImVec2 vMin;
-ImVec2 vMax;
+bool viewportFocused = false;
+bool viewportHovered = false;
 
 uint32_t denoisedTex;
 ImVec2 denoisedTexSize;
@@ -81,6 +82,43 @@ struct LoopData
     SDL_Window* mWindow = nullptr;
     SDL_GLContext mGLContext = nullptr;
 };
+
+void SetImGuiTheme()
+{
+    auto& colors = ImGui::GetStyle().Colors;
+    colors[ImGuiCol_WindowBg]               = ImVec4{ 0.031f, 0.031f, 0.031f,  1.0f }; 
+
+    // Headers
+    colors[ImGuiCol_Header]                 = ImVec4{ 0.219f, 0.219f,  0.219f, 1.0f };
+    colors[ImGuiCol_HeaderHovered]          = ImVec4{ 0.180f, 0.180f,  0.180f, 1.0f };
+    colors[ImGuiCol_HeaderActive]           = ImVec4{ 0.219f, 0.219f,  0.219f, 1.0f };
+                                                              
+    // Buttons                                                
+    colors[ImGuiCol_Button]                 = ImVec4{ 0.219f, 0.219f,  0.219f, 1.0f }; 
+    colors[ImGuiCol_ButtonHovered]          = ImVec4{ 0.180f, 0.180f,  0.180f, 1.0f }; 
+    colors[ImGuiCol_ButtonActive]           = ImVec4{ 0.219f, 0.219f,  0.219f, 1.0f }; 
+                                                              
+    // Frame BG                                               
+    colors[ImGuiCol_FrameBg]                = ImVec4{ 0.113f, 0.113f,  0.113f, 1.0f }; 
+    colors[ImGuiCol_FrameBgHovered]         = ImVec4{ 0.141f, 0.141f,  0.141f, 1.0f }; 
+    colors[ImGuiCol_FrameBgActive]          = ImVec4{ 0.113f, 0.113f,  0.113f, 1.0f }; 
+                                                              
+    // Tabs                                                   
+    colors[ImGuiCol_Tab]                    = ImVec4{ 0.113f, 0.113f,  0.113f, 1.0f };
+    colors[ImGuiCol_TabHovered]             = ImVec4{ 0.141f, 0.141f,  0.141f, 1.0f };
+    colors[ImGuiCol_TabActive]              = ImVec4{ 0.113f, 0.113f,  0.113f, 1.0f };
+    colors[ImGuiCol_TabUnfocused]           = ImVec4{ 0.141f, 0.141f,  0.141f, 1.0f };
+    colors[ImGuiCol_TabUnfocusedActive]     = ImVec4{ 0.113f, 0.113f,  0.113f, 1.0f };
+
+    // Title
+    colors[ImGuiCol_TitleBg]                = ImVec4{ 0.15f,  0.1505f, 0.151f, 1.0f };
+    colors[ImGuiCol_TitleBgActive]          = ImVec4{ 0.15f,  0.1505f, 0.151f, 1.0f };
+    colors[ImGuiCol_TitleBgCollapsed]       = ImVec4{ 0.15f,  0.1505f, 0.151f, 1.0f };
+
+    //Sliders
+    colors[ImGuiCol_SliderGrab]             = ImVec4{ 0.537f, 0.160f,  1.0f,   1.0f };                
+    colors[ImGuiCol_SliderGrabActive]       = ImVec4{ 0.172f, 0.172f,  0.172f, 1.0f };         
+}
 
 void GetSceneFiles()
 {
@@ -119,6 +157,72 @@ bool InitRenderer()
     return true;
 }
 
+void ImGuiDrawFloat3(const std::string& label, float* values, float defaultValue = 0.0f, float columnWidth = 100.0f)
+{
+    ImGuiIO& io = ImGui::GetIO();
+    auto componentFont = io.Fonts->Fonts[0];
+
+    ImGui::PushID(label.c_str());
+
+    ImGui::Columns(2);
+    ImGui::SetColumnWidth(0, columnWidth);
+    ImGui::Text(label.c_str());
+    ImGui::NextColumn();
+
+    ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+
+    float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+    ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+    ImGui::PushFont(componentFont);
+    if (ImGui::Button("X", buttonSize))
+        values[0] = defaultValue;
+    ImGui::PopFont();
+    ImGui::PopStyleColor(3);
+
+    ImGui::SameLine();
+    ImGui::DragFloat("##X", &values[0], 0.01f);
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+    ImGui::PushFont(componentFont);
+    if (ImGui::Button("Y", buttonSize))
+        values[1] = defaultValue;
+    ImGui::PopFont();
+    ImGui::PopStyleColor(3);
+
+    ImGui::SameLine();
+    ImGui::DragFloat("##Y", &values[1], 0.01f);
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+    ImGui::PushFont(componentFont);
+    if (ImGui::Button("Z", buttonSize))
+        values[2] = defaultValue;
+    ImGui::PopFont();
+    ImGui::PopStyleColor(3);
+
+    ImGui::SameLine();
+    ImGui::DragFloat("##Z", &values[2], 0.01f);
+    ImGui::PopItemWidth();
+
+    ImGui::PopStyleVar();
+
+    ImGui::Columns(1);
+
+    ImGui::PopID();
+}
+
 void SaveFrame(const std::string filename)
 {
     unsigned char* data = nullptr;
@@ -129,15 +233,17 @@ void SaveFrame(const std::string filename)
     printf("Frame saved: %s\n", filename.c_str());
     delete data;
 }
+
 bool denoised = false;
 void Render()
 {
     auto io = ImGui::GetIO();
     renderer->Render();
-
     //Viewport Setup
     ImGui::Begin("Viewport");
     {
+        viewportFocused = ImGui::IsWindowFocused();
+        viewportHovered = ImGui::IsWindowHovered();
         viewportPanelSize = ImGui::GetContentRegionAvail();
         if (scene->renderOptions.resolution.x != viewportPanelSize.x || scene->renderOptions.resolution.y != viewportPanelSize.y)
         {
@@ -155,14 +261,6 @@ void Render()
         uint32_t tex = renderer->SetViewport(10, 10);
         ImGui::Image((void*)tex, viewportPanelSize, ImVec2(0, 1), ImVec2(1, 0));
 
-        vMin = ImGui::GetWindowContentRegionMin();
-        vMax = ImGui::GetWindowContentRegionMax();
-
-        vMin.x += ImGui::GetWindowPos().x;
-        vMin.y += ImGui::GetWindowPos().y;
-        vMax.x += ImGui::GetWindowPos().x;
-        vMax.y += ImGui::GetWindowPos().y;
-
         ImGui::End();
     }
     ImGui::Render();
@@ -177,9 +275,8 @@ void Update(float secondsElapsed)
     if (ImGui::IsAnyMouseDown())
     {
         ImVec2 mousePos = ImGui::GetMousePos();
-        if (mousePos.x < vMax.x && mousePos.y < vMax.y && mousePos.x > vMin.x && mousePos.y > vMin.y) //Chech if mouse is on viewport TODO(PIXEL): Window mouse picking
+        if (viewportHovered) //Chech if mouse is on viewport TODO(PIXEL): Window mouse picking
         {
-
             if (ImGui::IsMouseDown(0))
             {
                 //Rotate Mouse around center
@@ -248,12 +345,17 @@ void EditTransform(const float* view, const float* projection, float* matrix)
 
     float matrixTranslation[3], matrixRotation[3], matrixScale[3];
     ImGuizmo::DecomposeMatrixToComponents(matrix, matrixTranslation, matrixRotation, matrixScale);
-    ImGui::InputFloat3("Tr", matrixTranslation);
-    ImGui::InputFloat3("Rt", matrixRotation);
-    ImGui::InputFloat3("Sc", matrixScale);
+    //ImGui::DragFloat3("Tr", matrixTranslation, 0.1f);
+    //ImGui::DragFloat3("Rt", matrixRotation   , 0.1f);
+    //ImGui::DragFloat3("Sc", matrixScale      , 0.1f);
+
+    ImGuiDrawFloat3("Position", matrixTranslation);
+    ImGuiDrawFloat3("Rotation", matrixRotation);
+    ImGuiDrawFloat3("Scale", matrixScale);
+
     ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix);
 
-    if (mCurrentGizmoOperation != ImGuizmo::SCALE)
+    /*if (mCurrentGizmoOperation != ImGuizmo::SCALE)
     {
         if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
         {
@@ -265,12 +367,13 @@ void EditTransform(const float* view, const float* projection, float* matrix)
         {
             mCurrentGizmoMode = ImGuizmo::WORLD;
         }
-    }
+    }*/
 
     ImGuiIO& io = ImGui::GetIO();
     ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
     ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
 }
+
 void MainLoop(void* arg)
 {
     LoopData& loopdata = *(LoopData*)arg;
@@ -373,7 +476,67 @@ void MainLoop(void* arg)
                 optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
                 scene->camera->aperture = aperture / 1000.0f;
                 optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
-                ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
+
+                ImGuiIO& io = ImGui::GetIO();
+                auto componentFont = io.Fonts->Fonts[0];
+
+                ImGui::PushID("Position");
+
+                ImGui::Columns(2);
+                ImGui::SetColumnWidth(0, 100.0f);
+                ImGui::Text("Position");
+                ImGui::NextColumn();
+
+                ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
+
+                float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+                ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
+
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
+                ImGui::PushFont(componentFont);
+                ImGui::Button("X", buttonSize);
+                ImGui::PopFont();
+                ImGui::PopStyleColor(3);
+
+                ImGui::SameLine();
+                ImGui::Text("%f", scene->camera->position.x);
+                ImGui::PopItemWidth();
+
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
+                ImGui::PushFont(componentFont);
+                ImGui::Button("Y", buttonSize);
+                ImGui::PopFont();
+                ImGui::PopStyleColor(3);
+
+                ImGui::SameLine();
+                ImGui::Text("%f", scene->camera->position.y);
+                ImGui::PopItemWidth();
+
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
+                ImGui::PushFont(componentFont);
+                ImGui::Button("Z", buttonSize);
+                ImGui::PopFont();
+                ImGui::PopStyleColor(3);
+
+                ImGui::SameLine();
+                ImGui::Text("%f", scene->camera->position.z);
+                ImGui::PopItemWidth();
+
+                ImGui::PopStyleVar();
+
+                ImGui::Columns(1);
+
+                ImGui::PopID();
+
+
+             //   ImGui::Text("Pos: %.2f, %.2f, %.2f", , scene->camera->position.y, scene->camera->position.z);
             }
 
             ImGui::End();
@@ -404,32 +567,9 @@ void MainLoop(void* arg)
             }
 
             ImGui::Separator();
-            ImGui::Text("Materials");
-
-            // Material Properties
-            Vec3* albedo = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
-            Vec3* emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
-            Vec3* extinction = &scene->materials[scene->meshInstances[selectedInstance].materialID].extinction;
-
-            objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
-            objectPropChanged |= ImGui::SliderFloat("Metallic", &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("SpecularTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].specularTint, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Subsurface", &scene->materials[scene->meshInstances[selectedInstance].materialID].subsurface, 0.0f, 1.0f);
-            //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Sheen", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheen, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("SheenTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheenTint, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Clearcoat", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoat, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("clearcoatGloss", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatGloss, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Transmission", &scene->materials[scene->meshInstances[selectedInstance].materialID].transmission, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.001f, 2.0f);
-            objectPropChanged |= ImGui::SliderFloat("atDistance", &scene->materials[scene->meshInstances[selectedInstance].materialID].atDistance, 0.05f, 10.0f);
-            objectPropChanged |= ImGui::ColorEdit3("Extinction", (float*)extinction, 0);
 
             // Transforms Properties
-            ImGui::Separator();
-            ImGui::Text("Transforms");
+            ImGui::CollapsingHeader("Transforms");
             {
                 float viewMatrix[16];
                 float projMatrix[16];
@@ -447,6 +587,31 @@ void MainLoop(void* arg)
                 }
             }
 
+            ImGui::Separator();
+            if(ImGui::CollapsingHeader("Materials"))
+            {
+
+                // Material Properties
+                Vec3* albedo = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
+                Vec3* emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
+                Vec3* extinction = &scene->materials[scene->meshInstances[selectedInstance].materialID].extinction;
+
+                objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
+                objectPropChanged |= ImGui::SliderFloat("Metallic", &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("SpecularTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].specularTint, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Subsurface", &scene->materials[scene->meshInstances[selectedInstance].materialID].subsurface, 0.0f, 1.0f);
+                //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Sheen", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheen, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("SheenTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheenTint, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Clearcoat", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoat, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("clearcoatGloss", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatGloss, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Transmission", &scene->materials[scene->meshInstances[selectedInstance].materialID].transmission, 0.0f, 1.0f);
+                objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.001f, 2.0f);
+                objectPropChanged |= ImGui::SliderFloat("atDistance", &scene->materials[scene->meshInstances[selectedInstance].materialID].atDistance, 0.05f, 10.0f);
+                objectPropChanged |= ImGui::ColorEdit3("Extinction", (float*)extinction, 0);
+            }
             if (objectPropChanged)
             {
                 scene->RebuildInstances();
@@ -585,9 +750,12 @@ int main(int argc, char** argv)
 
     ImGui_ImplSDL2_InitForOpenGL(loopdata.mWindow, loopdata.mGLContext);
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.Fonts->AddFontFromFileTTF("../assets/fonts/Roboto-Bold.ttf", 15.0f);
+    io.FontDefault = io.Fonts->AddFontFromFileTTF("../assets/fonts/Roboto-Regular.ttf", 15.0f);
 
     //DarkMode
     ImGui::StyleColorsDark();
+    SetImGuiTheme();
     if (!InitRenderer())
         return 1;
     ImGuiStyle& style = ImGui::GetStyle();
