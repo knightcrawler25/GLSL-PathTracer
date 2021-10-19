@@ -23,7 +23,6 @@
  */
 
 #define _USE_MATH_DEFINES
-#include "ShaderIncludes.h"
 #include <SDL2/SDL.h>
 #include <GL/gl3w.h>
 
@@ -275,7 +274,7 @@ void Update(float secondsElapsed)
     if (ImGui::IsAnyMouseDown())
     {
         ImVec2 mousePos = ImGui::GetMousePos();
-        if (viewportHovered) //Chech if mouse is on viewport TODO(PIXEL): Window mouse picking
+        if (viewportHovered) //Chech if mouse is on viewport TODO(PIXEL): object mouse picking
         {
             if (ImGui::IsMouseDown(0))
             {
@@ -710,7 +709,7 @@ int main(int argc, char** argv)
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI /*| SDL_WINDOW_MAXIMIZED*/);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI /*| SDL_WINDOW_MAXIMIZED*/); //Commented start maximized for debugging
     loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
@@ -756,6 +755,7 @@ int main(int argc, char** argv)
     //DarkMode
     ImGui::StyleColorsDark();
     SetImGuiTheme();
+
     if (!InitRenderer())
         return 1;
     ImGuiStyle& style = ImGui::GetStyle();
