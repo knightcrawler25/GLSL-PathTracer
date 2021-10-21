@@ -91,34 +91,49 @@ namespace GLSLPT
         ShaderInclude::ShaderSource tonemapShaderSrcObj         = ShaderInclude::load(shadersDirectory + "tonemap.glsl");
 
         // Add preprocessor defines for conditional compilation
-        std::string defines = "";
+        std::string pathtraceDefines = "";
         if (scene->renderOptions.useEnvMap && scene->hdrData != nullptr)
-            defines += "#define ENVMAP\n";
+            pathtraceDefines += "#define ENVMAP\n";
         if (!scene->lights.empty())
-            defines += "#define LIGHTS\n";
+            pathtraceDefines += "#define LIGHTS\n";
         if (scene->renderOptions.enableRR)
         {
-            defines += "#define RR\n";
-            defines += "#define RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
+            pathtraceDefines += "#define RR\n";
+            pathtraceDefines += "#define RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
         }
         if (scene->renderOptions.useConstantBg)
-            defines += "#define CONSTANT_BG\n";
+            pathtraceDefines += "#define CONSTANT_BG\n";
 
-        if (defines.size() > 0)
+        std::string tonemapDefines = "";
+
+        if (scene->renderOptions.useAces)
+            tonemapDefines += "#define USE_ACES\n";
+
+        if (pathtraceDefines.size() > 0)
         {
             size_t idx = pathTraceShaderSrcObj.src.find("#version");
             if (idx != -1)
                 idx = pathTraceShaderSrcObj.src.find("\n", idx);
             else
                 idx = 0;
-            pathTraceShaderSrcObj.src.insert(idx + 1, defines);
+            pathTraceShaderSrcObj.src.insert(idx + 1, pathtraceDefines);
 
             idx = pathTraceShaderLowResSrcObj.src.find("#version");
             if (idx != -1)
                 idx = pathTraceShaderLowResSrcObj.src.find("\n", idx);
             else
                 idx = 0;
-            pathTraceShaderLowResSrcObj.src.insert(idx + 1, defines);
+            pathTraceShaderLowResSrcObj.src.insert(idx + 1, pathtraceDefines);
+        }
+
+        if (tonemapDefines.size() > 0)
+        {
+            size_t idx = tonemapShaderSrcObj.src.find("#version");
+            if (idx != -1)
+                idx = tonemapShaderSrcObj.src.find("\n", idx);
+            else
+                idx = 0;
+            tonemapShaderSrcObj.src.insert(idx + 1, tonemapDefines);
         }
 
         pathTraceShader       = LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);

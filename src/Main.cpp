@@ -312,6 +312,7 @@ void MainLoop(void* arg)
             optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
+            requiresReload |= ImGui::Checkbox("Use ACES tonemapping", &renderOptions.useAces);
             
             if (requiresReload)
             {
