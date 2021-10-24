@@ -104,11 +104,6 @@ namespace GLSLPT
         if (scene->renderOptions.useConstantBg)
             pathtraceDefines += "#define CONSTANT_BG\n";
 
-        std::string tonemapDefines = "";
-
-        if (scene->renderOptions.useAces)
-            tonemapDefines += "#define USE_ACES\n";
-
         if (pathtraceDefines.size() > 0)
         {
             size_t idx = pathTraceShaderSrcObj.src.find("#version");
@@ -124,16 +119,6 @@ namespace GLSLPT
             else
                 idx = 0;
             pathTraceShaderLowResSrcObj.src.insert(idx + 1, pathtraceDefines);
-        }
-
-        if (tonemapDefines.size() > 0)
-        {
-            size_t idx = tonemapShaderSrcObj.src.find("#version");
-            if (idx != -1)
-                idx = tonemapShaderSrcObj.src.find("\n", idx);
-            else
-                idx = 0;
-            tonemapShaderSrcObj.src.insert(idx + 1, tonemapDefines);
         }
 
         pathTraceShader       = LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);
@@ -523,6 +508,9 @@ namespace GLSLPT
         tonemapShader->Use();
         shaderObject = tonemapShader->getObject();
         glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f / (sampleCounter));
+        glUniform1i(glGetUniformLocation(shaderObject, "enableTonemap"), scene->renderOptions.enableTonemap);
+        glUniform1i(glGetUniformLocation(shaderObject, "useAces"), scene->renderOptions.useAces);
+        glUniform1i(glGetUniformLocation(shaderObject, "simpleAcesFit"), scene->renderOptions.simpleAcesFit);
         tonemapShader->StopUsing();
     }
 }

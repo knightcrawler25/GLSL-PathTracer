@@ -51,7 +51,8 @@ namespace GLSLPT
             bgColor = Vec3(0.3f, 0.3f, 0.3f);
             denoiserFrameCnt = 20;
             enableDenoiser = false;
-            useAces = true;
+            enableTonemap = true;
+            useAces = false;
         }
         iVec2 resolution;
         int maxDepth;
@@ -61,7 +62,9 @@ namespace GLSLPT
         bool enableRR;
         bool enableDenoiser;
         bool useConstantBg;
+        bool enableTonemap;
         bool useAces;
+        bool simpleAcesFit;
         int RRDepth;
         int denoiserFrameCnt;
         float hdrMultiplier;

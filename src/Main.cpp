@@ -312,8 +312,15 @@ void MainLoop(void* arg)
             optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
-            requiresReload |= ImGui::Checkbox("Use ACES tonemapping", &renderOptions.useAces);
-            
+            ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);
+
+            if (renderOptions.enableTonemap)
+            {
+                ImGui::Checkbox("Use ACES", &renderOptions.useAces);
+                if (renderOptions.useAces)
+                    ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
+            }
+
             if (requiresReload)
             {
                 scene->renderOptions = renderOptions;
@@ -322,6 +329,9 @@ void MainLoop(void* arg)
 
             scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
             scene->renderOptions.denoiserFrameCnt = renderOptions.denoiserFrameCnt;
+            scene->renderOptions.enableTonemap = renderOptions.enableTonemap;
+            scene->renderOptions.useAces = renderOptions.useAces;
+            scene->renderOptions.simpleAcesFit = renderOptions.simpleAcesFit;
         }
         
         if (ImGui::CollapsingHeader("Camera"))
