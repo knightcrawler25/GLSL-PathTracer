@@ -4,18 +4,18 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions :
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -33,9 +33,7 @@
  * [8] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
  */
 
-//-----------------------------------------------------------------------
 vec3 EvalDielectricReflection(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
-//-----------------------------------------------------------------------
 {
     pdf = 0.0;
     if (dot(N, L) <= 0.0)
@@ -46,13 +44,11 @@ vec3 EvalDielectricReflection(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout
     
     pdf = D * dot(N, H) * F / (4.0 * abs(dot(V, H)));
 
-    float G = SmithG_GGX(abs(dot(N, L)), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
+    float G = SmithG(abs(dot(N, L)), state.mat.roughness) * SmithG(abs(dot(N, V)), state.mat.roughness);
     return state.mat.albedo * F * D * G;
 }
 
-//-----------------------------------------------------------------------
 vec3 EvalDielectricRefraction(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
-//-----------------------------------------------------------------------
 {
     pdf = 0.0;
     if (dot(N, L) >= 0.0)
@@ -64,13 +60,11 @@ vec3 EvalDielectricRefraction(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout
     float denomSqrt = dot(L, H) + dot(V, H) * state.eta;
     pdf = D * dot(N, H) * (1.0 - F) * abs(dot(L, H)) / (denomSqrt * denomSqrt);
 
-    float G = SmithG_GGX(abs(dot(N, L)), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
+    float G = SmithG(abs(dot(N, L)), state.mat.roughness) * SmithG(abs(dot(N, V)), state.mat.roughness);
     return state.mat.albedo * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * 4.0 * state.eta * state.eta / (denomSqrt * denomSqrt);
 }
 
-//-----------------------------------------------------------------------
 vec3 EvalSpecular(State state, vec3 Cspec0, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
-//-----------------------------------------------------------------------
 {
     pdf = 0.0;
     if (dot(N, L) <= 0.0)
@@ -81,13 +75,11 @@ vec3 EvalSpecular(State state, vec3 Cspec0, vec3 V, vec3 N, vec3 L, vec3 H, inou
 
     float FH = SchlickFresnel(dot(L, H));
     vec3 F = mix(Cspec0, vec3(1.0), FH);
-    float G = SmithG_GGX(abs(dot(N, L)), state.mat.roughness) * SmithG_GGX(abs(dot(N, V)), state.mat.roughness);
+    float G = SmithG(abs(dot(N, L)), state.mat.roughness) * SmithG(abs(dot(N, V)), state.mat.roughness);
     return F * D * G;
 }
 
-//-----------------------------------------------------------------------
 vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
-//-----------------------------------------------------------------------
 {
     pdf = 0.0;
     if (dot(N, L) <= 0.0)
@@ -98,19 +90,17 @@ vec3 EvalClearcoat(State state, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
 
     float FH = SchlickFresnel(dot(L, H));
     float F = mix(0.04, 1.0, FH);
-    float G = SmithG_GGX(dot(N, L), 0.25) * SmithG_GGX(dot(N, V), 0.25);
+    float G = SmithG(dot(N, L), 0.25) * SmithG(dot(N, V), 0.25);
     return vec3(0.25 * state.mat.clearcoat * F * D * G);
 }
 
-//-----------------------------------------------------------------------
 vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
-//-----------------------------------------------------------------------
 {
     pdf = 0.0;
     if (dot(N, L) <= 0.0)
         return vec3(0.0);
 
-    pdf = dot(N, L) * (1.0 / PI);
+    pdf = dot(N, L) * INV_PI;
 
     // Diffuse
     float FL = SchlickFresnel(dot(N, L));
@@ -125,12 +115,10 @@ vec3 EvalDiffuse(State state, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout
     float ss = 1.25 * (Fss * (1.0 / (dot(N, L) + dot(N, V)) - 0.5) + 0.5);
 
     vec3 Fsheen = FH * state.mat.sheen * Csheen;
-    return ((1.0 / PI) * mix(Fd, ss, state.mat.subsurface) * state.mat.albedo + Fsheen) * (1.0 - state.mat.metallic);
+    return (INV_PI * mix(Fd, ss, state.mat.subsurface) * state.mat.albedo + Fsheen) * (1.0 - state.mat.metallic);
 }
 
-//-----------------------------------------------------------------------
 vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
-//-----------------------------------------------------------------------
 {
     pdf = 0.0;
     vec3 f = vec3(0.0);
@@ -151,7 +139,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     // TODO: Reuse random numbers and reduce so many calls to rand()
     if (rand() < transWeight)
     {
-        vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
+        vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
         H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
         if (dot(V, H) < 0.0)
@@ -195,7 +183,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
             if (rand() < primarySpecRatio) 
             {
                 // TODO: Implement http://jcgt.org/published/0007/04/01/
-                vec3 H = ImportanceSampleGTR2(state.mat.roughness, r1, r2);
+                vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
                 H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
                 if (dot(V, H) < 0.0)
@@ -208,7 +196,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
             }
             else // Sample clearcoat lobe
             {
-                vec3 H = ImportanceSampleGTR1(mix(0.1, 0.001, state.mat.clearcoatGloss), r1, r2);
+                vec3 H = SampleGTR1(mix(0.1, 0.001, state.mat.clearcoatGloss), r1, r2);
                 H = state.tangent * H.x + state.bitangent * H.y + N * H.z;
 
                 if (dot(V, H) < 0.0)
@@ -227,9 +215,7 @@ vec3 DisneySample(inout State state, vec3 V, vec3 N, inout vec3 L, inout float p
     return f;
 }
 
-//-----------------------------------------------------------------------
 vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
-//-----------------------------------------------------------------------
 {
     vec3 H;
     bool refl = dot(N, L) > 0.0;

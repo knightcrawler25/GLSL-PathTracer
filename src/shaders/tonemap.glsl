@@ -4,18 +4,18 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions :
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -33,8 +33,11 @@ uniform bool enableTonemap;
 uniform bool useAces;
 uniform bool simpleAcesFit;
 
-// The code in this file was originally written by Stephen Hill (@self_shadow), who deserves all
-// credit for coming up with this fit and implementing it. Buy him a beer next time you see him. :)
+#include common/globals.glsl
+
+// Sources:
+// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+// https://github.com/TheRealMJP/BakingLab/blob/master/BakingLab/ACES.hlsl
 
 // sRGB => XYZ => D65_2_D60 => AP1 => RRT_SAT
 mat3 ACESInputMat = mat3
@@ -74,7 +77,7 @@ vec3 ACESFitted(vec3 color)
     return color;
 }
 
-vec3 TonemapACES(in vec3 c)
+vec3 ACES(in vec3 c)
 {
     float a = 2.51f;
     float b = 0.03f;
@@ -87,9 +90,7 @@ vec3 TonemapACES(in vec3 c)
 
 vec3 Tonemap(in vec3 c, float limit)
 {
-    float luminance = 0.3 * c.x + 0.6 * c.y + 0.1 * c.z;
-
-    return c * 1.0 / (1.0 + luminance / limit);
+    return c * 1.0 / (1.0 + Luminance(c) / limit);
 }
 
 void main()
@@ -101,7 +102,7 @@ void main()
         if (useAces)
         {
             if (simpleAcesFit)
-                color = TonemapACES(color);
+                color = ACES(color);
             else
                 color = ACESFitted(color);
         }

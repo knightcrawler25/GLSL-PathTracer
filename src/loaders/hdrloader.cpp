@@ -8,7 +8,7 @@
 ************************************************************************************/
 
 /* 
-    This is a modified version of the original code. Addeed code to build marginal & conditional densities for IBL importance sampling
+    This is a modified version of the original code. Added code to build marginal & conditional cdf for importance sampling
 */
 
 #include "hdrloader.h"
@@ -30,30 +30,27 @@ static void workOnRGBE(RGBE *scan, int len, float *cols);
 static bool decrunch(RGBE *scanline, int len, FILE *file);
 static bool oldDecrunch(RGBE *scanline, int len, FILE *file);
 
-float Luminance(const Vec3 &c)
+float luminance(const Vec3 &c)
 {
-    return c.x*0.3f + c.y*0.6f + c.z*0.1f;
+    return 0.212671f * c.x + 0.715160f * c.y + 0.072169f * c.z;
 }
 
-int LowerBound(const float* array, int lower, int upper, const float value)
+int lowerBound(const float* array, int lower, int upper, const float value)
 {
     while (lower < upper)
     {
         int mid = lower + (upper - lower) / 2;
 
         if (array[mid] < value)
-        {
             lower = mid + 1;
-        }
         else
-        {
             upper = mid;
-        }
     }
 
     return lower;
 }
 
+// TODO: Recheck if this is working as expected
 void HDRLoader::buildDistributions(HDRData* res)
 {
     int width  = res->width;
@@ -76,7 +73,8 @@ void HDRLoader::buildDistributions(HDRData* res)
 
         for (int i = 0; i < width; ++i)
         {
-            float weight = Luminance(Vec3(res->cols[j*width * 3 + i * 3 + 0], res->cols[j*width * 3 + i * 3 + 1], res->cols[j*width * 3 + i * 3 + 2]));
+            int index = j * width * 3 + i * 3;
+            float weight = luminance(Vec3(res->cols[index + 0], res->cols[index + 1], res->cols[index + 2]));
 
             rowWeightSum += weight;
 
@@ -84,7 +82,7 @@ void HDRLoader::buildDistributions(HDRData* res)
             cdf2D[j*width + i] = rowWeightSum;
         }
 
-        /* Convert to range 0,1 */
+        // Normalize
         for (int i = 0; i < width; i++)
         {
             pdf2D[j*width + i] /= rowWeightSum;
@@ -97,18 +95,18 @@ void HDRLoader::buildDistributions(HDRData* res)
         cdf1D[j] = colWeightSum;
     }
     
-    /* Convert to range 0,1 */
+    // Normalize
     for (int j = 0; j < height; j++)
     {
         cdf1D[j] /= colWeightSum;
         pdf1D[j] /= colWeightSum;
     }
 
-    /* Precalculate row and col to avoid binary search during lookup in the shader */
+    // Precalculate row and col to avoid binary search during lookup in the shader
     for (int i = 0; i < height; i++)
     {
         float invHeight = (float)(i+1) / height;
-        int row = LowerBound(cdf1D, 0, height, invHeight);
+        int row = lowerBound(cdf1D, 0, height, invHeight);
         res->marginalDistData[i].x = row / (float)height;
         res->marginalDistData[i].y = pdf1D[i];
     }
@@ -118,7 +116,7 @@ void HDRLoader::buildDistributions(HDRData* res)
         for (int i = 0; i < width; i++)
         {
             float invWidth = (float)(i+1) / width;
-            int col = LowerBound(cdf2D, j*width, (j + 1)*width, invWidth) - j * width;
+            int col = lowerBound(cdf2D, j*width, (j + 1)*width, invWidth) - j * width;
             res->conditionalDistData[j*width + i].x = col / (float)width;
             res->conditionalDistData[j*width + i].y = pdf2D[j*width + i];
         }

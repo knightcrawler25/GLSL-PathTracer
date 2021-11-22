@@ -4,27 +4,25 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this softwareand associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions :
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
 
-//-----------------------------------------------------------------------
 void GetMaterials(inout State state, in Ray r)
-//-----------------------------------------------------------------------
 {
     int index = state.matID * 7;
     Material mat;
@@ -106,9 +104,7 @@ void GetMaterials(inout State state, in Ray r)
     state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
-//-----------------------------------------------------------------------
 vec3 DirectLight(in Ray r, in State state)
-//-----------------------------------------------------------------------
 {
     vec3 Li = vec3(0.0);
     vec3 surfacePos = state.fhp + state.normal * EPS;
@@ -120,12 +116,12 @@ vec3 DirectLight(in Ray r, in State state)
 #ifndef CONSTANT_BG
     {
         vec3 color;
-        vec4 dirPdf = EnvSample(color);
+        vec4 dirPdf = SampleEnvMap(color);
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
         Ray shadowRay = Ray(surfacePos, lightDir);
-        bool inShadow = AnyHit(shadowRay, INFINITY - EPS);
+        bool inShadow = AnyHit(shadowRay, INF - EPS);
 
         if (!inShadow)
         {
@@ -133,7 +129,7 @@ vec3 DirectLight(in Ray r, in State state)
 
             if (bsdfSampleRec.pdf > 0.0)
             {
-                float misWeight = powerHeuristic(lightPdf, bsdfSampleRec.pdf);
+                float misWeight = PowerHeuristic(lightPdf, bsdfSampleRec.pdf);
                 if (misWeight > 0.0)
                     Li += misWeight * bsdfSampleRec.f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
             }
@@ -162,7 +158,7 @@ vec3 DirectLight(in Ray r, in State state)
         float type    = params.z; // 0->Rect, 1->Sphere, 2->Distant
 
         light = Light(position, emission, u, v, radius, area, type);
-        sampleOneLight(light, surfacePos, lightSampleRec);
+        SampleOneLight(light, surfacePos, lightSampleRec);
 
         if (dot(lightSampleRec.direction, lightSampleRec.normal) < 0.0) // Required for quad lights with single sided emission
         {
@@ -175,7 +171,7 @@ vec3 DirectLight(in Ray r, in State state)
 
                 float weight = 1.0;
                 if(light.area > 0.0) // No MIS for distant light
-                    weight = powerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
+                    weight = PowerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0)
                     Li += weight * bsdfSampleRec.f * abs(dot(state.ffnormal, lightSampleRec.direction)) * lightSampleRec.emission / lightSampleRec.pdf;
@@ -187,10 +183,7 @@ vec3 DirectLight(in Ray r, in State state)
     return Li;
 }
 
-
-//-----------------------------------------------------------------------
 vec3 PathTrace(Ray r)
-//-----------------------------------------------------------------------
 {
     vec3 radiance = vec3(0.0);
     vec3 throughput = vec3(1.0);
@@ -212,13 +205,13 @@ vec3 PathTrace(Ray r)
 #ifdef ENVMAP
             {
                 float misWeight = 1.0f;
-                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * (1.0 / TWO_PI), acos(r.direction.y) * (1.0 / PI));
+                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
 
                 if (depth > 0)
                 {
                     // TODO: Fix NaNs when using certain HDRs
-                    float lightPdf = EnvPdf(r);
-                    misWeight = powerHeuristic(bsdfSampleRec.pdf, lightPdf);
+                    float lightPdf = EnvMapPdf(r);
+                    misWeight = PowerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
                 radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }

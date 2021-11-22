@@ -4,29 +4,27 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this softwareand associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions :
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
 
-//-----------------------------------------------------------------------
 bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
-//-----------------------------------------------------------------------
 {
-    float t = INFINITY;
+    float t = INF;
     float d;
 
 #ifdef LIGHTS
@@ -54,7 +52,7 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
 
             d = RectIntersect(position, u, v, plane, r);
             if (d < 0.)
-                d = INFINITY;
+                d = INF;
             if (d < t)
             {
                 t = d;
@@ -69,7 +67,7 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         {
             d = SphereIntersect(radius, position, r);
             if (d < 0.)
-                d = INFINITY;
+                d = INF;
             if (d < t)
             {
                 t = d;
@@ -217,7 +215,7 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
     }
 
     // No intersections
-    if (t == INFINITY)
+    if (t == INF)
         return false;
 
     state.hitDist = t;
@@ -233,13 +231,13 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         vec4 n2 = texelFetch(normalsTex, triID.y);
         vec4 n3 = texelFetch(normalsTex, triID.z);
 
-        // Create texcoords from w coord of vertices and normals
+        // Get tex coords
         vec2 t1 = vec2(texCoords.x, n1.w);
         vec2 t2 = vec2(texCoords.y, n2.w);
         vec2 t3 = vec2(texCoords.z, n3.w);
 
+        // Interpolate using barcentric coords
         state.texCoord = t1 * bary.x + t2 * bary.y + t3 * bary.z;
-
         vec3 normal = normalize(n1.xyz * bary.x + n2.xyz * bary.y + n3.xyz * bary.z);
 
         state.normal = normalize(transpose(inverse(mat3(transform))) * normal);

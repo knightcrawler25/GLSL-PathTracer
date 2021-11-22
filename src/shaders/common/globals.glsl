@@ -4,28 +4,31 @@
  * Copyright(c) 2019-2021 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this softwareand associated documentation files(the "Software"), to deal
+ * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions :
+ * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
 
-#define PI        3.14159265358979323
-#define TWO_PI    6.28318530717958648
-#define INFINITY  1000000.0
+#define PI         3.14159265358979323
+#define INV_PI     0.31830988618379067
+#define TWO_PI     6.28318530717958648
+#define INV_TWO_PI 0.15915494309189533
+#define INV_4_PI   0.07957747154594766
 #define EPS 0.001
+#define INF 1000000.0
 
 #define QUAD_LIGHT 0
 #define SPHERE_LIGHT 1
@@ -147,4 +150,9 @@ float rand()
 vec3 FaceForward(vec3 a, vec3 b)
 {
     return dot(a, b) < 0.0 ? -b : b;
+}
+
+float Luminance(vec3 c)
+{
+    return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
 }
