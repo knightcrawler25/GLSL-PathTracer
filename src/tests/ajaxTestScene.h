@@ -40,17 +40,17 @@ namespace GLSLPT
         int mesh_id = scene->AddMesh("./assets/ajax/ajax.obj");
 
         Material black;
-        black.albedo = Vec3(0.1f, 0.1f, 0.1f);
+        black.baseColor = Vec3(0.1f, 0.1f, 0.1f);
         black.roughness = 0.01f;
         black.metallic = 1.0f;
 
         Material red_plastic;
-        red_plastic.albedo = Vec3(1.0f, 0.0f, 0.0f);
+        red_plastic.baseColor = Vec3(1.0f, 0.0f, 0.0f);
         red_plastic.roughness = 0.01f;
         red_plastic.metallic = 0.0f;
 
         Material gold;
-        gold.albedo = Vec3(1.0f, 0.71f, 0.29f);
+        gold.baseColor = Vec3(1.0f, 0.71f, 0.29f);
         gold.roughness = 0.2f;
         gold.metallic = 1.0f;
 

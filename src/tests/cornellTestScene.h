@@ -48,13 +48,13 @@ namespace GLSLPT
         int smallbox_mesh_id = scene->AddMesh("./assets/cornell_box/cbox_smallbox.obj");
 
         Material white;
-        white.albedo = Vec3(0.725f, 0.71f, 0.68f);
+        white.baseColor = Vec3(0.725f, 0.71f, 0.68f);
 
         Material red;
-        red.albedo = Vec3(0.63f, 0.065f, 0.05f);
+        red.baseColor = Vec3(0.63f, 0.065f, 0.05f);
 
         Material green;
-        green.albedo = Vec3(0.14f, 0.45f, 0.091f);
+        green.baseColor = Vec3(0.14f, 0.45f, 0.091f);
 
         int white_mat_id = scene->AddMaterial(white);
         int red_mat_id   = scene->AddMaterial(red);

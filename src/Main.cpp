@@ -380,25 +380,20 @@ void MainLoop(void* arg)
             ImGui::Text("Materials");
 
             // Material Properties
-            Vec3 *albedo   = &scene->materials[scene->meshInstances[selectedInstance].materialID].albedo;
-            Vec3 *emission = &scene->materials[scene->meshInstances[selectedInstance].materialID].emission;
-            Vec3 *extinction = &scene->materials[scene->meshInstances[selectedInstance].materialID].extinction;
+            Material* mat = &scene->materials[scene->meshInstances[selectedInstance].materialID];
 
-            objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)albedo, 0);
-            objectPropChanged |= ImGui::SliderFloat("Metallic",  &scene->materials[scene->meshInstances[selectedInstance].materialID].metallic, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Roughness", &scene->materials[scene->meshInstances[selectedInstance].materialID].roughness, 0.001f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Specular", &scene->materials[scene->meshInstances[selectedInstance].materialID].specular, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("SpecularTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].specularTint, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Subsurface", &scene->materials[scene->meshInstances[selectedInstance].materialID].subsurface, 0.0f, 1.0f);
-            //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &scene->materials[scene->meshInstances[selectedInstance].materialID].anisotropic, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Sheen", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheen, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("SheenTint", &scene->materials[scene->meshInstances[selectedInstance].materialID].sheenTint, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Clearcoat", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoat, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("clearcoatGloss", &scene->materials[scene->meshInstances[selectedInstance].materialID].clearcoatGloss, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Transmission", &scene->materials[scene->meshInstances[selectedInstance].materialID].transmission, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Ior", &scene->materials[scene->meshInstances[selectedInstance].materialID].ior, 1.001f, 2.0f);
-            objectPropChanged |= ImGui::SliderFloat("atDistance", &scene->materials[scene->meshInstances[selectedInstance].materialID].atDistance, 0.05f, 10.0f);
-            objectPropChanged |= ImGui::ColorEdit3("Extinction", (float*)extinction, 0);
+            objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)(&mat->baseColor), 0);
+            objectPropChanged |= ImGui::SliderFloat("Metallic", &mat->metallic, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Roughness", &mat->roughness, 0.001f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("SpecularTint", &mat->specularTint, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Subsurface", &mat->subsurface, 0.0f, 1.0f);
+            //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &mat->anisotropic, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Sheen", &mat->sheen, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("SheenTint", &mat->sheenTint, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Clearcoat", &mat->clearcoat, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("clearcoatGloss", &mat->clearcoatGloss, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Transmission", &mat->specTrans, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("Ior", &mat->ior, 1.001f, 2.0f);
 
             // Transforms Properties
             ImGui::Separator();

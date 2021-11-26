@@ -96,19 +96,18 @@ namespace GLSLPT
                     if (strchr(line, '}'))
                         break;
 
-                    sscanf(line, " color %f %f %f", &material.albedo.x, &material.albedo.y, &material.albedo.z);
+                    sscanf(line, " color %f %f %f", &material.baseColor.x, &material.baseColor.y, &material.baseColor.z);
                     sscanf(line, " emission %f %f %f", &material.emission.x, &material.emission.y, &material.emission.z);
                     sscanf(line, " metallic %f", &material.metallic);
                     sscanf(line, " roughness %f", &material.roughness);
                     sscanf(line, " subsurface %f", &material.subsurface);
-                    sscanf(line, " specular %f", &material.specular);
                     sscanf(line, " specularTint %f", &material.specularTint);
                     sscanf(line, " anisotropic %f", &material.anisotropic);
                     sscanf(line, " sheen %f", &material.sheen);
                     sscanf(line, " sheenTint %f", &material.sheenTint);
                     sscanf(line, " clearcoat %f", &material.clearcoat);
                     sscanf(line, " clearcoatGloss %f", &material.clearcoatGloss);
-                    sscanf(line, " transmission %f", &material.transmission);
+                    sscanf(line, " transmission %f", &material.specTrans);
                     sscanf(line, " ior %f", &material.ior);
                     sscanf(line, " extinction %f %f %f", &material.extinction.x, &material.extinction.y, &material.extinction.z);
                     sscanf(line, " atDistance %f", &material.atDistance);

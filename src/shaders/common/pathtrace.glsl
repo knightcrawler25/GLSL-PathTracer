@@ -35,37 +35,36 @@ void GetMaterials(inout State state, in Ray r)
     vec4 param6 = texelFetch(materialsTex, ivec2(index + 5, 0), 0);
     vec4 param7 = texelFetch(materialsTex, ivec2(index + 6, 0), 0);
 
-    mat.albedo         = param1.xyz;
-    mat.specular       = param1.w;
+    mat.baseColor          = param1.xyz;
+                           
+    mat.emission           = param2.xyz;
+    mat.anisotropic        = param2.w;
+                           
+    mat.metallic           = param3.x;
+    mat.roughness          = max(param3.y, 0.001);
+                           
+    mat.subsurface         = param3.z;
+    mat.specularTint       = param3.w;
+                           
+    mat.sheen              = param4.x;
+    mat.sheenTint          = param4.y;
+    mat.clearcoat          = param4.z;
+    mat.clearcoatRoughness = mix(0.1, 0.001, param4.w); // Remapping from gloss to roughness
 
-    mat.emission       = param2.xyz;
-    mat.anisotropic    = param2.w;
-
-    mat.metallic       = param3.x;
-    mat.roughness      = max(param3.y, 0.001);
-
-    mat.subsurface     = param3.z;
-    mat.specularTint   = param3.w;
-
-    mat.sheen          = param4.x;
-    mat.sheenTint      = param4.y;
-    mat.clearcoat      = param4.z;
-    mat.clearcoatGloss = param4.w;
-
-    mat.specTrans      = param5.x;
-    mat.ior            = param5.y;
-    mat.atDistance     = param5.z;
-
-    mat.extinction     = param6.xyz;
-
-    vec3 texIDs        = param7.xyz;
+    mat.specTrans          = param5.x;
+    mat.ior                = param5.y;
+    mat.atDistance         = param5.z;
+                           
+    mat.extinction         = param6.xyz;
+                           
+    vec3 texIDs            = param7.xyz;
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
 
     // Albedo Map
     if (int(texIDs.x) >= 0)
-        mat.albedo *= pow(texture(textureMapsArrayTex, vec3(texUV, int(texIDs.x))).xyz, vec3(2.2));
+        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, int(texIDs.x))).xyz, vec3(2.2));
 
     // Metallic Roughness Map
     if (int(texIDs.y) >= 0)
@@ -131,7 +130,7 @@ vec3 DirectLight(in Ray r, in State state)
             {
                 float misWeight = PowerHeuristic(lightPdf, bsdfSampleRec.pdf);
                 if (misWeight > 0.0)
-                    Li += misWeight * bsdfSampleRec.f * abs(dot(lightDir, state.ffnormal)) * color / lightPdf;
+                    Li += misWeight * bsdfSampleRec.f * color / lightPdf;
             }
         }
     }
@@ -174,7 +173,7 @@ vec3 DirectLight(in Ray r, in State state)
                     weight = PowerHeuristic(lightSampleRec.pdf, bsdfSampleRec.pdf);
 
                 if (bsdfSampleRec.pdf > 0.0)
-                    Li += weight * bsdfSampleRec.f * abs(dot(state.ffnormal, lightSampleRec.direction)) * lightSampleRec.emission / lightSampleRec.pdf;
+                    Li += weight * bsdfSampleRec.f * lightSampleRec.emission / lightSampleRec.pdf;
             }
         }
     }
@@ -248,7 +247,7 @@ vec3 PathTrace(Ray r)
             absorption = -log(state.mat.extinction) / state.mat.atDistance;
 
         if (bsdfSampleRec.pdf > 0.0)
-            throughput *= bsdfSampleRec.f * abs(dot(state.ffnormal, bsdfSampleRec.L)) / bsdfSampleRec.pdf;
+            throughput *= bsdfSampleRec.f / bsdfSampleRec.pdf;
         else
             break;
 

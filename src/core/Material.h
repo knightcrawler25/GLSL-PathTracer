@@ -34,8 +34,8 @@ namespace GLSLPT
     public:
         Material()
         {
-            albedo   = Vec3(1.0f, 1.0f, 1.0f);
-            specular = 0.5f;
+            baseColor = Vec3(1.0f, 1.0f, 1.0f);
+            padding1  = 0.0f;
 
             emission    = Vec3(0.0f, 0.0f, 0.0f);
             anisotropic = 0.0f;
@@ -50,22 +50,22 @@ namespace GLSLPT
             clearcoat      = 0.0f;
             clearcoatGloss = 0.0f;
 
-            transmission = 0.0f;
+            specTrans = 0.0f;
             ior          = 1.45f;
             atDistance   = 1.0f;
-            padding1     = 0.0f;
+            padding2     = 0.0f;
 
             extinction    = Vec3(1.0f, 1.0f, 1.0f);
-            padding2      = 0.0f;
+            padding3      = 0.0f;
 
             albedoTexID            = -1.0f;
             metallicRoughnessTexID = -1.0f;
             normalmapTexID         = -1.0f;
-            padding3               =  0.0f;
+            padding4               =  0.0f;
         };
 
-        Vec3 albedo;
-        float specular;
+        Vec3 baseColor;
+        float padding1;
 
         Vec3 emission;
         float anisotropic;
@@ -80,17 +80,17 @@ namespace GLSLPT
         float clearcoat;
         float clearcoatGloss;
 
-        float transmission;
+        float specTrans;
         float ior;
         float atDistance;
-        float padding1;
+        float padding2;
 
         Vec3 extinction;
-        float padding2;
+        float padding3;
 
         float albedoTexID;
         float metallicRoughnessTexID;
         float normalmapTexID;
-        float padding3;
+        float padding4;
     };
 }

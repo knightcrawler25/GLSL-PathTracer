@@ -42,8 +42,7 @@ struct Ray
 
 struct Material
 {
-    vec3 albedo;
-    float specular;
+    vec3 baseColor;
     vec3 emission;
     float anisotropic;
     float metallic;
@@ -53,7 +52,7 @@ struct Material
     float sheen;
     float sheenTint;
     float clearcoat;
-    float clearcoatGloss;
+    float clearcoatRoughness;
     float specTrans;
     float ior;
     float atDistance;
