@@ -57,40 +57,33 @@ void GetMaterials(inout State state, in Ray r)
                            
     mat.extinction         = param6.xyz;
                            
-    vec3 texIDs            = param7.xyz;
+    ivec3 texIDs           = ivec3(param7.xyz);
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
 
     // Albedo Map
-    if (int(texIDs.x) >= 0)
-        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, int(texIDs.x))).xyz, vec3(2.2));
+    if (texIDs.x >= 0)
+        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.x)).xyz, vec3(2.2));
 
     // Metallic Roughness Map
-    if (int(texIDs.y) >= 0)
+    if (texIDs.y >= 0)
     {
         vec2 matRgh;
         // TODO: Change metallic roughness maps in repo to linear space and remove gamma correction
-        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, int(texIDs.y))).xy, vec2(2.2));
+        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.y)).xy, vec2(2.2));
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y, 0.001);
     }
 
     // Normal Map
-    // FIXME: Output when using a normal map doesn't match up with Cycles (Blender) output
-    if (int(texIDs.z) >= 0)
+    if (texIDs.z >= 0)
     {
-        vec3 nrm = texture(textureMapsArrayTex, vec3(texUV, int(texIDs.z))).xyz;
-        nrm = normalize(nrm * 2.0 - 1.0);
+        vec3 texNormal = texture(textureMapsArrayTex, vec3(texUV, texIDs.z)).xyz;
+        texNormal = normalize(texNormal * 2.0 - 1.0);
 
-        vec3 T, B;
-        Onb(state.normal, T, B);
-
-        nrm = T * nrm.x + B * nrm.y + state.normal * nrm.z;
-        state.normal = normalize(nrm);
-        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
-
-        Onb(state.normal, state.tangent, state.bitangent);
+        state.normal = normalize(state.tangent * texNormal.x + state.bitangent * texNormal.y + state.ffnormal * texNormal.z);
+        state.ffnormal = normalize(state.normal);
     }
 
     // Commented out the following as anisotropic param is temporarily unused.
@@ -220,6 +213,13 @@ vec3 PathTrace(Ray r)
         }
 
         GetMaterials(state, r);
+
+        //vec3 T, B;
+        //Onb(state.ffnormal, T, B);
+        //radiance += T;
+        //radiance += state.ffnormal.xzy * vec3(1,-1,1);
+        //radiance += vec3(state.texCoord, 1.0);
+        //return radiance;
 
         // Reset absorption when ray is going out of surface
         if (dot(state.normal, state.ffnormal) > 0.0)

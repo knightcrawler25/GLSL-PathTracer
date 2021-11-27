@@ -97,8 +97,8 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
     ivec3 triID = ivec3(-1);
     mat4 transMat;
     mat4 transform;
-    vec3 texCoords;
     vec3 bary;
+    vec4 vert0, vert1, vert2;
 
     Ray rTrans;
     rTrans.origin = r.origin;
@@ -143,7 +143,7 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
                     triID = vertIndices;
                     state.matID = currMatID;
                     bary = uvt.wxy;
-                    texCoords = vec3(v0.w, v1.w, v2.w);
+                    vert0 = v0, vert1 = v1, vert2 = v2;
                     transform = transMat;
                 }
             }
@@ -227,23 +227,36 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         state.isEmitter = false;
 
         // Normals
-        vec4 n1 = texelFetch(normalsTex, triID.x);
-        vec4 n2 = texelFetch(normalsTex, triID.y);
-        vec4 n3 = texelFetch(normalsTex, triID.z);
+        vec4 n0 = texelFetch(normalsTex, triID.x);
+        vec4 n1 = texelFetch(normalsTex, triID.y);
+        vec4 n2 = texelFetch(normalsTex, triID.z);
 
-        // Get tex coords
-        vec2 t1 = vec2(texCoords.x, n1.w);
-        vec2 t2 = vec2(texCoords.y, n2.w);
-        vec2 t3 = vec2(texCoords.z, n3.w);
+        // Get texcoords from w coord of vertices and normals
+        vec2 t0 = vec2(vert0.w, n0.w);
+        vec2 t1 = vec2(vert1.w, n1.w);
+        vec2 t2 = vec2(vert2.w, n2.w);
 
-        // Interpolate using barcentric coords
-        state.texCoord = t1 * bary.x + t2 * bary.y + t3 * bary.z;
-        vec3 normal = normalize(n1.xyz * bary.x + n2.xyz * bary.y + n3.xyz * bary.z);
+        // Interpolate texture coords and normals using barycentric coords
+        state.texCoord = t0 * bary.x + t1 * bary.y + t2 * bary.z;
+        vec3 normal = normalize(n0.xyz * bary.x + n1.xyz * bary.y + n2.xyz * bary.z);
 
         state.normal = normalize(transpose(inverse(mat3(transform))) * normal);
         state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
 
-        Onb(state.normal, state.tangent, state.bitangent);
+        // Calculate tangent and bitangent
+        vec3 deltaPos1 = vert1.xyz - vert0.xyz;
+        vec3 deltaPos2 = vert2.xyz - vert0.xyz;
+
+        vec2 deltaUV1 = t1 - t0;
+        vec2 deltaUV2 = t2 - t0;
+
+        float invdet = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
+
+        state.tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * invdet;
+        state.bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * invdet;
+
+        state.tangent = normalize(mat3(transform) * state.tangent);
+        state.bitangent = normalize(mat3(transform) * state.bitangent);
     }
 
     return true;

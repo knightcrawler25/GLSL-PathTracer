@@ -391,7 +391,7 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("Sheen", &mat->sheen, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SheenTint", &mat->sheenTint, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Clearcoat", &mat->clearcoat, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("clearcoatGloss", &mat->clearcoatGloss, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("ClearcoatGloss", &mat->clearcoatGloss, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Transmission", &mat->specTrans, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Ior", &mat->ior, 1.001f, 2.0f);
 

@@ -71,8 +71,8 @@ vec3 EvalSpecReflection(Material mat, float eta, vec3 specCol, vec3 V, vec3 N, v
     if (dot(N, L) <= 0.0)
         return vec3(0.0);
 
-    float FMix = FresnelMix(mat, eta, V, L, H);
-    vec3 F = mix(specCol, vec3(1.0), FMix);
+    float FM = FresnelMix(mat, eta, V, L, H);
+    vec3 F = mix(specCol, vec3(1.0), FM);
     float D = GTR2(dot(N, H), mat.roughness);
     float G = SmithG(abs(dot(N, L)), mat.roughness)
             * SmithG(abs(dot(N, V)), mat.roughness);

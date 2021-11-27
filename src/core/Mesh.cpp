@@ -51,11 +51,10 @@ namespace GLSLPT
             // Loop over faces(polygon)
             size_t index_offset = 0;
 
-            for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) 
+            for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
             {
-                int fv = shapes[s].mesh.num_face_vertices[f];
                 // Loop over vertices in the face.
-                for (size_t v = 0; v < fv; v++)
+                for (size_t v = 0; v < 3; v++)
                 {
                     // access to vertex
                     tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
@@ -68,7 +67,6 @@ namespace GLSLPT
 
                     tinyobj::real_t tx, ty;
                     
-                    // temporary fix
                     if (!attrib.texcoords.empty())
                     {
                         tx = attrib.texcoords[2 * idx.texcoord_index + 0];
@@ -76,14 +74,19 @@ namespace GLSLPT
                     }
                     else
                     {
-                        tx = ty = 0;
+                        if (v == 0)
+                            tx = ty = 0;
+                        else if (v == 1)
+                            tx = 0, ty = 1;
+                        else
+                            tx = ty = 1;
                     }
 
                     verticesUVX.push_back(Vec4(vx, vy, vz, tx));
                     normalsUVY.push_back(Vec4(nx, ny, nz, ty));
                 }
     
-                index_offset += fv;
+                index_offset += 3;
             }
         }
 
