@@ -138,7 +138,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
     // Compute specular color
     float lum = Luminance(state.mat.baseColor);
     vec3 ctint = lum > 0.0 ? state.mat.baseColor / lum : vec3(1.0f);
-    float F0 = (1.0 - state.mat.ior) / (1.0 + state.mat.ior);
+    float F0 = state.eta < 1.0 ? (1.0 - state.mat.ior) / (1.0 + state.mat.ior) : (state.mat.ior - 1.0) / (state.mat.ior + 1.0);
     vec3 specCol = mix(F0 * F0 * mix(vec3(1.0), ctint, state.mat.specularTint), state.mat.baseColor, state.mat.metallic);
     vec3 csheen = mix(vec3(1.0), ctint, state.mat.sheenTint);
 
@@ -234,7 +234,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
     // Compute specular color
     float lum = Luminance(state.mat.baseColor);
     vec3 ctint = lum > 0.0 ? state.mat.baseColor / lum : vec3(1.0f);
-    float F0 = (1.0 - state.mat.ior) / (1.0 + state.mat.ior);
+    float F0 = state.eta < 1.0 ? (1.0 - state.mat.ior) / (1.0 + state.mat.ior) : (state.mat.ior - 1.0) / (state.mat.ior + 1.0);
     vec3 specCol = mix(F0 * F0 * mix(vec3(1.0), ctint, state.mat.specularTint), state.mat.baseColor, state.mat.metallic);
     vec3 csheen = mix(vec3(1.0), ctint, state.mat.sheenTint);
 

@@ -57,34 +57,36 @@ void GetMaterials(inout State state, in Ray r)
                            
     mat.extinction         = param6.xyz;
                            
-    ivec3 texIDs           = ivec3(param7.xyz);
+    ivec4 texIDs           = ivec4(param7);
 
     vec2 texUV = state.texCoord;
     texUV.y = 1.0 - texUV.y;
 
     // Albedo Map
     if (texIDs.x >= 0)
-        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.x)).xyz, vec3(2.2));
+        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.x)).rgb, vec3(2.2));
 
     // Metallic Roughness Map
     if (texIDs.y >= 0)
     {
-        vec2 matRgh;
-        // TODO: Change metallic roughness maps in repo to linear space and remove gamma correction
-        matRgh = pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.y)).xy, vec2(2.2));
+        vec2 matRgh = texture(textureMapsArrayTex, vec3(texUV, texIDs.y)).rg;
         mat.metallic = matRgh.x;
-        mat.roughness = max(matRgh.y, 0.001);
+        mat.roughness = max(matRgh.y * matRgh.y, 0.001);
     }
 
     // Normal Map
     if (texIDs.z >= 0)
     {
-        vec3 texNormal = texture(textureMapsArrayTex, vec3(texUV, texIDs.z)).xyz;
+        vec3 texNormal = texture(textureMapsArrayTex, vec3(texUV, texIDs.z)).rgb;
         texNormal = normalize(texNormal * 2.0 - 1.0);
 
         state.normal = normalize(state.tangent * texNormal.x + state.bitangent * texNormal.y + state.ffnormal * texNormal.z);
         state.ffnormal = normalize(state.normal);
     }
+
+    // Emission Map
+    if (texIDs.w >= 0)
+        mat.emission = pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.w)).rgb, vec3(2.2));
 
     // Commented out the following as anisotropic param is temporarily unused.
     // Calculate anisotropic roughness along the tangent and bitangent directions
@@ -93,7 +95,7 @@ void GetMaterials(inout State state, in Ray r)
     // mat.ay = max(0.001, mat.roughness * aspect);
 
     state.mat = mat;
-    state.eta = dot(state.normal, state.ffnormal) > 0.0 ? (1.0 / mat.ior) : mat.ior;
+    state.eta = dot(r.direction, state.normal) < 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
 vec3 DirectLight(in Ray r, in State state)
@@ -213,13 +215,6 @@ vec3 PathTrace(Ray r)
         }
 
         GetMaterials(state, r);
-
-        //vec3 T, B;
-        //Onb(state.ffnormal, T, B);
-        //radiance += T;
-        //radiance += state.ffnormal.xzy * vec3(1,-1,1);
-        //radiance += vec3(state.texCoord, 1.0);
-        //return radiance;
 
         // Reset absorption when ray is going out of surface
         if (dot(state.normal, state.ffnormal) > 0.0)

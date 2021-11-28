@@ -30,6 +30,17 @@
 
 namespace GLSLPT
 {
+    float sphericalTheta(const Vec3& v) 
+    {
+        return acosf(Math::Clamp(v.y, -1.f, 1.f));
+    }
+
+    float sphericalPhi(const Vec3& v) 
+    {
+        float p = atan2f(v.z, v.x);
+        return (p < 0.f) ? p + 2.f * PI : p;
+    }
+
     bool Mesh::LoadFromFile(const std::string &filename)
     {
         name = filename;
@@ -89,6 +100,20 @@ namespace GLSLPT
                 index_offset += 3;
             }
         }
+
+        /*Vec3 center = Vec3(0.0, 0.0, 0.0);
+
+        for (int i = 0; i < verticesUVX.size(); i++)
+            center = center + Vec3(verticesUVX[i]);
+        center = center * (1.0 / verticesUVX.size());
+            
+        for (int i = 0; i < verticesUVX.size(); i++)
+        {
+            Vec3 diff = Vec3(verticesUVX[i]) - center;
+            diff = Vec3::Normalize(diff);
+            verticesUVX[i].w = sphericalTheta(diff) * (1.0 / PI);
+            normalsUVY[i].w = sphericalPhi(diff) * (1.0 / (2.0 * PI));
+        }*/
 
         return true;
     }

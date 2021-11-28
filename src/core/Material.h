@@ -61,7 +61,7 @@ namespace GLSLPT
             albedoTexID            = -1.0f;
             metallicRoughnessTexID = -1.0f;
             normalmapTexID         = -1.0f;
-            padding4               =  0.0f;
+            emissionmapTexID       = -1.0f;
         };
 
         Vec3 baseColor;
@@ -91,6 +91,6 @@ namespace GLSLPT
         float albedoTexID;
         float metallicRoughnessTexID;
         float normalmapTexID;
-        float padding4;
+        float emissionmapTexID;
     };
 }
