@@ -113,6 +113,15 @@ vec3 EvalClearcoat(Material mat, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf
     return vec3(0.25 * mat.clearcoat * F * D * G);
 }
 
+void GetSpecColor(Material mat, float eta, inout vec3 specCol, inout vec3 sheenCol)
+{
+    float lum = Luminance(mat.baseColor);
+    vec3 ctint = lum > 0.0 ? mat.baseColor / lum : vec3(1.0f);
+    float F0 = (1.0 - eta) / (1.0 + eta);
+    specCol = mix(F0 * F0 * mix(vec3(1.0), ctint, mat.specularTint), mat.baseColor, mat.metallic);
+    sheenCol = mix(vec3(1.0), ctint, mat.sheenTint);
+}
+
 void GetLobeProbabilities(Material mat, float eta, vec3 specCol, float approxFresnel, inout float diffuseWt, inout float specReflectWt, inout float specRefractWt, inout float clearcoatWt)
 {
     diffuseWt = Luminance(mat.baseColor) * (1.0 - mat.metallic) * (1.0 - mat.specTrans);
@@ -135,12 +144,9 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
     float r1 = rand();
     float r2 = rand();
 
-    // Compute specular color
-    float lum = Luminance(state.mat.baseColor);
-    vec3 ctint = lum > 0.0 ? state.mat.baseColor / lum : vec3(1.0f);
-    float F0 = state.eta < 1.0 ? (1.0 - state.mat.ior) / (1.0 + state.mat.ior) : (state.mat.ior - 1.0) / (state.mat.ior + 1.0);
-    vec3 specCol = mix(F0 * F0 * mix(vec3(1.0), ctint, state.mat.specularTint), state.mat.baseColor, state.mat.metallic);
-    vec3 csheen = mix(vec3(1.0), ctint, state.mat.sheenTint);
+    // Specular and sheen color
+    vec3 specCol, sheenCol;
+    GetSpecColor(state.mat, state.eta, specCol, sheenCol);
 
     // Lobe weights
     float diffuseWt, specReflectWt, specRefractWt, clearcoatWt;
@@ -165,7 +171,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
 
         vec3 H = normalize(L + V);
 
-        f = EvalDiffuse(state.mat, csheen, V, N, L, H, pdf);
+        f = EvalDiffuse(state.mat, sheenCol, V, N, L, H, pdf);
         pdf *= diffuseWt;
     }
     else if (r1 < cdf[1]) // Specular Reflection Lobe
@@ -174,7 +180,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
         vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
         H = T * H.x + B * H.y + N * H.z;
 
-        if (dot(V, H) <= 0.0)
+        if (dot(V, H) < 0.0)
             H = -H;
 
         L = normalize(reflect(-V, H));
@@ -188,7 +194,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
         vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
         H = T * H.x + B * H.y + N * H.z;
 
-        if (dot(V, H) <= 0.0)
+        if (dot(V, H) < 0.0)
             H = -H;
 
         L = normalize(refract(-V, H, state.eta));
@@ -202,7 +208,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
         vec3 H = SampleGTR1(state.mat.clearcoatRoughness, r1, r2);
         H = T * H.x + B * H.y + N * H.z;
 
-        if (dot(V, H) <= 0.0)
+        if (dot(V, H) < 0.0)
             H = -H;
 
         L = normalize(reflect(-V, H));
@@ -231,12 +237,9 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
     if (dot(V, H) < 0.0)
         H = -H;
 
-    // Compute specular color
-    float lum = Luminance(state.mat.baseColor);
-    vec3 ctint = lum > 0.0 ? state.mat.baseColor / lum : vec3(1.0f);
-    float F0 = state.eta < 1.0 ? (1.0 - state.mat.ior) / (1.0 + state.mat.ior) : (state.mat.ior - 1.0) / (state.mat.ior + 1.0);
-    vec3 specCol = mix(F0 * F0 * mix(vec3(1.0), ctint, state.mat.specularTint), state.mat.baseColor, state.mat.metallic);
-    vec3 csheen = mix(vec3(1.0), ctint, state.mat.sheenTint);
+    // Specular and sheen color
+    vec3 specCol, sheenCol;
+    GetSpecColor(state.mat, state.eta, specCol, sheenCol);
 
     // Lobe weights
     float diffuseWt, specReflectWt, specRefractWt, clearcoatWt;
@@ -248,7 +251,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
     // Diffuse
     if (diffuseWt > 0.0 && NDotL > 0.0)
     {
-        f += EvalDiffuse(state.mat, csheen, V, N, L, H, pdf);
+        f += EvalDiffuse(state.mat, sheenCol, V, N, L, H, pdf);
         bsdfPdf += pdf * diffuseWt;
     }
 
