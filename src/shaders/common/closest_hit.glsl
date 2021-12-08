@@ -241,7 +241,7 @@ bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
         vec3 normal = normalize(n0.xyz * bary.x + n1.xyz * bary.y + n2.xyz * bary.z);
 
         state.normal = normalize(transpose(inverse(mat3(transform))) * normal);
-        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : state.normal * -1.0;
+        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : -state.normal;
 
         // Calculate tangent and bitangent
         vec3 deltaPos1 = vert1.xyz - vert0.xyz;

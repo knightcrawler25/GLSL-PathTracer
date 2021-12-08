@@ -80,8 +80,9 @@ void GetMaterials(inout State state, in Ray r)
         vec3 texNormal = texture(textureMapsArrayTex, vec3(texUV, texIDs.z)).rgb;
         texNormal = normalize(texNormal * 2.0 - 1.0);
 
-        state.normal = normalize(state.tangent * texNormal.x + state.bitangent * texNormal.y + state.ffnormal * texNormal.z);
-        state.ffnormal = normalize(state.normal);
+        vec3 origNormal = state.normal;
+        state.normal = normalize(state.tangent * texNormal.x + state.bitangent * texNormal.y + state.normal * texNormal.z);
+        state.ffnormal = dot(origNormal, r.direction) <= 0.0 ? state.normal : -state.normal;
     }
 
     // Emission Map
