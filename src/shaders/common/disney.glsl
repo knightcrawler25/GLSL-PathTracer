@@ -28,9 +28,9 @@
  * [3] https://github.com/wdas/brdf/blob/main/src/brdfs/disney.brdf
  * [4] https://github.com/mmacklin/tinsel/blob/master/src/disney.h
  * [5] http://simon-kallweit.me/rendercompo2015/report/
- * [6] http://shihchinw.github.io/2015/07/implementing-disney-principled-brdf-in-arnold.html
- * [7] https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
- * [8] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ * [6] https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
+ * [7] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ * [8] https://jcgt.org/published/0007/04/01/paper.pdf
  */
 
 vec3 ToWorld(vec3 X, vec3 Y, vec3 Z, vec3 V)
@@ -84,11 +84,12 @@ vec3 EvalSpecReflection(Material mat, float eta, vec3 specCol, vec3 V, vec3 L, v
     float FM = FresnelMix(mat, eta, V, L, H);
     vec3 F = mix(specCol, vec3(1.0), FM);
     float D = GTR2(H.z, mat.roughness);
-    float G = SmithG(abs(L.z), mat.roughness)
-            * SmithG(abs(V.z), mat.roughness);
+    float G1 = SmithG(abs(V.z), mat.roughness);
+    float G2 = G1 * SmithG(abs(L.z), mat.roughness);
+    float jacobian = 1.0 / (4.0 * dot(V, H));
 
-    pdf = D * H.z / (4.0 * abs(dot(V, H)));
-    return F * D * G;
+    pdf = G1 * max(0.0, dot(V, H)) * D * jacobian / V.z;
+    return F * D * G2 / (4.0 * L.z * V.z);
 }
 
 vec3 EvalSpecRefraction(Material mat, float eta, vec3 V, vec3 L, vec3 H, inout float pdf)
@@ -99,13 +100,16 @@ vec3 EvalSpecRefraction(Material mat, float eta, vec3 V, vec3 L, vec3 H, inout f
 
     float F = DielectricFresnel(abs(dot(V, H)), eta);
     float D = GTR2(H.z, mat.roughness);
-    float denomSqrt = dot(L, H) + dot(V, H) * eta;
-    float G = SmithG(abs(L.z), mat.roughness) 
-            * SmithG(abs(V.z), mat.roughness);
+    float denom = dot(L, H) + dot(V, H) * eta; 
+    denom *= denom;
+    float G1 = SmithG(abs(V.z), mat.roughness);
+    float G2 = G1 * SmithG(abs(L.z), mat.roughness);
+    float jacobian = abs(dot(L, H)) * eta * eta / denom;
 
-    pdf = D * H.z * abs(dot(L, H)) / (denomSqrt * denomSqrt);
+    pdf = G1 * max(0.0, dot(V, H)) * D * jacobian / V.z;
+    
     vec3 specColor = pow(mat.baseColor, vec3(0.5));
-    return specColor * (1.0 - mat.metallic) * mat.specTrans * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * eta * eta * 4.0 / (denomSqrt * denomSqrt);
+    return specColor * (1.0 - mat.metallic) * mat.specTrans * (1.0 - F) * D * G2 * abs(dot(V, H)) * abs(dot(L, H)) * eta * eta / (denom * abs(L.z) * abs(V.z));
 }
 
 vec3 EvalClearcoat(Material mat, vec3 V, vec3 L, vec3 H, inout float pdf)
@@ -119,8 +123,10 @@ vec3 EvalClearcoat(Material mat, vec3 V, vec3 L, vec3 H, inout float pdf)
     float D = GTR1(H.z, mat.clearcoatRoughness);
     float G = SmithG(L.z, 0.25) 
             * SmithG(V.z, 0.25);
-    pdf = D * H.z / (4.0 * dot(V, H));
-    return vec3(0.25 * mat.clearcoat * F * D * G);
+    float jacobian = 1.0 / (4.0 * dot(V, H));
+
+    pdf = D * H.z * jacobian;
+    return vec3(0.25) * mat.clearcoat * F * D * G / (4.0 * L.z * V.z);
 }
 
 void GetSpecColor(Material mat, float eta, inout vec3 specCol, inout vec3 sheenCol)
@@ -188,7 +194,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
     else if (r1 < cdf[1]) // Specular Reflection Lobe
     {
         r1 = (r1 - cdf[0]) / (cdf[1] - cdf[0]);
-        vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
+        vec3 H = SampleGGXVNDF(V, state.mat.roughness, r1, r2);
 
         if (dot(V, H) < 0.0)
             H = -H;
@@ -201,7 +207,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
     else if (r1 < cdf[2]) // Specular Refraction Lobe
     {
         r1 = (r1 - cdf[1]) / (cdf[2] - cdf[1]);
-        vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
+        vec3 H = SampleGGXVNDF(V, state.mat.roughness, r1, r2);
 
         if (dot(V, H) < 0.0)
             H = -H;
