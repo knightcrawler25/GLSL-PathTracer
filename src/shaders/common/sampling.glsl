@@ -67,6 +67,27 @@ vec3 SampleGTR2(float rgh, float r1, float r2)
     return vec3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
 }
 
+vec3 sampleGGXVNDF(vec3 V, float rgh, float r1, float r2)
+{
+
+    vec3 Vh = normalize(vec3(rgh * V.x, rgh * V.y, V.z));
+
+    float lensq = Vh.x * Vh.x + Vh.y * Vh.y;
+    vec3 T1 = lensq > 0 ? vec3(-Vh.y, Vh.x, 0) * inversesqrt(lensq) : vec3(1, 0, 0);
+    vec3 T2 = cross(Vh, T1);
+
+    float r = sqrt(r1);
+    float phi = 2.0 * M_PI * r2;
+    float t1 = r * cos(phi);
+    float t2 = r * sin(phi);
+    float s = 0.5 * (1.0 + Vh.z);
+    t2 = (1.0 - s) * sqrt(1.0 - t1 * t1) + s * t2;
+
+    vec3 Nh = t1 * T1 + t2 * T2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * Vh;
+
+    return normalize(vec3(rgh * Nh.x, rgh * Nh.y, std::max<float>(0.0, Nh.z)));
+}
+
 float GTR2Aniso(float NDotH, float HDotX, float HDotY, float ax, float ay)
 {
     float a = HDotX / ax;

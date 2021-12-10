@@ -33,6 +33,16 @@
  * [8] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
  */
 
+vec3 ToWorld(vec3 X, vec3 Y, vec3 Z, vec3 V)
+{
+    return V.x * X + V.y * Y + V.z * Z;
+}
+
+vec3 ToLocal(vec3 X, vec3 Y, vec3 Z, vec3 V)
+{
+    return vec3(dot(V, X), dot(V, Y), dot(V, Z));
+}
+
 float FresnelMix(Material mat, float eta, vec3 V, vec3 L, vec3 H)
 {
     float metallicFresnel = SchlickFresnel(abs(dot(L, H)));
@@ -40,15 +50,15 @@ float FresnelMix(Material mat, float eta, vec3 V, vec3 L, vec3 H)
     return mix(dielectricFresnel, metallicFresnel, mat.metallic);
 }
 
-vec3 EvalDiffuse(Material mat, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
+vec3 EvalDiffuse(Material mat, vec3 Csheen, vec3 V, vec3 L, vec3 H, inout float pdf)
 {
     pdf = 0.0;
-    if (dot(N, L) <= 0.0)
+    if (L.z <= 0.0)
         return vec3(0.0);
 
     // Diffuse
-    float FL = SchlickFresnel(dot(N, L));
-    float FV = SchlickFresnel(dot(N, V));
+    float FL = SchlickFresnel(L.z);
+    float FV = SchlickFresnel(V.z);
     float FH = SchlickFresnel(dot(L, H));
     float Fd90 = 0.5 + 2.0 * dot(L, H) * dot(L, H) * mat.roughness;
     float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
@@ -56,60 +66,60 @@ vec3 EvalDiffuse(Material mat, vec3 Csheen, vec3 V, vec3 N, vec3 L, vec3 H, inou
     // Fake Subsurface TODO: Replace with volumetric scattering
     float Fss90 = dot(L, H) * dot(L, H) * mat.roughness;
     float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
-    float ss = 1.25 * (Fss * (1.0 / (dot(N, L) + dot(N, V)) - 0.5) + 0.5);
+    float ss = 1.25 * (Fss * (1.0 / (L.z + V.z) - 0.5) + 0.5);
 
     // Sheen
     vec3 Fsheen = FH * mat.sheen * Csheen;
 
-    pdf = dot(N, L) * INV_PI;
+    pdf = L.z * INV_PI;
     return (INV_PI * mix(Fd, ss, mat.subsurface) * mat.baseColor + Fsheen) * (1.0 - mat.metallic) * (1.0 - mat.specTrans);
 }
 
-vec3 EvalSpecReflection(Material mat, float eta, vec3 specCol, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
+vec3 EvalSpecReflection(Material mat, float eta, vec3 specCol, vec3 V, vec3 L, vec3 H, inout float pdf)
 {
     pdf = 0.0;
-    if (dot(N, L) <= 0.0)
+    if (L.z <= 0.0)
         return vec3(0.0);
 
     float FM = FresnelMix(mat, eta, V, L, H);
     vec3 F = mix(specCol, vec3(1.0), FM);
-    float D = GTR2(dot(N, H), mat.roughness);
-    float G = SmithG(abs(dot(N, L)), mat.roughness)
-            * SmithG(abs(dot(N, V)), mat.roughness);
+    float D = GTR2(H.z, mat.roughness);
+    float G = SmithG(abs(L.z), mat.roughness)
+            * SmithG(abs(V.z), mat.roughness);
 
-    pdf = D * dot(N, H) / (4.0 * abs(dot(V, H)));
+    pdf = D * H.z / (4.0 * abs(dot(V, H)));
     return F * D * G;
 }
 
-vec3 EvalSpecRefraction(Material mat, float eta, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
+vec3 EvalSpecRefraction(Material mat, float eta, vec3 V, vec3 L, vec3 H, inout float pdf)
 {
     pdf = 0.0;
-    if (dot(N, L) >= 0.0)
+    if (L.z >= 0.0)
         return vec3(0.0);
 
     float F = DielectricFresnel(abs(dot(V, H)), eta);
-    float D = GTR2(dot(N, H), mat.roughness);
+    float D = GTR2(H.z, mat.roughness);
     float denomSqrt = dot(L, H) + dot(V, H) * eta;
-    float G = SmithG(abs(dot(N, L)), mat.roughness) 
-            * SmithG(abs(dot(N, V)), mat.roughness);
+    float G = SmithG(abs(L.z), mat.roughness) 
+            * SmithG(abs(V.z), mat.roughness);
 
-    pdf = D * dot(N, H) * abs(dot(L, H)) / (denomSqrt * denomSqrt);
+    pdf = D * H.z * abs(dot(L, H)) / (denomSqrt * denomSqrt);
     vec3 specColor = pow(mat.baseColor, vec3(0.5));
     return specColor * (1.0 - mat.metallic) * mat.specTrans * (1.0 - F) * D * G * abs(dot(V, H)) * abs(dot(L, H)) * eta * eta * 4.0 / (denomSqrt * denomSqrt);
 }
 
-vec3 EvalClearcoat(Material mat, vec3 V, vec3 N, vec3 L, vec3 H, inout float pdf)
+vec3 EvalClearcoat(Material mat, vec3 V, vec3 L, vec3 H, inout float pdf)
 {
     pdf = 0.0;
-    if (dot(N, L) <= 0.0)
+    if (L.z <= 0.0)
         return vec3(0.0);
 
     float FH = DielectricFresnel(dot(V, H), 1.0 / 1.5);
     float F = mix(0.04, 1.0, FH);
-    float D = GTR1(dot(N, H), mat.clearcoatRoughness);
-    float G = SmithG(dot(N, L), 0.25) 
-            * SmithG(dot(N, V), 0.25);
-    pdf = D * dot(N, H) / (4.0 * dot(V, H));
+    float D = GTR1(H.z, mat.clearcoatRoughness);
+    float G = SmithG(L.z, 0.25) 
+            * SmithG(V.z, 0.25);
+    pdf = D * H.z / (4.0 * dot(V, H));
     return vec3(0.25 * mat.clearcoat * F * D * G);
 }
 
@@ -162,61 +172,60 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
 
     vec3 T, B;
     Onb(N, T, B);
+    // NDotL = L.z; NDotV = V.z; NDotH = H.z
+    V = ToLocal(T, B, N, V);
 
     if(r1 < cdf[0]) // Diffuse Reflection Lobe
     {
         r1 /= cdf[0];
         L = CosineSampleHemisphere(r1, r2);
-        L = T * L.x + B * L.y + N * L.z;
 
         vec3 H = normalize(L + V);
 
-        f = EvalDiffuse(state.mat, sheenCol, V, N, L, H, pdf);
+        f = EvalDiffuse(state.mat, sheenCol, V, L, H, pdf);
         pdf *= diffuseWt;
     }
     else if (r1 < cdf[1]) // Specular Reflection Lobe
     {
         r1 = (r1 - cdf[0]) / (cdf[1] - cdf[0]);
         vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
-        H = T * H.x + B * H.y + N * H.z;
 
         if (dot(V, H) < 0.0)
             H = -H;
 
         L = normalize(reflect(-V, H));
 
-        f = EvalSpecReflection(state.mat, state.eta, specCol, V, N, L, H, pdf);
+        f = EvalSpecReflection(state.mat, state.eta, specCol, V, L, H, pdf);
         pdf *= specReflectWt;
     }
     else if (r1 < cdf[2]) // Specular Refraction Lobe
     {
         r1 = (r1 - cdf[1]) / (cdf[2] - cdf[1]);
         vec3 H = SampleGTR2(state.mat.roughness, r1, r2);
-        H = T * H.x + B * H.y + N * H.z;
 
         if (dot(V, H) < 0.0)
             H = -H;
 
         L = normalize(refract(-V, H, state.eta));
 
-        f = EvalSpecRefraction(state.mat, state.eta, V, N, L, H, pdf);
+        f = EvalSpecRefraction(state.mat, state.eta, V, L, H, pdf);
         pdf *= specRefractWt;
     }
     else // Clearcoat Lobe
     {
         r1 = (r1 - cdf[2]) / (1.0 - cdf[2]);
         vec3 H = SampleGTR1(state.mat.clearcoatRoughness, r1, r2);
-        H = T * H.x + B * H.y + N * H.z;
 
         if (dot(V, H) < 0.0)
             H = -H;
 
         L = normalize(reflect(-V, H));
 
-        f = EvalClearcoat(state.mat, V, N, L, H, pdf);
+        f = EvalClearcoat(state.mat, V, L, H, pdf);
         pdf *= clearcoatWt;
     }
 
+    L = ToWorld(T, B, N, L);
     return f * abs(dot(N, L));
 }
 
@@ -225,11 +234,14 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
     bsdfPdf = 0.0;
     vec3 f = vec3(0.0);
 
-    float NDotL = dot(N, L);
-    float NDotV = dot(N, V);
+    vec3 T, B;
+    Onb(N, T, B);
+    // NDotL = L.z; NDotV = V.z; NDotH = H.z
+    V = ToLocal(T, B, N, V);
+    L = ToLocal(T, B, N, L);
 
     vec3 H;
-    if (NDotL > 0.0)
+    if (L.z > 0.0)
         H = normalize(L + V);
     else
         H = normalize(L + V * state.eta);
@@ -249,32 +261,32 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
     float pdf;
 
     // Diffuse
-    if (diffuseWt > 0.0 && NDotL > 0.0)
+    if (diffuseWt > 0.0 && L.z > 0.0)
     {
-        f += EvalDiffuse(state.mat, sheenCol, V, N, L, H, pdf);
+        f += EvalDiffuse(state.mat, sheenCol, V, L, H, pdf);
         bsdfPdf += pdf * diffuseWt;
     }
 
     // Specular Reflection
-    if (specReflectWt > 0.0 && NDotL > 0.0 && NDotV > 0.0)
+    if (specReflectWt > 0.0 && L.z > 0.0 && V.z > 0.0)
     {
-        f += EvalSpecReflection(state.mat, state.eta, specCol, V, N, L, H, pdf);
+        f += EvalSpecReflection(state.mat, state.eta, specCol, V, L, H, pdf);
         bsdfPdf += pdf * specReflectWt;
     }
 
     // Specular Refraction
-    if (specRefractWt > 0.0 && NDotL < 0.0)
+    if (specRefractWt > 0.0 && L.z < 0.0)
     {
-        f += EvalSpecRefraction(state.mat, state.eta, V, N, L, H, pdf);
+        f += EvalSpecRefraction(state.mat, state.eta, V, L, H, pdf);
         bsdfPdf += pdf * specRefractWt;
     }
 
     // Clearcoat
-    if (clearcoatWt > 0.0 && NDotL > 0.0 && NDotV > 0.0)
+    if (clearcoatWt > 0.0 && L.z > 0.0 && V.z > 0.0)
     {
-        f += EvalClearcoat(state.mat, V, N, L, H, pdf);
+        f += EvalClearcoat(state.mat, V, L, H, pdf);
         bsdfPdf += pdf * clearcoatWt;
     }
 
-    return f * abs(dot(N, L));
+    return f * abs(L.z);
 }
