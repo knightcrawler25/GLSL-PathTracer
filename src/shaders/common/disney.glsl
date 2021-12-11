@@ -43,10 +43,10 @@ vec3 ToLocal(vec3 X, vec3 Y, vec3 Z, vec3 V)
     return vec3(dot(V, X), dot(V, Y), dot(V, Z));
 }
 
-float FresnelMix(Material mat, float eta, vec3 V, vec3 L, vec3 H)
+float FresnelMix(Material mat, float eta, float VDotH)
 {
-    float metallicFresnel = SchlickFresnel(abs(dot(L, H)));
-    float dielectricFresnel = DielectricFresnel(abs(dot(V, H)), eta);
+    float metallicFresnel = SchlickFresnel(VDotH);
+    float dielectricFresnel = DielectricFresnel(VDotH, eta);
     return mix(dielectricFresnel, metallicFresnel, mat.metallic);
 }
 
@@ -81,7 +81,7 @@ vec3 EvalSpecReflection(Material mat, float eta, vec3 specCol, vec3 V, vec3 L, v
     if (L.z <= 0.0)
         return vec3(0.0);
 
-    float FM = FresnelMix(mat, eta, V, L, H);
+    float FM = FresnelMix(mat, eta, dot(L, H));
     vec3 F = mix(specCol, vec3(1.0), FM);
     float D = GTR2(H.z, mat.roughness);
     float G1 = SmithG(abs(V.z), mat.roughness);
@@ -104,7 +104,7 @@ vec3 EvalSpecRefraction(Material mat, float eta, vec3 V, vec3 L, vec3 H, inout f
     denom *= denom;
     float G1 = SmithG(abs(V.z), mat.roughness);
     float G2 = G1 * SmithG(abs(L.z), mat.roughness);
-    float jacobian = abs(dot(L, H)) * eta * eta / denom;
+    float jacobian = abs(dot(L, H)) / denom;
 
     pdf = G1 * max(0.0, dot(V, H)) * D * jacobian / V.z;
     
@@ -160,13 +160,19 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
     float r1 = rand();
     float r2 = rand();
 
+    vec3 T, B;
+    Onb(N, T, B);
+    V = ToLocal(T, B, N, V); // NDotL = L.z; NDotV = V.z; NDotH = H.z
+
     // Specular and sheen color
     vec3 specCol, sheenCol;
     GetSpecColor(state.mat, state.eta, specCol, sheenCol);
 
     // Lobe weights
     float diffuseWt, specReflectWt, specRefractWt, clearcoatWt;
-    float approxFresnel = FresnelMix(state.mat, state.eta, V, reflect(V, N), N);
+    // TODO: Recheck fresnel. Not sure if correct. VDotN produces fireflies with rough dielectric. 
+    // VDotH matches Mitsuba and gets rid of all fireflies but H isn't available at this stage
+    float approxFresnel = FresnelMix(state.mat, state.eta, V.z); 
     GetLobeProbabilities(state.mat, state.eta, specCol, approxFresnel, diffuseWt, specReflectWt, specRefractWt, clearcoatWt);
 
     // CDF for picking a lobe
@@ -175,11 +181,6 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
     cdf[1] = cdf[0] + specReflectWt;
     cdf[2] = cdf[1] + specRefractWt;
     cdf[3] = cdf[2] + clearcoatWt;
-
-    vec3 T, B;
-    Onb(N, T, B);
-    // NDotL = L.z; NDotV = V.z; NDotH = H.z
-    V = ToLocal(T, B, N, V);
 
     if(r1 < cdf[0]) // Diffuse Reflection Lobe
     {
@@ -196,7 +197,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
         r1 = (r1 - cdf[0]) / (cdf[1] - cdf[0]);
         vec3 H = SampleGGXVNDF(V, state.mat.roughness, r1, r2);
 
-        if (dot(V, H) < 0.0)
+        if (H.z < 0.0)
             H = -H;
 
         L = normalize(reflect(-V, H));
@@ -209,7 +210,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
         r1 = (r1 - cdf[1]) / (cdf[2] - cdf[1]);
         vec3 H = SampleGGXVNDF(V, state.mat.roughness, r1, r2);
 
-        if (dot(V, H) < 0.0)
+        if (H.z < 0.0)
             H = -H;
 
         L = normalize(refract(-V, H, state.eta));
@@ -222,7 +223,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
         r1 = (r1 - cdf[2]) / (1.0 - cdf[2]);
         vec3 H = SampleGTR1(state.mat.clearcoatRoughness, r1, r2);
 
-        if (dot(V, H) < 0.0)
+        if (H.z < 0.0)
             H = -H;
 
         L = normalize(reflect(-V, H));
@@ -242,8 +243,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
 
     vec3 T, B;
     Onb(N, T, B);
-    // NDotL = L.z; NDotV = V.z; NDotH = H.z
-    V = ToLocal(T, B, N, V);
+    V = ToLocal(T, B, N, V); // NDotL = L.z; NDotV = V.z; NDotH = H.z
     L = ToLocal(T, B, N, L);
 
     vec3 H;
@@ -252,7 +252,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
     else
         H = normalize(L + V * state.eta);
 
-    if (dot(V, H) < 0.0)
+    if (H.z < 0.0)
         H = -H;
 
     // Specular and sheen color
@@ -261,7 +261,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, inout float bsdfPdf)
 
     // Lobe weights
     float diffuseWt, specReflectWt, specRefractWt, clearcoatWt;
-    float approxFresnel = FresnelMix(state.mat, state.eta, V, L, H);
+    float approxFresnel = FresnelMix(state.mat, state.eta, dot(V, H));
     GetLobeProbabilities(state.mat, state.eta, specCol, approxFresnel, diffuseWt, specReflectWt, specRefractWt, clearcoatWt);
 
     float pdf;
