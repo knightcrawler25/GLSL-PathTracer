@@ -23,14 +23,14 @@
  */
 
  /* References:
- * [1] https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf
- * [2] https://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
- * [3] https://github.com/wdas/brdf/blob/main/src/brdfs/disney.brdf
- * [4] https://github.com/mmacklin/tinsel/blob/master/src/disney.h
- * [5] http://simon-kallweit.me/rendercompo2015/report/
- * [6] https://github.com/mmp/pbrt-v4/blob/0ec29d1ec8754bddd9d667f0e80c4ff025c900ce/src/pbrt/bxdfs.cpp#L76-L286
- * [7] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
- * [8] https://jcgt.org/published/0007/04/01/paper.pdf
+ * [1] [Physically Based Shading at Disney] https://media.disneyanimation.com/uploads/production/publication_asset/48/asset/s2012_pbs_disney_brdf_notes_v3.pdf
+ * [2] [Extending the Disney BRDF to a BSDF with Integrated Subsurface Scattering] https://blog.selfshadow.com/publications/s2015-shading-course/burley/s2015_pbs_disney_bsdf_notes.pdf
+ * [3] [The Disney BRDF Explorer] https://github.com/wdas/brdf/blob/main/src/brdfs/disney.brdf
+ * [4] [Miles Macklin's implementation] https://github.com/mmacklin/tinsel/blob/master/src/disney.h
+ * [5] [Simon Kallweit's project report] http://simon-kallweit.me/rendercompo2015/report/
+ * [6] [Microfacet Models for Refraction through Rough Surfaces] https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.pdf
+ * [7] [Sampling the GGX Distribution of Visible Normals] https://jcgt.org/published/0007/04/01/paper.pdf
+ * [8] [Pixar’s Foundation for Materials] https://graphics.pixar.com/library/PxrMaterialsCourse2017/paper.pdf
  */
 
 vec3 ToWorld(vec3 X, vec3 Y, vec3 Z, vec3 V)
@@ -213,7 +213,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, out vec3 L, out float pdf)
             H = -H;
 
         // Using fresnel based on half vector to pick between refl and refr lobes
-        // as doing it this way gets rid of the fireflies due to incorrect weighting
+        // as doing it this way gets rid of fireflies due to incorrect weighting
         // when picking lobes based on shading normal. This split isn't required in DisneyEval()
         // as H is already available when computing the lobe probabilities.
 
