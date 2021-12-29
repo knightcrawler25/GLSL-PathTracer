@@ -321,6 +321,7 @@ void MainLoop(void* arg)
         {
             bool requiresReload = false;
             Vec3* uniformLightCol = &renderOptions.uniformLightCol;
+            Vec3* backgroundCol = &renderOptions.backgroundCol;
 
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
             requiresReload |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
@@ -330,6 +331,9 @@ void MainLoop(void* arg)
             requiresReload |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
             optionsChanged |= ImGui::ColorEdit3("Uniform Light Color", (float*)uniformLightCol, 0);
             requiresReload |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
+            requiresReload |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
+            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)backgroundCol, 0);
+            requiresReload |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
             ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);

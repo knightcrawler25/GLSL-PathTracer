@@ -24,7 +24,7 @@
 
 #version 330
 
-out vec3 color;
+out vec4 outCol;
 in vec2 TexCoords;
 
 uniform sampler2D pathTraceTexture;
@@ -32,6 +32,7 @@ uniform float invSampleCounter;
 uniform bool enableTonemap;
 uniform bool useAces;
 uniform bool simpleAcesFit;
+uniform vec3 backgroundCol;
 
 #include common/globals.glsl
 
@@ -95,7 +96,9 @@ vec3 Tonemap(in vec3 c, float limit)
 
 void main()
 {
-    color = texture(pathTraceTexture, TexCoords).xyz * invSampleCounter;
+    vec4 col = texture(pathTraceTexture, TexCoords) * invSampleCounter;
+    vec3 color = col.rgb;
+    float alpha = col.a;
 
     if (enableTonemap)
     {
@@ -111,4 +114,20 @@ void main()
     }
 
     color = pow(color, vec3(1.0 / 2.2));
+
+    float outAlpha = 1.0;
+    vec3 bgCol = backgroundCol;
+
+#ifdef OPT_TRANSPARENT_BACKGROUND
+    outAlpha = alpha;
+    float checkerSize = 10.0;
+    float res = max(sign(mod(floor(gl_FragCoord.x / checkerSize) + floor(gl_FragCoord.y / checkerSize), 2.0)), 0.0);
+    bgCol = mix(vec3(0.1), vec3(0.2), res);
+#endif
+
+#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND)
+    outCol = vec4(mix(bgCol, color, alpha), outAlpha);
+#else
+    outCol = vec4(color, 1.0);
+#endif
 }

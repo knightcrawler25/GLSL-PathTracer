@@ -56,6 +56,9 @@ namespace GLSLPT
             texArrayHeight = 4096;
             openglNormalMap = true;
             hideEmitters = false;
+            enableBackground = false;
+            backgroundCol = Vec3(1.0f, 1.0f, 1.0f);
+            transparentBackground = false;
         }
 
         iVec2 resolution;
@@ -77,6 +80,9 @@ namespace GLSLPT
         int texArrayHeight;
         bool openglNormalMap;
         bool hideEmitters;
+        Vec3 backgroundCol;
+        bool enableBackground;
+        bool transparentBackground;
     };
 
     class Scene;

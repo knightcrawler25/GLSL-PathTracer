@@ -108,8 +108,8 @@ vec3 DirectLight(in Ray r, in State state)
     BsdfSampleRec bsdfSampleRec;
 
     // Environment Light
-#ifdef ENVMAP
-#ifndef UNIFORM_LIGHT
+#ifdef OPT_ENVMAP
+#ifndef OPT_UNIFORM_LIGHT
     {
         vec3 color;
         vec4 dirPdf = SampleEnvMap(color);
@@ -135,7 +135,7 @@ vec3 DirectLight(in Ray r, in State state)
 #endif
 
     // Analytic Lights 
-#ifdef LIGHTS
+#ifdef OPT_LIGHTS
     {
         LightSampleRec lightSampleRec;
         Light light;
@@ -179,7 +179,7 @@ vec3 DirectLight(in Ray r, in State state)
     return Li;
 }
 
-vec3 PathTrace(Ray r)
+vec4 PathTrace(Ray r)
 {
     vec3 radiance = vec3(0.0);
     vec3 throughput = vec3(1.0);
@@ -187,6 +187,7 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
+    float alpha = 1.0;
     
     for (int depth = 0; depth < maxDepth; depth++)
     {
@@ -195,13 +196,18 @@ vec3 PathTrace(Ray r)
 
         if (!hit)
         {
-#ifdef UNIFORM_LIGHT
-#ifdef HIDE_EMITTERS
+#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND) 
+            if (state.depth == 0)
+                alpha = 0.0;
+#endif
+
+#ifdef OPT_UNIFORM_LIGHT
+#ifdef OPT_HIDE_EMITTERS
             if(state.depth > 0)
 #endif
                 radiance += uniformLightCol * throughput;
 #else
-#ifdef ENVMAP
+#ifdef OPT_ENVMAP
             {
                 float misWeight = 1.0f;
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
@@ -212,14 +218,14 @@ vec3 PathTrace(Ray r)
                     float lightPdf = EnvMapPdf(r);
                     misWeight = PowerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
-#ifdef HIDE_EMITTERS
+#ifdef OPT_HIDE_EMITTERS
                 if (state.depth > 0)
 #endif
                     radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }
 #endif
 #endif
-            return radiance;
+            return vec4(radiance, alpha);
         }
 
         GetMaterials(state, r);
@@ -230,7 +236,7 @@ vec3 PathTrace(Ray r)
 
         radiance += state.mat.emission * throughput;
 
-#ifdef LIGHTS
+#ifdef OPT_LIGHTS
         if (state.isEmitter)
         {
             radiance += EmitterSample(r, state, lightSampleRec, bsdfSampleRec) * throughput;
@@ -254,9 +260,9 @@ vec3 PathTrace(Ray r)
         else
             break;
 
-#ifdef RR
+#ifdef OPT_RR
         // Russian roulette
-        if (depth >= RR_DEPTH)
+        if (depth >= OPT_RR_DEPTH)
         {
             float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
             if (rand() > q)
@@ -269,5 +275,5 @@ vec3 PathTrace(Ray r)
         r.origin = state.fhp + r.direction * EPS;
     }
 
-    return radiance;
+    return vec4(radiance, alpha);
 }

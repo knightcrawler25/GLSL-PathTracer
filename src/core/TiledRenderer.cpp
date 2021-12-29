@@ -94,22 +94,33 @@ namespace GLSLPT
 
         // Add preprocessor defines for conditional compilation
         std::string pathtraceDefines = "";
+        std::string tonemapDefines = "";
 
         if (scene->renderOptions.useEnvMap && scene->hdrData != nullptr)
-            pathtraceDefines += "#define ENVMAP\n";
+            pathtraceDefines += "#define OPT_ENVMAP\n";
         if (!scene->lights.empty())
-            pathtraceDefines += "#define LIGHTS\n";
+            pathtraceDefines += "#define OPT_LIGHTS\n";
         if (scene->renderOptions.enableRR)
         {
-            pathtraceDefines += "#define RR\n";
-            pathtraceDefines += "#define RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
+            pathtraceDefines += "#define OPT_RR\n";
+            pathtraceDefines += "#define OPT_RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
         }
         if (scene->renderOptions.useUniformLight)
-            pathtraceDefines += "#define UNIFORM_LIGHT\n";
+            pathtraceDefines += "#define OPT_UNIFORM_LIGHT\n";
         if (scene->renderOptions.openglNormalMap)
-            pathtraceDefines += "#define OPENGL_NORMALMAP\n";
+            pathtraceDefines += "#define OPT_OPENGL_NORMALMAP\n";
         if (scene->renderOptions.hideEmitters)
-            pathtraceDefines += "#define HIDE_EMITTERS\n";
+            pathtraceDefines += "#define OPT_HIDE_EMITTERS\n";
+        if (scene->renderOptions.enableBackground)
+        {
+            pathtraceDefines += "#define OPT_BACKGROUND\n";
+            tonemapDefines += "#define OPT_BACKGROUND\n";
+        }
+        if (scene->renderOptions.transparentBackground)
+        {
+            pathtraceDefines += "#define OPT_TRANSPARENT_BACKGROUND\n";
+            tonemapDefines += "#define OPT_TRANSPARENT_BACKGROUND\n";
+        }
 
         if (pathtraceDefines.size() > 0)
         {
@@ -126,6 +137,16 @@ namespace GLSLPT
             else
                 idx = 0;
             pathTraceShaderLowResSrcObj.src.insert(idx + 1, pathtraceDefines);
+        }
+
+        if (tonemapDefines.size() > 0)
+        {
+            size_t idx = tonemapShaderSrcObj.src.find("#version");
+            if (idx != -1)
+                idx = tonemapShaderSrcObj.src.find("\n", idx);
+            else
+                idx = 0;
+            tonemapShaderSrcObj.src.insert(idx + 1, tonemapDefines);
         }
 
         pathTraceShader       = LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);
@@ -176,7 +197,7 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &accumTexture);
         glBindTexture(GL_TEXTURE_2D, accumTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenSize.x, screenSize.y, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -417,6 +438,7 @@ namespace GLSLPT
         // Denoise Image
         if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0)
         {
+            // FIXME: Figure out a way to have transparency with denoiser
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
 
@@ -426,8 +448,8 @@ namespace GLSLPT
 
             // Create a denoising filter
             oidn::FilterRef filter = device.newFilter("RT"); // generic ray tracing filter
-            filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, screenSize.x, screenSize.y);
-            filter.setImage("output", frameOutputPtr, oidn::Format::Float3, screenSize.x, screenSize.y);
+            filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, screenSize.x, screenSize.y, 0, 0, 0);
+            filter.setImage("output", frameOutputPtr, oidn::Format::Float3, screenSize.x, screenSize.y, 0, 0, 0);
             filter.set("hdr", false);
             filter.commit();
 
@@ -518,6 +540,7 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "enableTonemap"), scene->renderOptions.enableTonemap);
         glUniform1i(glGetUniformLocation(shaderObject, "useAces"), scene->renderOptions.useAces);
         glUniform1i(glGetUniformLocation(shaderObject, "simpleAcesFit"), scene->renderOptions.simpleAcesFit);
+        glUniform3f(glGetUniformLocation(shaderObject, "backgroundCol"), scene->renderOptions.backgroundCol.x, scene->renderOptions.backgroundCol.y, scene->renderOptions.backgroundCol.z);
         tonemapShader->StopUsing();
     }
 }

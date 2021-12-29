@@ -247,8 +247,8 @@ void SampleOneLight(in Light light, in vec3 surfacePos, inout LightSampleRec lig
         SampleDistantLight(light, surfacePos, lightSampleRec);
 }
 
-#ifdef ENVMAP
-#ifndef UNIFORM_LIGHT
+#ifdef OPT_ENVMAP
+#ifndef OPT_UNIFORM_LIGHT
 
 float EnvMapPdf(in Ray r)
 {

@@ -217,6 +217,8 @@ namespace GLSLPT
                 char enableRR[10] = "None";
                 char openglNormalMap[10] = "None";
                 char hideEmitters[10] = "None";
+                char transparentBackground[10] = "None";
+                char enableBackground[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -237,6 +239,9 @@ namespace GLSLPT
                     sscanf(line, " texArrayHeight %i", &renderOptions.texArrayHeight);
                     sscanf(line, " openglNormalMap %s", openglNormalMap);
                     sscanf(line, " hideEmitters %s", hideEmitters);
+                    sscanf(line, " enableBackground %s", enableBackground);
+                    sscanf(line, " transparentBackground %s", transparentBackground);
+                    sscanf(line, " backgroundColor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -261,6 +266,16 @@ namespace GLSLPT
                     renderOptions.hideEmitters = false;
                 else if (strcmp(hideEmitters, "True") == 0)
                     renderOptions.hideEmitters = true;
+
+                if (strcmp(enableBackground, "False") == 0)
+                    renderOptions.enableBackground = false;
+                else if (strcmp(enableBackground, "True") == 0)
+                    renderOptions.enableBackground = true;
+
+                if (strcmp(transparentBackground, "False") == 0)
+                    renderOptions.transparentBackground = false;
+                else if (strcmp(transparentBackground, "True") == 0)
+                    renderOptions.transparentBackground = true;
             }
 
 
