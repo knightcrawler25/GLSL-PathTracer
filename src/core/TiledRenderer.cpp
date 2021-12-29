@@ -94,6 +94,7 @@ namespace GLSLPT
 
         // Add preprocessor defines for conditional compilation
         std::string pathtraceDefines = "";
+
         if (scene->renderOptions.useEnvMap && scene->hdrData != nullptr)
             pathtraceDefines += "#define ENVMAP\n";
         if (!scene->lights.empty())
@@ -105,8 +106,10 @@ namespace GLSLPT
         }
         if (scene->renderOptions.useUniformLight)
             pathtraceDefines += "#define UNIFORM_LIGHT\n";
-        if(scene->renderOptions.openglNormalMap)
+        if (scene->renderOptions.openglNormalMap)
             pathtraceDefines += "#define OPENGL_NORMALMAP\n";
+        if (scene->renderOptions.hideEmitters)
+            pathtraceDefines += "#define HIDE_EMITTERS\n";
 
         if (pathtraceDefines.size() > 0)
         {

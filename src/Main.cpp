@@ -329,6 +329,7 @@ void MainLoop(void* arg)
             requiresReload |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
             requiresReload |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
             optionsChanged |= ImGui::ColorEdit3("Uniform Light Color", (float*)uniformLightCol, 0);
+            requiresReload |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
             ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);

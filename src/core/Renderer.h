@@ -55,7 +55,9 @@ namespace GLSLPT
             texArrayWidth = 4096;
             texArrayHeight = 4096;
             openglNormalMap = true;
+            hideEmitters = false;
         }
+
         iVec2 resolution;
         int maxDepth;
         int tileWidth;
@@ -74,6 +76,7 @@ namespace GLSLPT
         int texArrayWidth;
         int texArrayHeight;
         bool openglNormalMap;
+        bool hideEmitters;
     };
 
     class Scene;

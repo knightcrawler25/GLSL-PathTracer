@@ -254,13 +254,13 @@ namespace GLSLPT
 
     void LoadInstances(Scene* scene, tinygltf::Model& gltfModel)
     {
+        // FIXME: Traverse nodes to get instances with correct transforms
         for (size_t i = 0; i < scene->meshes.size(); i++)
         {
             Mat4 xform;
-            MeshInstance instance = MeshInstance("", i, xform, i);;
+            MeshInstance instance = MeshInstance("", i, xform, i);
             scene->AddMeshInstance(instance);
         }
-
     }
 
     bool LoadGLTF(const std::string &filename, Scene *scene, RenderOptions& renderOptions, bool binary)

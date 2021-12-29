@@ -216,6 +216,7 @@ namespace GLSLPT
                 char envMap[200] = "None";
                 char enableRR[10] = "None";
                 char openglNormalMap[10] = "None";
+                char hideEmitters[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -235,6 +236,7 @@ namespace GLSLPT
                     sscanf(line, " texArrayWidth %i", &renderOptions.texArrayWidth);
                     sscanf(line, " texArrayHeight %i", &renderOptions.texArrayHeight);
                     sscanf(line, " openglNormalMap %s", openglNormalMap);
+                    sscanf(line, " hideEmitters %s", hideEmitters);
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -254,6 +256,11 @@ namespace GLSLPT
                     renderOptions.openglNormalMap = false;
                 else if (strcmp(openglNormalMap, "True") == 0)
                     renderOptions.openglNormalMap = true;
+
+                if (strcmp(hideEmitters, "False") == 0)
+                    renderOptions.hideEmitters = false;
+                else if (strcmp(hideEmitters, "True") == 0)
+                    renderOptions.hideEmitters = true;
             }
 
 

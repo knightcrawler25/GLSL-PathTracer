@@ -66,7 +66,8 @@ void GetMaterials(inout State state, in Ray r)
     // Metallic Roughness Map
     if (texIDs.y >= 0)
     {
-        vec2 matRgh = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.y)).bg;
+        // FIXME: Textures in repo use rg channels. GLTF uses bg.
+        vec2 matRgh = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.y)).rg;
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y * matRgh.y, 0.001);
     }
@@ -195,7 +196,10 @@ vec3 PathTrace(Ray r)
         if (!hit)
         {
 #ifdef UNIFORM_LIGHT
-            radiance += uniformLightCol * throughput;
+#ifdef HIDE_EMITTERS
+            if(state.depth > 0)
+#endif
+                radiance += uniformLightCol * throughput;
 #else
 #ifdef ENVMAP
             {
@@ -208,7 +212,10 @@ vec3 PathTrace(Ray r)
                     float lightPdf = EnvMapPdf(r);
                     misWeight = PowerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
-                radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
+#ifdef HIDE_EMITTERS
+                if (state.depth > 0)
+#endif
+                    radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }
 #endif
 #endif
