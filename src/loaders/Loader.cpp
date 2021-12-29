@@ -26,16 +26,10 @@ freely, subject to the following restrictions:
 */
 
 #include "Loader.h"
-#include <tiny_obj_loader.h>
-#include <iostream>
-#include <iterator>
-#include <algorithm>
-#include <stdio.h>
 
 namespace GLSLPT
 {
     static const int kMaxLineLength = 2048;
-    int(*Log)(const char* szFormat, ...) = printf;
 
     bool LoadSceneFromFile(const std::string &filename, Scene *scene, RenderOptions& renderOptions)
     {
@@ -44,11 +38,11 @@ namespace GLSLPT
 
         if (!file)
         {
-            Log("Couldn't open %s for reading\n", filename.c_str());
+            printf("Couldn't open %s for reading\n", filename.c_str());
             return false;
         }
 
-        Log("Loading Scene..\n");
+        printf("Loading Scene..\n");
 
         struct MaterialData
         {
@@ -68,8 +62,6 @@ namespace GLSLPT
         //Defaults
         Material defaultMat;
         scene->AddMaterial(defaultMat);
-
-        bool cameraAdded = false;
 
         while (fgets(line, kMaxLineLength, file))
         {
@@ -120,7 +112,7 @@ namespace GLSLPT
 
                 // Albedo Texture
                 if (strcmp(albedoTexName, "None") != 0)
-                    material.albedoTexID = scene->AddTexture(path + albedoTexName);
+                    material.baseColorTexId = scene->AddTexture(path + albedoTexName);
              
                 // MetallicRoughness Texture
                 if (strcmp(metallicRoughnessTexName, "None") != 0)
@@ -214,7 +206,6 @@ namespace GLSLPT
                 scene->AddCamera(position, lookAt, fov);
                 scene->camera->aperture = aperture;
                 scene->camera->focalDist = focalDist;
-                cameraAdded = true;
             }
 
             //--------------------------------------------
@@ -224,6 +215,7 @@ namespace GLSLPT
             {
                 char envMap[200] = "None";
                 char enableRR[10] = "None";
+                char openglNormalMap[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -240,6 +232,9 @@ namespace GLSLPT
                     sscanf(line, " enableRR %s", enableRR);
                     sscanf(line, " RRDepth %i", &renderOptions.RRDepth);
                     sscanf(line, " useAces %s", &renderOptions.useAces);
+                    sscanf(line, " texArrayWidth %i", &renderOptions.texArrayWidth);
+                    sscanf(line, " texArrayHeight %i", &renderOptions.texArrayHeight);
+                    sscanf(line, " openglNormalMap %s", openglNormalMap);
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -247,11 +242,18 @@ namespace GLSLPT
                     scene->AddHDR(path + envMap);
                     renderOptions.useEnvMap = true;
                 }
+                else
+                    renderOptions.useEnvMap = false;
 
                 if (strcmp(enableRR, "False") == 0)
                     renderOptions.enableRR = false;
                 else if (strcmp(enableRR, "True") == 0)
                     renderOptions.enableRR = true;
+
+                if (strcmp(openglNormalMap, "False") == 0)
+                    renderOptions.openglNormalMap = false;
+                else if (strcmp(openglNormalMap, "True") == 0)
+                    renderOptions.openglNormalMap = true;
             }
 
 
@@ -292,7 +294,7 @@ namespace GLSLPT
                         }
                         else
                         {
-                            Log("Could not find material %s\n", matName);
+                            printf("Could not find material %s\n", matName);
                         }
                     }
 
@@ -316,19 +318,14 @@ namespace GLSLPT
                             instanceName = filename.substr(pos + 1);
                         }
                         
-                        MeshInstance instance1(instanceName, mesh_id, xform, material_id);
-                        scene->AddMeshInstance(instance1);
+                        MeshInstance instance(instanceName, mesh_id, xform, material_id);
+                        scene->AddMeshInstance(instance);
                     }
                 }
             }
         }
 
         fclose(file);
-
-        if (!cameraAdded)
-            scene->AddCamera(Vec3(0.0f, 0.0f, 10.0f), Vec3(0.0f, 0.0f, -10.0f), 35.0f);
-
-        scene->CreateAccelerationStructures();
 
         return true;
     }

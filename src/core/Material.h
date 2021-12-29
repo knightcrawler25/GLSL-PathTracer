@@ -25,7 +25,7 @@
 #pragma once
 
 #include <vector>
-#include <Vec3.h>
+#include "Vec3.h"
 
 namespace GLSLPT
 {
@@ -58,7 +58,7 @@ namespace GLSLPT
             extinction    = Vec3(1.0f, 1.0f, 1.0f);
             padding3      = 0.0f;
 
-            albedoTexID            = -1.0f;
+            baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
             normalmapTexID         = -1.0f;
             emissionmapTexID       = -1.0f;
@@ -88,7 +88,7 @@ namespace GLSLPT
         Vec3 extinction;
         float padding3;
 
-        float albedoTexID;
+        float baseColorTexId;
         float metallicRoughnessTexID;
         float normalmapTexID;
         float emissionmapTexID;

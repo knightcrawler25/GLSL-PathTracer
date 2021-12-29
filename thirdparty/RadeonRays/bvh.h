@@ -29,7 +29,6 @@ THE SOFTWARE.
 #include <list>
 #include <atomic>
 #include <iostream>
-
 #include "bbox.h"
 
 namespace RadeonRays

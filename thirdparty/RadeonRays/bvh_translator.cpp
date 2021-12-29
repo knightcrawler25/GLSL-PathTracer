@@ -24,11 +24,10 @@ THE SOFTWARE.
 	Modified version of code from https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK
 */
 
-#include "bvh_translator.h"
-
 #include <cassert>
 #include <stack>
 #include <iostream>
+#include "bvh_translator.h"
 
 namespace RadeonRays
 {

@@ -24,12 +24,11 @@
 
 #pragma once
 
+#include <vector>
 #include "Quad.h"
 #include "Program.h"
-#include <Vec2.h>
-#include <Vec3.h>
-
-#include <vector>
+#include "Vec2.h"
+#include "Vec3.h"
 
 namespace GLSLPT
 {
@@ -46,13 +45,16 @@ namespace GLSLPT
             resolution = iVec2(1280, 720);
             hdrMultiplier = 1.0f;
             enableRR = true;
-            useConstantBg = false;
+            useUniformLight = false;
             RRDepth = 2;
-            bgColor = Vec3(0.3f, 0.3f, 0.3f);
+            uniformLightCol = Vec3(0.3f, 0.3f, 0.3f);
             denoiserFrameCnt = 20;
             enableDenoiser = false;
             enableTonemap = true;
             useAces = false;
+            texArrayWidth = 4096;
+            texArrayHeight = 4096;
+            openglNormalMap = true;
         }
         iVec2 resolution;
         int maxDepth;
@@ -61,14 +63,17 @@ namespace GLSLPT
         bool useEnvMap;
         bool enableRR;
         bool enableDenoiser;
-        bool useConstantBg;
+        bool useUniformLight;
         bool enableTonemap;
         bool useAces;
         bool simpleAcesFit;
         int RRDepth;
         int denoiserFrameCnt;
         float hdrMultiplier;
-        Vec3 bgColor;
+        Vec3 uniformLightCol;
+        int texArrayWidth;
+        int texArrayHeight;
+        bool openglNormalMap;
     };
 
     class Scene;

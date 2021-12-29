@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include <Vec4.h>
-#include <MathUtils.h>
+#include "Vec4.h"
+#include "MathUtils.h"
 
 namespace GLSLPT
 {

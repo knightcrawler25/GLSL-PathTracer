@@ -59,17 +59,14 @@ void GetMaterials(inout State state, in Ray r)
                            
     ivec4 texIDs           = ivec4(param7);
 
-    vec2 texUV = state.texCoord;
-    texUV.y = 1.0 - texUV.y;
-
     // Albedo Map
     if (texIDs.x >= 0)
-        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.x)).rgb, vec3(2.2));
+        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.x)).rgb, vec3(2.2));
 
     // Metallic Roughness Map
     if (texIDs.y >= 0)
     {
-        vec2 matRgh = texture(textureMapsArrayTex, vec3(texUV, texIDs.y)).rg;
+        vec2 matRgh = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.y)).bg;
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y * matRgh.y, 0.001);
     }
@@ -77,7 +74,11 @@ void GetMaterials(inout State state, in Ray r)
     // Normal Map
     if (texIDs.z >= 0)
     {
-        vec3 texNormal = texture(textureMapsArrayTex, vec3(texUV, texIDs.z)).rgb;
+        vec3 texNormal = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.z)).rgb;
+
+#ifdef OPENGL_NORMALMAP
+        texNormal.y = 1.0 - texNormal.y;
+#endif
         texNormal = normalize(texNormal * 2.0 - 1.0);
 
         vec3 origNormal = state.normal;
@@ -87,10 +88,9 @@ void GetMaterials(inout State state, in Ray r)
 
     // Emission Map
     if (texIDs.w >= 0)
-        mat.emission = pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.w)).rgb, vec3(2.2));
+        mat.emission = pow(texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.w)).rgb, vec3(2.2));
 
     // Commented out the following as anisotropic param is temporarily unused.
-    // Calculate anisotropic roughness along the tangent and bitangent directions
     // float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
     // mat.ax = max(0.001, mat.roughness / aspect);
     // mat.ay = max(0.001, mat.roughness * aspect);
@@ -108,7 +108,7 @@ vec3 DirectLight(in Ray r, in State state)
 
     // Environment Light
 #ifdef ENVMAP
-#ifndef CONSTANT_BG
+#ifndef UNIFORM_LIGHT
     {
         vec3 color;
         vec4 dirPdf = SampleEnvMap(color);
@@ -194,8 +194,8 @@ vec3 PathTrace(Ray r)
 
         if (!hit)
         {
-#ifdef CONSTANT_BG
-            radiance += bgColor * throughput;
+#ifdef UNIFORM_LIGHT
+            radiance += uniformLightCol * throughput;
 #else
 #ifdef ENVMAP
             {

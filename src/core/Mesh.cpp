@@ -23,10 +23,10 @@
  */
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 
-#include "Mesh.h"
 #include <iostream>
+#include "tiny_obj_loader.h"
+#include "Mesh.h"
 
 namespace GLSLPT
 {
@@ -81,7 +81,7 @@ namespace GLSLPT
                     if (!attrib.texcoords.empty())
                     {
                         tx = attrib.texcoords[2 * idx.texcoord_index + 0];
-                        ty = attrib.texcoords[2 * idx.texcoord_index + 1];
+                        ty = 1.0 - attrib.texcoords[2 * idx.texcoord_index + 1];
                     }
                     else
                     {

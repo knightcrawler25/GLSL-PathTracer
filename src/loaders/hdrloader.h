@@ -1,18 +1,20 @@
-#pragma once
-#include <iostream>
-#include <Vec2.h>
-#include <Vec3.h>
 /***********************************************************************************
     Created:    17:9:2002
     FileName:     hdrloader.h
     Author:        Igor Kravtchenko
-    
+
     Info:        Load HDR image and convert to a set of float32 RGB triplet.
 ************************************************************************************/
 
-/* 
-    This is a modified version of the original code. Addeed code to build marginal & conditional densities for IBL importance sampling
+/*
+    This is a modified version of the original code. Addeed code to build marginal & conditional densities for importance sampling
 */
+
+#pragma once
+
+#include <iostream>
+#include <Vec2.h>
+#include <Vec3.h>
 
 using namespace GLSLPT;
 

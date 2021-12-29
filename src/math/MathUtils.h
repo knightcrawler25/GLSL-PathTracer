@@ -26,9 +26,9 @@
 
 #define PI 3.14159265358979323846f
 
-#include <Config.h>
 #include <cmath>
 #include <algorithm>
+#include "Config.h"
 
 namespace GLSLPT
 {

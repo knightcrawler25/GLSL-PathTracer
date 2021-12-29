@@ -61,16 +61,16 @@ namespace GLSLPT
         int bodyMatRgh = scene->AddTexture("./assets/Figurine/textures/02_Body_MetallicRoughness.png");
         int baseMatRgh = scene->AddTexture("./assets/Figurine/textures/03_Base_MetallicRoughness.png");
 
-        head.albedoTexID = headAlbedo;
+        head.baseColorTexId = headAlbedo;
         head.metallicRoughnessTexID = headMatRgh;
         
-        body.albedoTexID = bodyAlbedo;
+        body.baseColorTexId = bodyAlbedo;
         body.metallicRoughnessTexID = bodyMatRgh;
 
-        base.albedoTexID = baseAlbedo;
+        base.baseColorTexId = baseAlbedo;
         base.metallicRoughnessTexID = baseMatRgh;
 
-        white.albedoTexID = bgAlbedo;
+        white.baseColorTexId = bgAlbedo;
 
         gold.baseColor = Vec3(1.0f, 0.71f, 0.29f);
         gold.roughness = 0.2f;
@@ -153,8 +153,6 @@ namespace GLSLPT
         scene->AddMeshInstance(instance11);
         scene->AddMeshInstance(instance12);
         scene->AddMeshInstance(instance13);
-
-        scene->CreateAccelerationStructures();
 
     }
 }

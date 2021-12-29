@@ -25,6 +25,7 @@
 #pragma once
 
 #include <vector>
+#include <algorithm>
 #include "split_bvh.h"
 
 namespace GLSLPT
@@ -32,14 +33,16 @@ namespace GLSLPT
     class Texture
     {
     public:
-        Texture() : texData(nullptr), width(0), height(0) {};
-        ~Texture() { delete texData; }
+        Texture() : width(0), height(0), components(0) {};
+        Texture::Texture(std::string texName, unsigned char* data, int w, int h, int c);
+        ~Texture() { }
 
         bool LoadTexture(const std::string &filename);
         
         int width;
         int height;
-        unsigned char* texData;
+        int components;
+        std::vector<unsigned char> texData;
         std::string name;
     };
 }

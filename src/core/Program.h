@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "Shader.h"
 #include <vector>
+#include "Shader.h"
 
 namespace GLSLPT
 {
