@@ -29,6 +29,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
+#include <cstdint>
 #include "GLTFLoader.h"
 #include "tiny_gltf.h"
 
@@ -72,7 +73,7 @@ namespace GLSLPT
                 tinygltf::Accessor positionAccessor = gltfModel.accessors[positionIndex];
                 tinygltf::BufferView positionBufferView = gltfModel.bufferViews[positionAccessor.bufferView];
                 const tinygltf::Buffer& positionBuffer = gltfModel.buffers[positionBufferView.buffer];
-                const UINT8* positionBufferAddress = positionBuffer.data.data();
+                const uint8_t* positionBufferAddress = positionBuffer.data.data();
                 int positionStride = tinygltf::GetComponentSizeInBytes(positionAccessor.componentType) * tinygltf::GetNumComponentsInType(positionAccessor.type);
                 // TODO: Recheck
                 if (positionBufferView.byteStride > 0)
@@ -82,13 +83,13 @@ namespace GLSLPT
                 tinygltf::Accessor indexAccessor = gltfModel.accessors[indicesIndex];
                 tinygltf::BufferView indexBufferView = gltfModel.bufferViews[indexAccessor.bufferView];
                 const tinygltf::Buffer& indexBuffer = gltfModel.buffers[indexBufferView.buffer];
-                const UINT8* indexBufferAddress = indexBuffer.data.data();
+                const uint8_t* indexBufferAddress = indexBuffer.data.data();
                 int indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
 
                 // Normals
                 tinygltf::Accessor normalAccessor;
                 tinygltf::BufferView normalBufferView;
-                const UINT8* normalBufferAddress = nullptr;
+                const uint8_t* normalBufferAddress = nullptr;
                 int normalStride = -1;
                 if (normalIndex > -1)
                 {
@@ -104,7 +105,7 @@ namespace GLSLPT
                 // Texture coordinates
                 tinygltf::Accessor uv0Accessor;
                 tinygltf::BufferView uv0BufferView;
-                const UINT8* uv0BufferAddress = nullptr;
+                const uint8_t* uv0BufferAddress = nullptr;
                 int uv0Stride = -1;
                 if (uv0Index > -1)
                 {
@@ -128,19 +129,19 @@ namespace GLSLPT
                     Vec2 uv;
 
                     {
-                        const UINT8* address = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset + (vertexIndex * positionStride);
+                        const uint8_t* address = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset + (vertexIndex * positionStride);
                         memcpy(&vertex, address, 12);
                     }
 
                     if (normalIndex > -1)
                     {
-                        const UINT8* address = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset + (vertexIndex * normalStride);
+                        const uint8_t* address = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset + (vertexIndex * normalStride);
                         memcpy(&normal, address, 12);
                     }
 
                     if (uv0Index > -1)
                     {
-                        const UINT8* address = uv0BufferAddress + uv0BufferView.byteOffset + uv0Accessor.byteOffset + (vertexIndex * uv0Stride);
+                        const uint8_t* address = uv0BufferAddress + uv0BufferView.byteOffset + uv0Accessor.byteOffset + (vertexIndex * uv0Stride);
                         memcpy(&uv, address, 8);
                     }
 
@@ -151,10 +152,10 @@ namespace GLSLPT
 
                 // Get index data
                 std::vector<int> indices(indexAccessor.count);
-                const UINT8* baseAddress = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
+                const uint8_t* baseAddress = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
                 if (indexStride == 1)
                 {
-                    std::vector<UINT8> quarter;
+                    std::vector<uint8_t> quarter;
                     quarter.resize(indexAccessor.count);
 
                     memcpy(quarter.data(), baseAddress, (indexAccessor.count * indexStride));
@@ -167,7 +168,7 @@ namespace GLSLPT
                 }
                 else if (indexStride == 2)
                 {
-                    std::vector<UINT16> half;
+                    std::vector<uint16_t> half;
                     half.resize(indexAccessor.count);
 
                     memcpy(half.data(), baseAddress, (indexAccessor.count * indexStride));
@@ -247,8 +248,8 @@ namespace GLSLPT
         // Default material
         if (scene->materials.size() == 0)
         {
-            Material default;
-            scene->materials.push_back(default);
+            Material defaultMat;
+            scene->materials.push_back(defaultMat);
         }
     }
 

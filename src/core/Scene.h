@@ -69,7 +69,7 @@ namespace GLSLPT
         Scene() : camera(nullptr), hdrData(nullptr), initialized(false) {
             sceneBvh = new RadeonRays::Bvh(10.0f, 64, false);
         }
-        Scene::~Scene();
+        ~Scene();
 
         int AddMesh(const std::string &filename);
         int AddTexture(const std::string &filename);

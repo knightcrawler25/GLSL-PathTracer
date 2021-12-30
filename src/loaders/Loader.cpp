@@ -25,6 +25,7 @@ freely, subject to the following restrictions:
     Link to original code: https://github.com/mmacklin/tinsel
 */
 
+#include <cstring>
 #include "Loader.h"
 
 namespace GLSLPT
@@ -215,6 +216,7 @@ namespace GLSLPT
             {
                 char envMap[200] = "None";
                 char enableRR[10] = "None";
+                char useAces[10] = "None";
                 char openglNormalMap[10] = "None";
                 char hideEmitters[10] = "None";
                 char transparentBackground[10] = "None";
@@ -234,7 +236,7 @@ namespace GLSLPT
                     sscanf(line, " tileHeight %i", &renderOptions.tileHeight);
                     sscanf(line, " enableRR %s", enableRR);
                     sscanf(line, " RRDepth %i", &renderOptions.RRDepth);
-                    sscanf(line, " useAces %s", &renderOptions.useAces);
+                    sscanf(line, " useAces %s", useAces);
                     sscanf(line, " texArrayWidth %i", &renderOptions.texArrayWidth);
                     sscanf(line, " texArrayHeight %i", &renderOptions.texArrayHeight);
                     sscanf(line, " openglNormalMap %s", openglNormalMap);
@@ -251,6 +253,11 @@ namespace GLSLPT
                 }
                 else
                     renderOptions.useEnvMap = false;
+                    
+                if (strcmp(useAces, "False") == 0)
+                    renderOptions.useAces = false;
+                else if (strcmp(useAces, "True") == 0)
+                    renderOptions.useAces = true;
 
                 if (strcmp(enableRR, "False") == 0)
                     renderOptions.enableRR = false;

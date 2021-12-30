@@ -34,7 +34,7 @@ namespace GLSLPT
     {
     public:
         Texture() : width(0), height(0), components(0) {};
-        Texture::Texture(std::string texName, unsigned char* data, int w, int h, int c);
+        Texture(std::string texName, unsigned char* data, int w, int h, int c);
         ~Texture() { }
 
         bool LoadTexture(const std::string &filename);
