@@ -73,7 +73,6 @@ namespace GLSLPT
 
         int AddMesh(const std::string &filename);
         int AddTexture(const std::string &filename);
-        int AddTexture(const std::string& name, unsigned char* data, int width, int height, int components);
         int AddMaterial(const Material &material);
         int AddMeshInstance(const MeshInstance &meshInstance);
         int AddLight(const Light &light);

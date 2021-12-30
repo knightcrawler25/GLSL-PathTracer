@@ -105,21 +105,6 @@ namespace GLSLPT
         return id;
     }
 
-    int Scene::AddTexture(const std::string& name, unsigned char* data, int width, int height, int components)
-    {
-        int id = -1;
-        // Check if texture was already loaded
-        for (int i = 0; i < textures.size(); i++)
-            if (textures[i]->name == name)
-                return i;
-
-        id = textures.size();
-        Texture* texture = new Texture(name, data, width, height, components);
-        textures.push_back(texture);
-
-        return id;
-    }
-
     int Scene::AddMaterial(const Material& material)
     {
         int id = materials.size();

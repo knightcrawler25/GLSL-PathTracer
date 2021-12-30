@@ -29,21 +29,31 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 
+#include <map>
 #include <cstdint>
 #include "GLTFLoader.h"
 #include "tiny_gltf.h"
 
 namespace GLSLPT
 {
-    void LoadMeshes(Scene* scene, tinygltf::Model& gltfModel)
+    struct Primitive
     {
-        for (int meshIdx = 0; meshIdx < gltfModel.meshes.size(); meshIdx++)
-        {
-            tinygltf::Mesh gltfMesh = gltfModel.meshes[meshIdx];
+        int primitiveId;
+        int materialId;
+    };
 
-            for (int primIdx = 0; primIdx < gltfMesh.primitives.size(); primIdx++)
+    // Note: A GLTF mesh can contain multiple primitives and each primitive can potentially have a different material applied.
+    // The two level BVH in this repo holds material ids per mesh and not per primitive, so this function loads each primitive from the gltf mesh as a new mesh
+    void LoadMeshes(Scene* scene, tinygltf::Model& gltfModel, std::map<int, std::vector<Primitive>>& meshPrimMap)
+    {
+        
+        for (int gltfMeshIdx = 0; gltfMeshIdx < gltfModel.meshes.size(); gltfMeshIdx++)
+        {
+            tinygltf::Mesh gltfMesh = gltfModel.meshes[gltfMeshIdx];
+
+            for (int gltfPrimIdx = 0; gltfPrimIdx < gltfMesh.primitives.size(); gltfPrimIdx++)
             {
-                tinygltf::Primitive prim = gltfMesh.primitives[primIdx];
+                tinygltf::Primitive prim = gltfMesh.primitives[gltfPrimIdx];
 
                 // Skip points and lines
                 if (prim.mode != TINYGLTF_MODE_TRIANGLES)
@@ -198,7 +208,11 @@ namespace GLSLPT
                 }
 
                 mesh->name = gltfMesh.name;
+                int sceneMeshId = scene->meshes.size();
                 scene->meshes.push_back(mesh);
+                // Store a mapping for a gltf mesh and the loaded primitive data
+                // This is used for creating instances based on the primitive
+                meshPrimMap[gltfMeshIdx].push_back(Primitive{ sceneMeshId, prim.material });
             }
         }
     }
@@ -212,7 +226,8 @@ namespace GLSLPT
             std::string texName = gltfTex.name;
             if (strcmp(gltfTex.name.c_str(), "") == 0)
                 texName = image.uri;
-            scene->AddTexture(texName, image.image.data(), image.width, image.height, image.component);
+            Texture* texture = new Texture(texName, image.image.data(), image.width, image.height, image.component);
+            scene->textures.push_back(texture);
         }
     }
 
@@ -231,7 +246,7 @@ namespace GLSLPT
             material.baseColorTexId = pbr.baseColorTexture.index;
 
             // Roughness and Metallic
-            material.roughness = (float)pbr.roughnessFactor;
+            material.roughness = sqrtf((float)pbr.roughnessFactor); // Repo's disney material doesn't use squared roughness
             material.metallic = (float)pbr.metallicFactor;
             material.metallicRoughnessTexID = pbr.metallicRoughnessTexture.index;
 
@@ -253,14 +268,95 @@ namespace GLSLPT
         }
     }
 
-    void LoadInstances(Scene* scene, tinygltf::Model& gltfModel)
+    void TraverseNodes(Scene* scene, const tinygltf::Model& gltfModel, int nodeIdx, Mat4 &parentMat, std::map<int, std::vector<Primitive>>& meshPrimMap)
     {
-        // FIXME: Traverse nodes to get instances with correct transforms
-        for (size_t i = 0; i < scene->meshes.size(); i++)
+        tinygltf::Node gltfNode = gltfModel.nodes[nodeIdx];
+
+        Mat4 localMat;
+
+        if (gltfNode.matrix.size() > 0) 
         {
-            Mat4 xform;
-            MeshInstance instance = MeshInstance("", i, xform, i);
-            scene->AddMeshInstance(instance);
+            localMat.data[0][0] = gltfNode.matrix[0];  
+            localMat.data[0][1] = gltfNode.matrix[1];  
+            localMat.data[0][2] = gltfNode.matrix[2];  
+            localMat.data[0][3] = gltfNode.matrix[3];
+
+            localMat.data[1][0] = gltfNode.matrix[4];  
+            localMat.data[1][1] = gltfNode.matrix[5];  
+            localMat.data[1][2] = gltfNode.matrix[6];  
+            localMat.data[1][3] = gltfNode.matrix[7];
+
+            localMat.data[2][0] = gltfNode.matrix[8];  
+            localMat.data[2][1] = gltfNode.matrix[9];  
+            localMat.data[2][2] = gltfNode.matrix[10]; 
+            localMat.data[2][3] = gltfNode.matrix[11];
+
+            localMat.data[3][0] = gltfNode.matrix[12]; 
+            localMat.data[3][1] = gltfNode.matrix[13]; 
+            localMat.data[3][2] = gltfNode.matrix[14]; 
+            localMat.data[3][3] = gltfNode.matrix[15];
+        }
+        else 
+        {
+            Mat4 translate, rot, scale;
+
+            if (gltfNode.translation.size() > 0)
+            {
+                translate.data[3][0] = gltfNode.translation[0];
+                translate.data[3][1] = gltfNode.translation[1];
+                translate.data[3][2] = gltfNode.translation[2];
+            }
+
+            if (gltfNode.rotation.size() > 0)
+            {
+                rot = Mat4::QuatToMatrix(gltfNode.rotation[0], gltfNode.rotation[1], gltfNode.rotation[2], gltfNode.rotation[3]);
+            }
+
+            if (gltfNode.scale.size() > 0)
+            {
+                scale.data[0][0] = gltfNode.scale[0];
+                scale.data[1][1] = gltfNode.scale[1];
+                scale.data[2][2] = gltfNode.scale[2];
+            }
+
+            localMat = scale * rot * translate;
+        }
+
+        Mat4 xform = localMat * parentMat;
+        
+        // When at a leaf node, add an instance to the scene (if a mesh exists for it)
+        if (gltfNode.children.size() == 0 && gltfNode.mesh != -1)
+        {
+            std::vector<Primitive> prims = meshPrimMap[gltfNode.mesh];
+
+            // Write the instance data
+            for (int i = 0; i < prims.size(); i++)
+            {
+                std::string name = gltfNode.name;
+                // TODO: Better naming
+                if (strcmp(name.c_str(), "") == 0)
+                    name = "Mesh " + std::to_string(gltfNode.mesh) + " Prim" + std::to_string(prims[i].primitiveId);
+
+                MeshInstance instance(name, prims[i].primitiveId, xform, prims[i].materialId);
+                scene->AddMeshInstance(instance);
+            }
+        }
+
+        for (size_t i = 0; i < gltfNode.children.size(); i++)
+        {
+            TraverseNodes(scene, gltfModel, gltfNode.children[i], xform, meshPrimMap);
+        }
+    }
+
+    void LoadInstances(Scene* scene, tinygltf::Model& gltfModel, std::map<int, std::vector<Primitive>>& meshPrimMap)
+    {
+        const tinygltf::Scene gltfScene = gltfModel.scenes[gltfModel.defaultScene];
+
+        Mat4 xform;
+
+        for (int rootIdx = 0; rootIdx < gltfScene.nodes.size(); rootIdx++)
+        {
+            TraverseNodes(scene, gltfModel, rootIdx, xform, meshPrimMap);
         }
     }
 
@@ -286,10 +382,11 @@ namespace GLSLPT
             return false;
         }
 
-        LoadMeshes(scene, gltfModel);
+        std::map<int, std::vector<Primitive>> meshPrimMap;
+        LoadMeshes(scene, gltfModel, meshPrimMap);
         LoadTextures(scene, gltfModel);
         LoadMaterials(scene, gltfModel);
-        LoadInstances(scene, gltfModel);
+        LoadInstances(scene, gltfModel, meshPrimMap);
 
         return true;
     }

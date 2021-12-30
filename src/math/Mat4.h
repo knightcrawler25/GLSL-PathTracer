@@ -39,6 +39,7 @@ namespace GLSLPT
 
         static Mat4 Translate(const Vec3& a);
         static Mat4 Scale(const Vec3& a);
+        static Mat4 QuatToMatrix(float x, float y, float z, float w);
 
         float data[4][4];
     };
@@ -92,6 +93,49 @@ namespace GLSLPT
         out[3][1] = data[3][0] * b.data[0][1] + data[3][1] * b.data[1][1] + data[3][2] * b.data[2][1] + data[3][3] * b.data[3][1];
         out[3][2] = data[3][0] * b.data[0][2] + data[3][1] * b.data[1][2] + data[3][2] * b.data[2][2] + data[3][3] * b.data[3][2];
         out[3][3] = data[3][0] * b.data[0][3] + data[3][1] * b.data[1][3] + data[3][2] * b.data[2][3] + data[3][3] * b.data[3][3];
+
+        return out;
+    }
+
+    inline Mat4 Mat4::QuatToMatrix(float x, float y, float z, float w)
+    {
+        Mat4 out;
+
+        const float x2 = x + x;  
+        const float y2 = y + y;  
+        const float z2 = z + z;
+
+        const float xx = x * x2; 
+        const float xy = x * y2; 
+        const float xz = x * z2;
+
+        const float yy = y * y2; 
+        const float yz = y * z2; 
+        const float zz = z * z2;
+
+        const float wx = w * x2; 
+        const float wy = w * y2; 
+        const float wz = w * z2;
+
+        out.data[0][0] = 1.0f - (yy + zz);
+        out.data[0][1] = xy + wz;
+        out.data[0][2] = xz - wy;
+        out.data[0][3] = 0.0f;
+
+        out.data[1][0] = xy - wz;
+        out.data[1][1] = 1.0f - (xx + zz);
+        out.data[1][2] = yz + wx;
+        out.data[1][3] = 0.0f;
+
+        out.data[2][0] = xz + wy;
+        out.data[2][1] = yz - wx;
+        out.data[2][2] = 1.0f - (xx + yy);
+        out.data[2][3] = 0.0f;
+
+        out.data[3][0] = 0;
+        out.data[3][1] = 0;
+        out.data[3][2] = 0;
+        out.data[3][3] = 1.0f;
 
         return out;
     }
