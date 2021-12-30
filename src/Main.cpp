@@ -144,7 +144,7 @@ void SaveFrame(const std::string filename)
     stbi_flip_vertically_on_write(true);
     stbi_write_png(filename.c_str(), w, h, 4, data, w * 4);
     printf("Frame saved: %s\n", filename.c_str());
-    delete data;
+    delete[] data;
 }
 
 void Render()

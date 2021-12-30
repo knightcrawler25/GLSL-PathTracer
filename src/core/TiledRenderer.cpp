@@ -330,8 +330,8 @@ namespace GLSLPT
         delete outputShader;
         delete tonemapShader;
 
-        delete denoiserInputFramePtr;
-        delete frameOutputPtr;
+        delete[] denoiserInputFramePtr;
+        delete[] frameOutputPtr;
 
         Renderer::Finish();
     }

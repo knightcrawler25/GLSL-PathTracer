@@ -75,6 +75,7 @@ namespace GLSLPT
         else
         {
             printf("Unable to load model %s\n", filename.c_str());
+            delete mesh;
             id = -1;
         }
         return id;
@@ -97,6 +98,7 @@ namespace GLSLPT
         else
         {
             printf("Unable to load texture %s\n", filename.c_str());
+            delete texture;
             id = -1;
         }
 
@@ -282,7 +284,7 @@ namespace GLSLPT
                 unsigned char* resizedTex = new unsigned char[reqWidth * reqHeight * 4];
                 stbir_resize_uint8(&textures[i]->texData[0], texWidth, texHeight, 0, resizedTex, reqWidth, reqHeight, 0, 4);
                 textureMapsArray.insert(textureMapsArray.end(), resizedTex, resizedTex + (reqWidth * reqHeight * 4));
-                delete resizedTex;
+                delete[] resizedTex;
             }
             else
                 textureMapsArray.insert(textureMapsArray.end(), textures[i]->texData.begin(), textures[i]->texData.end());

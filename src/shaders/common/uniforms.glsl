@@ -23,7 +23,6 @@
  */
 
 uniform bool isCameraMoving;
-uniform bool useEnvMap;
 uniform vec3 randomVector;
 uniform vec2 screenResolution;
 uniform float hdrTexSize;

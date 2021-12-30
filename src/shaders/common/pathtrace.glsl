@@ -77,7 +77,7 @@ void GetMaterials(inout State state, in Ray r)
     {
         vec3 texNormal = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.z)).rgb;
 
-#ifdef OPENGL_NORMALMAP
+#ifdef OPT_OPENGL_NORMALMAP
         texNormal.y = 1.0 - texNormal.y;
 #endif
         texNormal = normalize(texNormal * 2.0 - 1.0);
