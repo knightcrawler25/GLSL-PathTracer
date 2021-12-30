@@ -45,8 +45,7 @@ namespace GLSLPT
     // Note: A GLTF mesh can contain multiple primitives and each primitive can potentially have a different material applied.
     // The two level BVH in this repo holds material ids per mesh and not per primitive, so this function loads each primitive from the gltf mesh as a new mesh
     void LoadMeshes(Scene* scene, tinygltf::Model& gltfModel, std::map<int, std::vector<Primitive>>& meshPrimMap)
-    {
-        
+    { 
         for (int gltfMeshIdx = 0; gltfMeshIdx < gltfModel.meshes.size(); gltfMeshIdx++)
         {
             tinygltf::Mesh gltfMesh = gltfModel.meshes[gltfMeshIdx];
@@ -89,6 +88,7 @@ namespace GLSLPT
                 if (positionBufferView.byteStride > 0)
                     positionStride = positionBufferView.byteStride;
 
+                // FIXME: Some GLTF files like TriangleWithoutIndices.gltf have no indices
                 // Vertex indices
                 tinygltf::Accessor indexAccessor = gltfModel.accessors[indicesIndex];
                 tinygltf::BufferView indexBufferView = gltfModel.bufferViews[indexAccessor.bufferView];
@@ -233,6 +233,7 @@ namespace GLSLPT
 
     void LoadMaterials(Scene* scene, tinygltf::Model& gltfModel)
     {
+        // TODO: Support for KHR extensions
         for (size_t i = 0; i < gltfModel.materials.size(); i++)
         {
             const tinygltf::Material gltfMaterial = gltfModel.materials[i];
@@ -356,7 +357,7 @@ namespace GLSLPT
 
         for (int rootIdx = 0; rootIdx < gltfScene.nodes.size(); rootIdx++)
         {
-            TraverseNodes(scene, gltfModel, rootIdx, xform, meshPrimMap);
+            TraverseNodes(scene, gltfModel, gltfScene.nodes[rootIdx], xform, meshPrimMap);
         }
     }
 

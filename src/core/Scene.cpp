@@ -208,10 +208,6 @@ namespace GLSLPT
 
     void Scene::ProcessScene()
     {
-        // Add a default camera
-        if (!camera)
-            AddCamera(Vec3(0.0f, 0.0f, 10.0f), Vec3(0.0f, 0.0f, 0.0f), 45.0f);
-
         printf("Processing scene data\n");
         createBLAS();
 
@@ -273,6 +269,15 @@ namespace GLSLPT
             }
             else
                 textureMapsArray.insert(textureMapsArray.end(), textures[i]->texData.begin(), textures[i]->texData.end());
+        }
+
+        // Add a default camera
+        if (!camera)
+        {
+            RadeonRays::bbox bounds = sceneBvh->Bounds();
+            Vec3 extents = bounds.extents() * 5.0f;
+            Vec3 center = bounds.center();
+            AddCamera(Vec3(extents.x, center.y, extents.z), center, 45.0f);
         }
 
         initialized = true;

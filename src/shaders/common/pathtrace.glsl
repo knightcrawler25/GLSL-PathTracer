@@ -66,8 +66,7 @@ void GetMaterials(inout State state, in Ray r)
     // Metallic Roughness Map
     if (texIDs.y >= 0)
     {
-        // FIXME: Textures in repo use rg channels. GLTF uses bg.
-        vec2 matRgh = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.y)).rg;
+        vec2 matRgh = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.y)).bg;
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y * matRgh.y, 0.001);
     }
