@@ -3,24 +3,19 @@ GLSL-PathTracer
 ==========
 A physically based path tracer that runs in a GLSL fragment shader.
 
-![RenderMan Swatch](./screenshots/Renderman_swatch.png)
-
-![Stormtrooper](./screenshots/stormtrooper.jpg)
-
-![Panther](./screenshots/panther.jpg)
-
-![Crown](./screenshots/crown.png)
+![Jinx](./screenshots/Jinx.png)
 
 Features
 --------
 - Unidirectional path tracer
-- RadeonRays for building BVHs (Traversal is performed in a shader)
+- RadeonRays 2.0 as a BVH builder (BVH traversal doesn't use RadeonRays as it is done in a fragment shader)
 - Disney BSDF
+- Texture Mapping (Albedo, Metallic-Roughness, Normal, Emission)
+- Analytic Lights (Sphere, Rect, Directional)
 - OpenImageDenoise
-- Texture Mapping (Albedo, Metallic-Roughness, Normal)
-- Analytic Lights (Sphere, Rect, Directional) with MIS
-- IBL
-- Progressive + Tiled Rendering
+- Image based lighting with importance sampling
+- Tile Rendering
+- GLTF/GLB Support (In progress)
 
 Build Instructions
 --------
@@ -33,9 +28,15 @@ https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
 
 Gallery
 --------
-![Mustang_red](./screenshots/Mustang_Red.jpg)
+![RenderMan Swatch](./screenshots/Renderman_swatch.png)
 --------
-![Mustang](./screenshots/Mustang.jpg)
+![Stormtrooper](./screenshots/stormtrooper.jpg)
+--------
+![Panther](./screenshots/panther.jpg)
+--------
+![Crown](./screenshots/crown.png)
+--------
+![Mustang_red](./screenshots/Mustang_Red.jpg)
 --------
 ![Hyperion](./screenshots/hyperion.jpg)
 --------
@@ -54,8 +55,10 @@ Gallery
 References/Credits
 --------
 - A huge shout-out to Cedric Guillemet (https://github.com/CedricGuillemet) for cleaning up the code, adding the UI, integrating ImGuizmo, cmake and quite a lot of fixes.
-- Tinsel Renderer (https://github.com/mmacklin/tinsel) A really amazing renderer which has several features. A modified version of the scene description & loader are taken from here. Reference for MIS, light sampling
-- Ray Tracing in One Weekend (https://github.com/petershirley/raytracinginoneweekend) Peter Shirley's excellent book introductory book on raytracing which helped me get started on this project
-- Mitsuba Renderer (https://github.com/mitsuba-renderer/mitsuba) Reference for validation of the code.
-- Erich Loftis's THREE.js PathTracer (https://github.com/erichlof/THREE.js-PathTracing-Renderer) Several amazing webgl examples including bidirectional path tracing; all running in a web browser.
+- Tinsel Renderer (https://github.com/mmacklin/tinsel) A really amazing renderer which has several features. A modified version of the scene description & loader are taken from here. The Disney BSDF differs from this project as there were some issues with the tinsel implementation.
+- Ray Tracing in One Weekend (https://github.com/petershirley/raytracinginoneweekend) Peter Shirley's excellent book introductory book on raytracing which helped me get started on this project.
+- Erich Loftis's THREE.js PathTracer (https://github.com/erichlof/THREE.js-PathTracing-Renderer).
 - OptiX Introduction Samples (https://github.com/nvpro-samples/optix_advanced_samples/tree/master/src/optixIntroduction)
+- Mitsuba Renderer (https://github.com/mitsuba-renderer/mitsuba) Reference for validation of the code.
+- PBRT-v3 (https://github.com/mmp/pbrt-v3) which provides an endless source of knowledge. The online book is a gift that keeps giving.
+- Model links/credits are in the assets folder (See: Model Credits.txt)

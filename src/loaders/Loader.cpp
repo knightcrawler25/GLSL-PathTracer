@@ -234,6 +234,7 @@ namespace GLSLPT
                 char hideEmitters[10] = "None";
                 char transparentBackground[10] = "None";
                 char enableBackground[10] = "None";
+                char independentRenderSize[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -242,7 +243,8 @@ namespace GLSLPT
                         break;
 
                     sscanf(line, " envMap %s", envMap);
-                    sscanf(line, " resolution %d %d", &renderOptions.resolution.x, &renderOptions.resolution.y);
+                    sscanf(line, " resolution %d %d", &renderOptions.renderResolution.x, &renderOptions.renderResolution.y);
+                    sscanf(line, " windowResolution %d %d", &renderOptions.windowResolution.x, &renderOptions.windowResolution.y);
                     sscanf(line, " hdrMultiplier %f", &renderOptions.hdrMultiplier);
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
                     sscanf(line, " tileWidth %i", &renderOptions.tileWidth);
@@ -257,6 +259,7 @@ namespace GLSLPT
                     sscanf(line, " enableBackground %s", enableBackground);
                     sscanf(line, " transparentBackground %s", transparentBackground);
                     sscanf(line, " backgroundColor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
+                    sscanf(line, " independentRenderSize %s", independentRenderSize);
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -296,6 +299,14 @@ namespace GLSLPT
                     renderOptions.transparentBackground = false;
                 else if (strcmp(transparentBackground, "True") == 0)
                     renderOptions.transparentBackground = true;
+
+                if (strcmp(independentRenderSize, "False") == 0)
+                    renderOptions.independentRenderSize = false;
+                else if (strcmp(independentRenderSize, "True") == 0)
+                    renderOptions.independentRenderSize = true;
+
+                if (!renderOptions.independentRenderSize)
+                    renderOptions.windowResolution = renderOptions.renderResolution;
             }
 
 

@@ -150,10 +150,9 @@ void SaveFrame(const std::string filename)
 
 void Render()
 {
-    auto io = ImGui::GetIO();
     renderer->Render();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+    glViewport(0, 0, renderOptions.windowResolution.x, renderOptions.windowResolution.y);
     renderer->Present();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -268,9 +267,13 @@ void MainLoop(void* arg)
         {
             if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
             {
-                renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
+                renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
+                
+                if (!renderOptions.independentRenderSize)
+                    renderOptions.renderResolution = renderOptions.windowResolution;
+
                 scene->renderOptions = renderOptions;
-                InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
+                InitRenderer();
             }
 
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
@@ -310,7 +313,7 @@ void MainLoop(void* arg)
         {
             LoadScene(sceneFiles[sampleSceneIndex]);
             SDL_RestoreWindow(loopdata.mWindow);
-            SDL_SetWindowSize(loopdata.mWindow, renderOptions.resolution.x, renderOptions.resolution.y);
+            SDL_SetWindowSize(loopdata.mWindow, renderOptions.windowResolution.x, renderOptions.windowResolution.y);
             InitRenderer();
         }
 
@@ -369,6 +372,7 @@ void MainLoop(void* arg)
             scene->camera->aperture = aperture / 1000.0f;
             optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
             ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
+            ImGui::Text("Dir: %.2f, %.2f, %.2f", scene->camera->forward.x, scene->camera->forward.y, scene->camera->forward.z);
         }
 
         scene->camera->isMoving = false;
@@ -526,7 +530,7 @@ int main(int argc, char** argv)
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
+    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.windowResolution.x, renderOptions.windowResolution.y, window_flags);
 
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 

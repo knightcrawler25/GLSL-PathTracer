@@ -53,7 +53,8 @@ namespace GLSLPT
         , quad(nullptr)
         , initialized(false)
         , numOfLights(scene->lights.size())
-        , screenSize(scene->renderOptions.resolution)
+        , renderSize(scene->renderOptions.renderResolution)
+        , windowSize(scene->renderOptions.windowResolution)
         , shadersDirectory(shadersDirectory)
     {
     }

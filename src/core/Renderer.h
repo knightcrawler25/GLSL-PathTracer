@@ -42,7 +42,9 @@ namespace GLSLPT
             tileWidth = 100;
             tileHeight = 100;
             useEnvMap = false;
-            resolution = iVec2(1280, 720);
+            renderResolution = iVec2(1280, 720);
+            windowResolution = iVec2(1280, 720);
+            independentRenderSize = false; // Is render resolution independent of window resolution
             hdrMultiplier = 1.0f;
             enableRR = true;
             useUniformLight = false;
@@ -61,7 +63,8 @@ namespace GLSLPT
             transparentBackground = false;
         }
 
-        iVec2 resolution;
+        iVec2 renderResolution;
+        iVec2 windowResolution;
         int maxDepth;
         int tileWidth;
         int tileHeight;
@@ -83,6 +86,7 @@ namespace GLSLPT
         Vec3 backgroundCol;
         bool enableBackground;
         bool transparentBackground;
+        bool independentRenderSize;
     };
 
     class Scene;
@@ -93,7 +97,8 @@ namespace GLSLPT
         Scene *scene;
         Quad* quad;
 
-        iVec2 screenSize;
+        iVec2 renderSize;
+        iVec2 windowSize;
         std::string shadersDirectory;
 
         GLuint BVHBuffer;
@@ -118,8 +123,6 @@ namespace GLSLPT
     public:
         Renderer(Scene *scene, const std::string& shadersDirectory);
         virtual ~Renderer();
-
-        const iVec2 GetScreenSize() const { return screenSize; }
 
         virtual void Init();
         virtual void Finish();
