@@ -100,13 +100,14 @@ void LoadScene(std::string sceneName)
     std::string ext = sceneName.substr(sceneName.find_last_of(".") + 1);
 
     bool success = false;
+    Mat4 xform;
 
     if (ext == "scene")
         success = LoadSceneFromFile(sceneName, scene, renderOptions);
     else if (ext == "gltf")
-        success = LoadGLTF(sceneName, scene, renderOptions, false);
+        success = LoadGLTF(sceneName, scene, renderOptions, xform, false);
     else if(ext == "glb")
-        success = LoadGLTF(sceneName, scene, renderOptions, true);
+        success = LoadGLTF(sceneName, scene, renderOptions, xform, true);
 
     if (!success)
     {

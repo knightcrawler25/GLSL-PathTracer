@@ -212,7 +212,8 @@ namespace GLSLPT
                 scene->meshes.push_back(mesh);
                 // Store a mapping for a gltf mesh and the loaded primitive data
                 // This is used for creating instances based on the primitive
-                meshPrimMap[gltfMeshIdx].push_back(Primitive{ sceneMeshId, prim.material });
+                int sceneMatIdx = prim.material + scene->materials.size();
+                meshPrimMap[gltfMeshIdx].push_back(Primitive{ sceneMeshId, sceneMatIdx });
             }
         }
     }
@@ -233,6 +234,7 @@ namespace GLSLPT
 
     void LoadMaterials(Scene* scene, tinygltf::Model& gltfModel)
     {
+        int sceneTexIdx = scene->textures.size();
         // TODO: Support for KHR extensions
         for (size_t i = 0; i < gltfModel.materials.size(); i++)
         {
@@ -244,19 +246,30 @@ namespace GLSLPT
 
             // Albedo
             material.baseColor = Vec3((float)pbr.baseColorFactor[0], (float)pbr.baseColorFactor[1], (float)pbr.baseColorFactor[2]);
-            material.baseColorTexId = pbr.baseColorTexture.index;
+            if (pbr.baseColorTexture.index > -1)
+                material.baseColorTexId = pbr.baseColorTexture.index + sceneTexIdx;
 
             // Roughness and Metallic
             material.roughness = sqrtf((float)pbr.roughnessFactor); // Repo's disney material doesn't use squared roughness
             material.metallic = (float)pbr.metallicFactor;
-            material.metallicRoughnessTexID = pbr.metallicRoughnessTexture.index;
+            if (pbr.metallicRoughnessTexture.index > -1)
+                material.metallicRoughnessTexID = pbr.metallicRoughnessTexture.index + sceneTexIdx;
 
             // Normal Map
-            material.normalmapTexID = gltfMaterial.normalTexture.index;
+            material.normalmapTexID = gltfMaterial.normalTexture.index + sceneTexIdx;
 
             // Emission
             material.emission = Vec3((float)gltfMaterial.emissiveFactor[0], (float)gltfMaterial.emissiveFactor[1], (float)gltfMaterial.emissiveFactor[2]);
-            material.emissionmapTexID = gltfMaterial.emissiveTexture.index;
+            if (gltfMaterial.emissiveTexture.index > -1)
+                material.emissionmapTexID = gltfMaterial.emissiveTexture.index + sceneTexIdx;
+
+            // KHR_materials_transmission
+            if (gltfMaterial.extensions.find("KHR_materials_transmission") != gltfMaterial.extensions.end())
+            {
+                const auto& ext = gltfMaterial.extensions.find("KHR_materials_transmission")->second;
+                if (ext.Has("transmissionFactor"))
+                    material.specTrans =(float)(ext.Get("transmissionFactor").Get<double>());
+            }
 
             scene->AddMaterial(material);
         }
@@ -269,7 +282,7 @@ namespace GLSLPT
         }
     }
 
-    void TraverseNodes(Scene* scene, const tinygltf::Model& gltfModel, int nodeIdx, Mat4 &parentMat, std::map<int, std::vector<Primitive>>& meshPrimMap)
+    void TraverseNodes(Scene* scene, tinygltf::Model& gltfModel, int nodeIdx, Mat4 &parentMat, std::map<int, std::vector<Primitive>>& meshPrimMap)
     {
         tinygltf::Node gltfNode = gltfModel.nodes[nodeIdx];
 
@@ -349,11 +362,9 @@ namespace GLSLPT
         }
     }
 
-    void LoadInstances(Scene* scene, tinygltf::Model& gltfModel, std::map<int, std::vector<Primitive>>& meshPrimMap)
+    void LoadInstances(Scene* scene, tinygltf::Model& gltfModel, Mat4 xform, std::map<int, std::vector<Primitive>>& meshPrimMap)
     {
         const tinygltf::Scene gltfScene = gltfModel.scenes[gltfModel.defaultScene];
-
-        Mat4 xform;
 
         for (int rootIdx = 0; rootIdx < gltfScene.nodes.size(); rootIdx++)
         {
@@ -361,7 +372,7 @@ namespace GLSLPT
         }
     }
 
-    bool LoadGLTF(const std::string &filename, Scene *scene, RenderOptions& renderOptions, bool binary)
+    bool LoadGLTF(const std::string &filename, Scene *scene, RenderOptions& renderOptions, Mat4 xform, bool binary)
     {
         tinygltf::Model gltfModel;
         tinygltf::TinyGLTF loader;
@@ -385,9 +396,9 @@ namespace GLSLPT
 
         std::map<int, std::vector<Primitive>> meshPrimMap;
         LoadMeshes(scene, gltfModel, meshPrimMap);
-        LoadTextures(scene, gltfModel);
         LoadMaterials(scene, gltfModel);
-        LoadInstances(scene, gltfModel, meshPrimMap);
+        LoadTextures(scene, gltfModel);
+        LoadInstances(scene, gltfModel, xform, meshPrimMap);
 
         return true;
     }

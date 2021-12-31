@@ -27,6 +27,7 @@ freely, subject to the following restrictions:
 
 #include <cstring>
 #include "Loader.h"
+#include "GLTFLoader.h"
 
 namespace GLSLPT
 {
@@ -292,9 +293,8 @@ namespace GLSLPT
             if (strstr(line, "mesh"))
             {
                 std::string filename;
-                Vec3 pos;
-                Vec3 scale;
-                Mat4 xform;
+                Vec4 rotQuat;
+                Mat4 translate, rot, scale;
                 int material_id = 0; // Default Material ID
                 char meshName[200] = "None";
 
@@ -327,9 +327,12 @@ namespace GLSLPT
                         }
                     }
 
-                    sscanf(line, " position %f %f %f", &xform[3][0], &xform[3][1], &xform[3][2]);
-                    sscanf(line, " scale %f %f %f", &xform[0][0], &xform[1][1], &xform[2][2]);
+                    sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
+                    sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
+                    sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w);
+                    rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
                 }
+
                 if (!filename.empty())
                 {
                     int mesh_id = scene->AddMesh(filename);
@@ -347,8 +350,59 @@ namespace GLSLPT
                             instanceName = filename.substr(pos + 1);
                         }
                         
+                        Mat4 xform = scale * rot * translate;
                         MeshInstance instance(instanceName, mesh_id, xform, material_id);
                         scene->AddMeshInstance(instance);
+                    }
+                }
+            }
+
+            //--------------------------------------------
+            // GLTF
+
+            if (strstr(line, "gltf"))
+            {
+                std::string filename;
+                Vec4 rotQuat;
+                Mat4 translate, rot, scale;
+
+                while (fgets(line, kMaxLineLength, file))
+                {
+                    // end group
+                    if (strchr(line, '}'))
+                        break;
+
+                    char file[2048];
+
+                    if (sscanf(line, " file %s", file) == 1)
+                    {
+                        filename = path + file;
+                    }
+
+                    sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
+                    sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
+                    sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w);
+                    rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
+                }
+
+                if (!filename.empty())
+                {
+                    std::string ext = filename.substr(filename.find_last_of(".") + 1);
+
+                    bool success = false;
+                    Mat4 xform = scale * rot * translate;
+
+                    // TODO: Add support for instancing.
+                    // If the same gltf is loaded multiple times then mesh data gets duplicated
+                    if (ext == "gltf")
+                        success = LoadGLTF(filename, scene, renderOptions, xform, false);
+                    else if (ext == "glb")
+                        success = LoadGLTF(filename, scene, renderOptions, xform, true);
+
+                    if (!success)
+                    {
+                        printf("Unable to load gltf %s\n", filename);
+                        exit(0);
                     }
                 }
             }

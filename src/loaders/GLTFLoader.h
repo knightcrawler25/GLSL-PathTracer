@@ -30,5 +30,5 @@ namespace GLSLPT
 {
     class Scene;
 
-    bool LoadGLTF(const std::string &filename, Scene *scene, RenderOptions& renderOptions, bool binary);
+    bool LoadGLTF(const std::string &filename, Scene *scene, RenderOptions& renderOptions, Mat4 xform, bool binary);
 }

@@ -35,10 +35,10 @@ namespace GLSLPT
         Material()
         {
             baseColor = Vec3(1.0f, 1.0f, 1.0f);
-            padding1  = 0.0f;
+            opacity  = 0.0f; // Not used
 
             emission    = Vec3(0.0f, 0.0f, 0.0f);
-            anisotropic = 0.0f;
+            anisotropic = 0.0f; // Not used
 
             metallic     = 0.0f;
             roughness    = 0.5f;
@@ -50,13 +50,13 @@ namespace GLSLPT
             clearcoat      = 0.0f;
             clearcoatGloss = 0.0f;
 
-            specTrans = 0.0f;
-            ior          = 1.45f;
-            atDistance   = 1.0f;
-            padding2     = 0.0f;
+            specTrans   = 0.0f;
+            ior         = 1.5f;
+            atDistance  = 1.0f;
+            padding2    = 0.0f;
 
-            extinction    = Vec3(1.0f, 1.0f, 1.0f);
-            padding3      = 0.0f;
+            extinction  = Vec3(1.0f, 1.0f, 1.0f);
+            padding3    = 0.0f;
 
             baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
@@ -65,7 +65,7 @@ namespace GLSLPT
         };
 
         Vec3 baseColor;
-        float padding1;
+        float opacity;
 
         Vec3 emission;
         float anisotropic;
