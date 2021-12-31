@@ -249,6 +249,15 @@ namespace GLSLPT
             if (pbr.baseColorTexture.index > -1)
                 material.baseColorTexId = pbr.baseColorTexture.index + sceneTexIdx;
 
+            // Opacity
+            material.opacity = (float)pbr.baseColorFactor[3];
+
+            // Alpha
+            material.alphaCutoff = static_cast<float>(gltfMaterial.alphaCutoff);
+            if (strcmp(gltfMaterial.alphaMode.c_str(), "OPAQUE") == 0) material.alphaMode = AlphaMode::Opaque;
+            else if (strcmp(gltfMaterial.alphaMode.c_str(), "BLEND") == 0) material.alphaMode = AlphaMode::Blend;
+            else if (strcmp(gltfMaterial.alphaMode.c_str(), "MASK") == 0) material.alphaMode = AlphaMode::Mask;
+
             // Roughness and Metallic
             material.roughness = sqrtf((float)pbr.roughnessFactor); // Repo's disney material doesn't use squared roughness
             material.metallic = (float)pbr.metallicFactor;

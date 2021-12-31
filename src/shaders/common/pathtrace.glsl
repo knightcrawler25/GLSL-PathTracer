@@ -35,9 +35,10 @@ void GetMaterials(inout State state, in Ray r)
     vec4 param6 = texelFetch(materialsTex, ivec2(index + 5, 0), 0);
     vec4 param7 = texelFetch(materialsTex, ivec2(index + 6, 0), 0);
 
-    mat.baseColor          = param1.xyz;
+    mat.baseColor          = param1.rgb;
+    mat.opacity            = param1.a;
                            
-    mat.emission           = param2.xyz;
+    mat.emission           = param2.rgb;
     mat.anisotropic        = param2.w;
                            
     mat.metallic           = param3.x;
@@ -54,14 +55,24 @@ void GetMaterials(inout State state, in Ray r)
     mat.specTrans          = param5.x;
     mat.ior                = param5.y;
     mat.atDistance         = param5.z;
+    mat.alphaMode          = int(param5.w);
                            
-    mat.extinction         = param6.xyz;
+    mat.extinction         = param6.rgb;
+    mat.alphaCutoff        = param6.w;
                            
     ivec4 texIDs           = ivec4(param7);
 
-    // Albedo Map
+    // Base Color Map
     if (texIDs.x >= 0)
-        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.x)).rgb, vec3(2.2));
+    {
+        vec4 col = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.x));
+        mat.baseColor.rgb *= pow(col.rgb, vec3(2.2));
+        mat.opacity *= col.a;
+    }
+
+    // Set opacity to 1.0 for opaque materials
+    if (mat.alphaMode == ALPHA_MODE_OPAQUE)
+        mat.opacity = 1.0;
 
     // Metallic Roughness Map
     if (texIDs.y >= 0)
@@ -186,6 +197,7 @@ vec4 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
+    // TODO: alpha from material opacity
     float alpha = 1.0;
     
     for (int depth = 0; depth < maxDepth; depth++)
@@ -242,6 +254,22 @@ vec4 PathTrace(Ray r)
             break;
         }
 #endif
+
+        // Ignore intersection based on alpha test
+        // TODO: Alphatest for anyhit()
+        bool ignoreHit = false;
+
+        if (state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff)
+            ignoreHit = true;
+        else if(state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity)
+            ignoreHit = true;
+
+        if (ignoreHit)
+        {
+            depth--;
+            r.origin = state.fhp + r.direction * EPS;
+            continue;
+        }
 
         // Add absoption
         throughput *= exp(-absorption * state.hitDist);

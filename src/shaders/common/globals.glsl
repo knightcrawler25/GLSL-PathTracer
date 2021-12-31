@@ -34,6 +34,10 @@
 #define SPHERE_LIGHT 1
 #define DISTANT_LIGHT 2
 
+#define ALPHA_MODE_OPAQUE 0
+#define ALPHA_MODE_BLEND 1
+#define ALPHA_MODE_MASK 2
+
 struct Ray
 {
     vec3 origin;
@@ -43,6 +47,9 @@ struct Ray
 struct Material
 {
     vec3 baseColor;
+    float opacity;
+    int alphaMode;
+    float alphaCutoff;
     vec3 emission;
     float anisotropic;
     float metallic;

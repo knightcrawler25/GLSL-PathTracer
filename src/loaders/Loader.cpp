@@ -84,6 +84,7 @@ namespace GLSLPT
                 char metallicRoughnessTexName[100] = "None";
                 char normalTexName[100] = "None";
                 char emissionTexName[100] = "None";
+                char alphaMode[20] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -92,6 +93,9 @@ namespace GLSLPT
                         break;
 
                     sscanf(line, " color %f %f %f", &material.baseColor.x, &material.baseColor.y, &material.baseColor.z);
+                    sscanf(line, " opacity %f", &material.opacity);
+                    sscanf(line, " alphaMode %s", alphaMode);
+                    sscanf(line, " alphaCutoff %f", &material.alphaCutoff);
                     sscanf(line, " emission %f %f %f", &material.emission.x, &material.emission.y, &material.emission.z);
                     sscanf(line, " metallic %f", &material.metallic);
                     sscanf(line, " roughness %f", &material.roughness);
@@ -128,6 +132,14 @@ namespace GLSLPT
                 if (strcmp(emissionTexName, "None") != 0)
                     material.emissionmapTexID = scene->AddTexture(path + emissionTexName);
 
+                // AlphaMode
+                if (strcmp(alphaMode, "Opaque") == 0)
+                    material.alphaMode = AlphaMode::Opaque;
+                else if (strcmp(alphaMode, "Blend") == 0)
+                    material.alphaMode = AlphaMode::Blend;
+                else if (strcmp(alphaMode, "Mask") == 0)
+                    material.alphaMode = AlphaMode::Mask;
+
                 // add material to map
                 if (materialMap.find(name) == materialMap.end()) // New material
                 {
@@ -143,7 +155,7 @@ namespace GLSLPT
             {
                 Light light;
                 Vec3 v1, v2;
-                char light_type[20] = "None";
+                char lightType[20] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -157,22 +169,22 @@ namespace GLSLPT
                     sscanf(line, " radius %f", &light.radius);
                     sscanf(line, " v1 %f %f %f", &v1.x, &v1.y, &v1.z);
                     sscanf(line, " v2 %f %f %f", &v2.x, &v2.y, &v2.z);
-                    sscanf(line, " type %s", light_type);
+                    sscanf(line, " type %s", lightType);
                 }
 
-                if (strcmp(light_type, "Quad") == 0)
+                if (strcmp(lightType, "Quad") == 0)
                 {
                     light.type = LightType::RectLight;
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
                     light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
                 }
-                else if (strcmp(light_type, "Sphere") == 0)
+                else if (strcmp(lightType, "Sphere") == 0)
                 {
                     light.type = LightType::SphereLight;
                     light.area = 4.0f * PI * light.radius * light.radius;
                 }
-                else if (strcmp(light_type, "Distant") == 0)
+                else if (strcmp(lightType, "Distant") == 0)
                 {
                     light.type = LightType::DistantLight;
                     light.area = 0.0f;

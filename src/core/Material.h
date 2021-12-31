@@ -29,13 +29,20 @@
 
 namespace GLSLPT
 {
+    enum AlphaMode
+    {
+        Opaque,
+        Blend,
+        Mask
+    };
+
     class Material
     {
     public:
         Material()
         {
             baseColor = Vec3(1.0f, 1.0f, 1.0f);
-            opacity  = 0.0f; // Not used
+            opacity   = 0.0f;
 
             emission    = Vec3(0.0f, 0.0f, 0.0f);
             anisotropic = 0.0f; // Not used
@@ -53,10 +60,10 @@ namespace GLSLPT
             specTrans   = 0.0f;
             ior         = 1.5f;
             atDistance  = 1.0f;
-            padding2    = 0.0f;
+            alphaMode   = 0.0f;
 
             extinction  = Vec3(1.0f, 1.0f, 1.0f);
-            padding3    = 0.0f;
+            alphaCutoff = 0.0f;
 
             baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
@@ -83,10 +90,10 @@ namespace GLSLPT
         float specTrans;
         float ior;
         float atDistance;
-        float padding2;
+        float alphaMode;
 
         Vec3 extinction;
-        float padding3;
+        float alphaCutoff;
 
         float baseColorTexId;
         float metallicRoughnessTexID;
