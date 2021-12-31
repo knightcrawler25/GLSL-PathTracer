@@ -23,7 +23,6 @@
  */
 
 uniform bool isCameraMoving;
-uniform bool useEnvMap;
 uniform vec3 randomVector;
 uniform vec2 screenResolution;
 uniform float hdrTexSize;
@@ -46,7 +45,7 @@ uniform sampler2D hdrCondDistTex;
 
 uniform float hdrResolution;
 uniform float hdrMultiplier;
-uniform vec3 bgColor;
+uniform vec3 uniformLightCol;
 uniform int numOfLights;
 uniform int maxDepth;
 uniform int topBVHIndex;

@@ -66,10 +66,10 @@ namespace GLSLPT
     class Scene
     {
     public:
-        Scene() : camera(nullptr), hdrData(nullptr) {
+        Scene() : camera(nullptr), hdrData(nullptr), initialized(false) {
             sceneBvh = new RadeonRays::Bvh(10.0f, 64, false);
         }
-        ~Scene() { delete camera; delete sceneBvh; delete hdrData; };
+        ~Scene();
 
         int AddMesh(const std::string &filename);
         int AddTexture(const std::string &filename);
@@ -80,7 +80,7 @@ namespace GLSLPT
         void AddCamera(Vec3 eye, Vec3 lookat, float fov);
         void AddHDR(const std::string &filename);
 
-        void CreateAccelerationStructures();
+        void ProcessScene();
         void RebuildInstances();
 
         //Options
@@ -116,8 +116,7 @@ namespace GLSLPT
         //Texture Data
         std::vector<Texture *> textures;
         std::vector<unsigned char> textureMapsArray;
-        int texWidth;
-        int texHeight; // TODO: allow textures of different sizes
+        bool initialized;
 
     private:
         RadeonRays::Bvh *sceneBvh;

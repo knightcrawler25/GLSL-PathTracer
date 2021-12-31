@@ -30,7 +30,6 @@ THE SOFTWARE.
 #define BVH_TRANSLATOR_H
 
 #include <map>
-
 #include "bvh.h"
 #include "Mesh.h"
 

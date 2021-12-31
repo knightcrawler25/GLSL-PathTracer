@@ -25,20 +25,27 @@
 #pragma once
 
 #include <vector>
-#include <Vec3.h>
+#include "Vec3.h"
 
 namespace GLSLPT
 {
+    enum AlphaMode
+    {
+        Opaque,
+        Blend,
+        Mask
+    };
+
     class Material
     {
     public:
         Material()
         {
             baseColor = Vec3(1.0f, 1.0f, 1.0f);
-            padding1  = 0.0f;
+            opacity   = 0.0f;
 
             emission    = Vec3(0.0f, 0.0f, 0.0f);
-            anisotropic = 0.0f;
+            anisotropic = 0.0f; // Not used
 
             metallic     = 0.0f;
             roughness    = 0.5f;
@@ -50,22 +57,22 @@ namespace GLSLPT
             clearcoat      = 0.0f;
             clearcoatGloss = 0.0f;
 
-            specTrans = 0.0f;
-            ior          = 1.45f;
-            atDistance   = 1.0f;
-            padding2     = 0.0f;
+            specTrans   = 0.0f;
+            ior         = 1.5f;
+            atDistance  = 1.0f;
+            alphaMode   = 0.0f;
 
-            extinction    = Vec3(1.0f, 1.0f, 1.0f);
-            padding3      = 0.0f;
+            extinction  = Vec3(1.0f, 1.0f, 1.0f);
+            alphaCutoff = 0.0f;
 
-            albedoTexID            = -1.0f;
+            baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
             normalmapTexID         = -1.0f;
             emissionmapTexID       = -1.0f;
         };
 
         Vec3 baseColor;
-        float padding1;
+        float opacity;
 
         Vec3 emission;
         float anisotropic;
@@ -83,12 +90,12 @@ namespace GLSLPT
         float specTrans;
         float ior;
         float atDistance;
-        float padding2;
+        float alphaMode;
 
         Vec3 extinction;
-        float padding3;
+        float alphaCutoff;
 
-        float albedoTexID;
+        float baseColorTexId;
         float metallicRoughnessTexID;
         float normalmapTexID;
         float emissionmapTexID;

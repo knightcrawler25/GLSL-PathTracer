@@ -24,7 +24,7 @@
 
 #version 330
 
-out vec3 color;
+out vec4 color;
 in vec2 TexCoords;
 
 #include common/uniforms.glsl
@@ -66,9 +66,9 @@ void main(void)
 
     Ray ray = Ray(camera.position + randomAperturePos, finalRayDir);
 
-    vec3 accumColor = texture(accumTexture, coordsTile).xyz;
+    vec4 accumColor = texture(accumTexture, coordsTile);
 
-    vec3 pixelColor = PathTrace(ray);
+    vec4 pixelColor = PathTrace(ray);
 
     color = pixelColor + accumColor;
 }

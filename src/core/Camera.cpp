@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 
-#include <Camera.h>
 #include <iostream>
 #include <cstring>
+#include "Camera.h"
 
 namespace GLSLPT
 {

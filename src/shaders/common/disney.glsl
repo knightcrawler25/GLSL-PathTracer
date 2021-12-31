@@ -159,6 +159,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, out vec3 L, out float pdf)
     float r1 = rand();
     float r2 = rand();
 
+    // TODO: Tangent and bitangent should be calculated from mesh (provided, the mesh has proper uvs)
     vec3 T, B;
     Onb(N, T, B);
     V = ToLocal(T, B, N, V); // NDotL = L.z; NDotV = V.z; NDotH = H.z
@@ -212,11 +213,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, out vec3 L, out float pdf)
         if (H.z < 0.0)
             H = -H;
 
-        // Using fresnel based on half vector to pick between refl and refr lobes
-        // as doing it this way gets rid of fireflies due to incorrect weighting
-        // when picking lobes based on shading normal. This split isn't required in DisneyEval()
-        // as H is already available when computing the lobe probabilities.
-
+        // TODO: Refactor into metallic BRDF and specular BSDF
         float fresnel = DisneyFresnel(state.mat, state.eta, dot(L, H), dot(V, H));
         float F = 1.0 - ((1.0 - fresnel) * state.mat.specTrans * (1.0 - state.mat.metallic));
 
@@ -247,6 +244,7 @@ vec3 DisneyEval(State state, vec3 V, vec3 N, vec3 L, out float bsdfPdf)
     bsdfPdf = 0.0;
     vec3 f = vec3(0.0);
 
+    // TODO: Tangent and bitangent should be calculated from mesh (provided, the mesh has proper uvs)
     vec3 T, B;
     Onb(N, T, B);
     V = ToLocal(T, B, N, V); // NDotL = L.z; NDotV = V.z; NDotH = H.z

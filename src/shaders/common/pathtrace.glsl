@@ -35,9 +35,10 @@ void GetMaterials(inout State state, in Ray r)
     vec4 param6 = texelFetch(materialsTex, ivec2(index + 5, 0), 0);
     vec4 param7 = texelFetch(materialsTex, ivec2(index + 6, 0), 0);
 
-    mat.baseColor          = param1.xyz;
+    mat.baseColor          = param1.rgb;
+    mat.opacity            = param1.a;
                            
-    mat.emission           = param2.xyz;
+    mat.emission           = param2.rgb;
     mat.anisotropic        = param2.w;
                            
     mat.metallic           = param3.x;
@@ -54,22 +55,29 @@ void GetMaterials(inout State state, in Ray r)
     mat.specTrans          = param5.x;
     mat.ior                = param5.y;
     mat.atDistance         = param5.z;
+    mat.alphaMode          = int(param5.w);
                            
-    mat.extinction         = param6.xyz;
+    mat.extinction         = param6.rgb;
+    mat.alphaCutoff        = param6.w;
                            
     ivec4 texIDs           = ivec4(param7);
 
-    vec2 texUV = state.texCoord;
-    texUV.y = 1.0 - texUV.y;
-
-    // Albedo Map
+    // Base Color Map
     if (texIDs.x >= 0)
-        mat.baseColor *= pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.x)).rgb, vec3(2.2));
+    {
+        vec4 col = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.x));
+        mat.baseColor.rgb *= pow(col.rgb, vec3(2.2));
+        mat.opacity *= col.a;
+    }
+
+    // Set opacity to 1.0 for opaque materials
+    if (mat.alphaMode == ALPHA_MODE_OPAQUE)
+        mat.opacity = 1.0;
 
     // Metallic Roughness Map
     if (texIDs.y >= 0)
     {
-        vec2 matRgh = texture(textureMapsArrayTex, vec3(texUV, texIDs.y)).rg;
+        vec2 matRgh = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.y)).bg;
         mat.metallic = matRgh.x;
         mat.roughness = max(matRgh.y * matRgh.y, 0.001);
     }
@@ -77,7 +85,11 @@ void GetMaterials(inout State state, in Ray r)
     // Normal Map
     if (texIDs.z >= 0)
     {
-        vec3 texNormal = texture(textureMapsArrayTex, vec3(texUV, texIDs.z)).rgb;
+        vec3 texNormal = texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.z)).rgb;
+
+#ifdef OPT_OPENGL_NORMALMAP
+        texNormal.y = 1.0 - texNormal.y;
+#endif
         texNormal = normalize(texNormal * 2.0 - 1.0);
 
         vec3 origNormal = state.normal;
@@ -87,10 +99,9 @@ void GetMaterials(inout State state, in Ray r)
 
     // Emission Map
     if (texIDs.w >= 0)
-        mat.emission = pow(texture(textureMapsArrayTex, vec3(texUV, texIDs.w)).rgb, vec3(2.2));
+        mat.emission = pow(texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.w)).rgb, vec3(2.2));
 
     // Commented out the following as anisotropic param is temporarily unused.
-    // Calculate anisotropic roughness along the tangent and bitangent directions
     // float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
     // mat.ax = max(0.001, mat.roughness / aspect);
     // mat.ay = max(0.001, mat.roughness * aspect);
@@ -107,8 +118,8 @@ vec3 DirectLight(in Ray r, in State state)
     BsdfSampleRec bsdfSampleRec;
 
     // Environment Light
-#ifdef ENVMAP
-#ifndef CONSTANT_BG
+#ifdef OPT_ENVMAP
+#ifndef OPT_UNIFORM_LIGHT
     {
         vec3 color;
         vec4 dirPdf = SampleEnvMap(color);
@@ -134,7 +145,7 @@ vec3 DirectLight(in Ray r, in State state)
 #endif
 
     // Analytic Lights 
-#ifdef LIGHTS
+#ifdef OPT_LIGHTS
     {
         LightSampleRec lightSampleRec;
         Light light;
@@ -178,7 +189,7 @@ vec3 DirectLight(in Ray r, in State state)
     return Li;
 }
 
-vec3 PathTrace(Ray r)
+vec4 PathTrace(Ray r)
 {
     vec3 radiance = vec3(0.0);
     vec3 throughput = vec3(1.0);
@@ -186,6 +197,8 @@ vec3 PathTrace(Ray r)
     LightSampleRec lightSampleRec;
     BsdfSampleRec bsdfSampleRec;
     vec3 absorption = vec3(0.0);
+    // TODO: alpha from material opacity
+    float alpha = 1.0;
     
     for (int depth = 0; depth < maxDepth; depth++)
     {
@@ -194,10 +207,18 @@ vec3 PathTrace(Ray r)
 
         if (!hit)
         {
-#ifdef CONSTANT_BG
-            radiance += bgColor * throughput;
+#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND) 
+            if (state.depth == 0)
+                alpha = 0.0;
+#endif
+
+#ifdef OPT_UNIFORM_LIGHT
+#ifdef OPT_HIDE_EMITTERS
+            if(state.depth > 0)
+#endif
+                radiance += uniformLightCol * throughput;
 #else
-#ifdef ENVMAP
+#ifdef OPT_ENVMAP
             {
                 float misWeight = 1.0f;
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
@@ -208,11 +229,14 @@ vec3 PathTrace(Ray r)
                     float lightPdf = EnvMapPdf(r);
                     misWeight = PowerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
-                radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
+#ifdef OPT_HIDE_EMITTERS
+                if (state.depth > 0)
+#endif
+                    radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
             }
 #endif
 #endif
-            return radiance;
+            return vec4(radiance, alpha);
         }
 
         GetMaterials(state, r);
@@ -223,13 +247,29 @@ vec3 PathTrace(Ray r)
 
         radiance += state.mat.emission * throughput;
 
-#ifdef LIGHTS
+#ifdef OPT_LIGHTS
         if (state.isEmitter)
         {
             radiance += EmitterSample(r, state, lightSampleRec, bsdfSampleRec) * throughput;
             break;
         }
 #endif
+
+        // Ignore intersection based on alpha test
+        // TODO: Alphatest for anyhit()
+        bool ignoreHit = false;
+
+        if (state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff)
+            ignoreHit = true;
+        else if(state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity)
+            ignoreHit = true;
+
+        if (ignoreHit)
+        {
+            depth--;
+            r.origin = state.fhp + r.direction * EPS;
+            continue;
+        }
 
         // Add absoption
         throughput *= exp(-absorption * state.hitDist);
@@ -247,9 +287,9 @@ vec3 PathTrace(Ray r)
         else
             break;
 
-#ifdef RR
+#ifdef OPT_RR
         // Russian roulette
-        if (depth >= RR_DEPTH)
+        if (depth >= OPT_RR_DEPTH)
         {
             float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
             if (rand() > q)
@@ -262,5 +302,5 @@ vec3 PathTrace(Ray r)
         r.origin = state.fhp + r.direction * EPS;
     }
 
-    return radiance;
+    return vec4(radiance, alpha);
 }

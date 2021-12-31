@@ -76,7 +76,5 @@ namespace GLSLPT
 
         scene->AddHDR("./assets/HDR/sunset.hdr");
 
-        scene->CreateAccelerationStructures();
-
     }
 }

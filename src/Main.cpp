@@ -24,45 +24,41 @@
 
 #define _USE_MATH_DEFINES
 
-#include <SDL2/SDL.h>
-#include <GL/gl3w.h>
-
 #include <time.h>
 #include <math.h>
 #include <string>
 
-#include "Scene.h"
-#include "TiledRenderer.h"
-#include "Camera.h"
+#include "SDL2/SDL.h"
+#include "GL/gl3w.h"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
+#include "ImGuizmo.h"
+#include "tinydir.h"
+#include "stb_image.h"
+#include "stb_image_write.h"
 
+#include "Scene.h"
 #include "Loader.h"
+#include "GLTFLoader.h"
+#include "TiledRenderer.h"
 #include "boyTestScene.h"
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
-#include "ImGuizmo.h"
-#include "tinydir.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image.h"
-#include "stb_image_write.h"
 
 using namespace std;
 using namespace GLSLPT;
 
-Scene* scene       = nullptr;
+Scene* scene = nullptr;
 Renderer* renderer = nullptr;
 
 std::vector<string> sceneFiles;
 
 float mouseSensitivity = 0.01f;
-bool keyPressed        = false;
-int sampleSceneIndex   = 0;
-int selectedInstance   = 0;
-double lastTime        = SDL_GetTicks(); 
+bool keyPressed = false;
+int sampleSceneIndex = 0;
+int selectedInstance = 0;
+double lastTime = SDL_GetTicks();
 bool done = false;
 
 std::string shadersDir = "../src/shaders/";
@@ -72,7 +68,7 @@ RenderOptions renderOptions;
 
 struct LoopData
 {
-    SDL_Window*   mWindow    = nullptr;
+    SDL_Window* mWindow = nullptr;
     SDL_GLContext mGLContext = nullptr;
 };
 
@@ -87,7 +83,8 @@ void GetSceneFiles()
         tinydir_file file;
         tinydir_readfile_n(&dir, &file, i);
 
-        if (std::string(file.extension) == "scene")
+        std::string ext = std::string(file.extension);
+        if (ext == "scene" || ext == "gltf" || ext == "glb")
         {
             sceneFiles.push_back(assetsDir + std::string(file.name));
         }
@@ -100,9 +97,35 @@ void LoadScene(std::string sceneName)
 {
     delete scene;
     scene = new Scene();
-    LoadSceneFromFile(sceneName, scene, renderOptions);
+    std::string ext = sceneName.substr(sceneName.find_last_of(".") + 1);
+
+    bool success = false;
+    Mat4 xform;
+
+    if (ext == "scene")
+        success = LoadSceneFromFile(sceneName, scene, renderOptions);
+    else if (ext == "gltf")
+        success = LoadGLTF(sceneName, scene, renderOptions, xform, false);
+    else if(ext == "glb")
+        success = LoadGLTF(sceneName, scene, renderOptions, xform, true);
+
+    if (!success)
+    {
+        printf("Unable to load scene\n");
+        exit(0);
+    }
+
     //loadCornellTestScene(scene, renderOptions);
     selectedInstance = 0;
+
+    // Add a default HDR if there are no lights in the scene
+    if (!scene->hdrData)
+    {
+        scene->AddHDR(assetsDir + "HDR/san_giuseppe_bridge_blurred.hdr");
+        renderOptions.useEnvMap = scene->lights.empty() ? true : false;
+        renderOptions.hdrMultiplier = 1.0f;
+    }
+
     scene->renderOptions = renderOptions;
 }
 
@@ -120,21 +143,17 @@ void SaveFrame(const std::string filename)
     int w, h;
     renderer->GetOutputBuffer(&data, w, h);
     stbi_flip_vertically_on_write(true);
-    stbi_write_png(filename.c_str(), w, h, 3, data, w*3);
+    stbi_write_png(filename.c_str(), w, h, 4, data, w * 4);
     printf("Frame saved: %s\n", filename.c_str());
-    delete data;
+    delete[] data;
 }
 
 void Render()
 {
-    auto io = ImGui::GetIO();
     renderer->Render();
-    //const glm::ivec2 screenSize = renderer->GetScreenSize();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+    glViewport(0, 0, renderOptions.windowResolution.x, renderOptions.windowResolution.y);
     renderer->Present();
-
-    // Rendering
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -143,7 +162,7 @@ void Update(float secondsElapsed)
 {
     keyPressed = false;
 
-    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver() )
+    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver())
     {
         if (ImGui::IsMouseDown(0))
         {
@@ -234,7 +253,7 @@ void EditTransform(const float* view, const float* projection, float* matrix)
 
 void MainLoop(void* arg)
 {
-    LoopData &loopdata = *(LoopData*)arg;
+    LoopData& loopdata = *(LoopData*)arg;
 
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -248,15 +267,19 @@ void MainLoop(void* arg)
         {
             if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
             {
-                renderOptions.resolution = iVec2(event.window.data1, event.window.data2);
+                renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
+                
+                if (!renderOptions.independentRenderSize)
+                    renderOptions.renderResolution = renderOptions.windowResolution;
+
                 scene->renderOptions = renderOptions;
-                InitRenderer(); // FIXME: Not all textures have to be regenerated on resizing
+                InitRenderer();
             }
 
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
             {
                 done = true;
-            }    
+            }
         }
     }
 
@@ -290,7 +313,7 @@ void MainLoop(void* arg)
         {
             LoadScene(sceneFiles[sampleSceneIndex]);
             SDL_RestoreWindow(loopdata.mWindow);
-            SDL_SetWindowSize(loopdata.mWindow, renderOptions.resolution.x, renderOptions.resolution.y);
+            SDL_SetWindowSize(loopdata.mWindow, renderOptions.windowResolution.x, renderOptions.windowResolution.y);
             InitRenderer();
         }
 
@@ -301,15 +324,20 @@ void MainLoop(void* arg)
         if (ImGui::CollapsingHeader("Render Settings"))
         {
             bool requiresReload = false;
-            Vec3* bgCol = &renderOptions.bgColor;
+            Vec3* uniformLightCol = &renderOptions.uniformLightCol;
+            Vec3* backgroundCol = &renderOptions.backgroundCol;
 
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable EnvMap", &renderOptions.useEnvMap);
+            requiresReload |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
             optionsChanged |= ImGui::SliderFloat("HDR multiplier", &renderOptions.hdrMultiplier, 0.1f, 10.0f);
-            requiresReload |= ImGui::Checkbox("Enable RR", &renderOptions.enableRR);
-            requiresReload |= ImGui::SliderInt("RR Depth", &renderOptions.RRDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable Constant BG", &renderOptions.useConstantBg);
-            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)bgCol, 0);
+            requiresReload |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
+            requiresReload |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
+            requiresReload |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
+            optionsChanged |= ImGui::ColorEdit3("Uniform Light Color", (float*)uniformLightCol, 0);
+            requiresReload |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
+            requiresReload |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
+            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)backgroundCol, 0);
+            requiresReload |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
             ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);
@@ -333,7 +361,7 @@ void MainLoop(void* arg)
             scene->renderOptions.useAces = renderOptions.useAces;
             scene->renderOptions.simpleAcesFit = renderOptions.simpleAcesFit;
         }
-        
+
         if (ImGui::CollapsingHeader("Camera"))
         {
             float fov = Math::Degrees(scene->camera->fov);
@@ -344,6 +372,7 @@ void MainLoop(void* arg)
             scene->camera->aperture = aperture / 1000.0f;
             optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
             ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
+            ImGui::Text("Dir: %.2f, %.2f, %.2f", scene->camera->forward.x, scene->camera->forward.y, scene->camera->forward.z);
         }
 
         scene->camera->isMoving = false;
@@ -501,7 +530,7 @@ int main(int argc, char** argv)
     SDL_DisplayMode current;
     SDL_GetCurrentDisplayMode(0, &current);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.resolution.x, renderOptions.resolution.y, window_flags);
+    loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.windowResolution.x, renderOptions.windowResolution.y, window_flags);
 
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
@@ -546,7 +575,7 @@ int main(int argc, char** argv)
     {
         MainLoop(&loopdata);
     }
-        
+
     delete renderer;
     delete scene;
 

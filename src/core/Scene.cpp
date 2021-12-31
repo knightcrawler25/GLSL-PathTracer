@@ -22,13 +22,36 @@
  * SOFTWARE.
  */
 
-#include <iostream>
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 
+#include <iostream>
+#include "stb_image_resize.h"
+#include "stb_image.h"
 #include "Scene.h"
 #include "Camera.h"
 
 namespace GLSLPT
 {
+    Scene::~Scene()
+    { 
+        for (int i = 0; i < meshes.size(); i++)
+            delete meshes[i];
+        meshes.clear();
+
+        for (int i = 0; i < textures.size(); i++)
+            delete textures[i];
+        textures.clear();
+
+        if(camera)
+            delete camera;
+
+        if(sceneBvh)
+            delete sceneBvh;
+
+        if(hdrData)
+            delete hdrData;
+    };
+
     void Scene::AddCamera(Vec3 pos, Vec3 lookAt, float fov)
     {
         delete camera;
@@ -42,18 +65,19 @@ namespace GLSLPT
         for (int i = 0; i < meshes.size(); i++)
             if (meshes[i]->name == filename)
                 return i;
-            
-        id = meshes.size();
 
+        id = meshes.size();
         Mesh* mesh = new Mesh;
 
+        printf("Loading model %s\n", filename.c_str());
         if (mesh->LoadFromFile(filename))
-        {
             meshes.push_back(mesh);
-            printf("Model %s loaded\n", filename.c_str());
-        }
         else
+        {
+            printf("Unable to load model %s\n", filename.c_str());
+            delete mesh;
             id = -1;
+        }
         return id;
     }
 
@@ -66,16 +90,17 @@ namespace GLSLPT
                 return i;
 
         id = textures.size();
-
         Texture* texture = new Texture;
 
+        printf("Loading texture %s\n", filename.c_str());
         if (texture->LoadTexture(filename))
-        {
             textures.push_back(texture);
-            printf("Texture %s loaded\n", filename.c_str());
-        }
         else
+        {
+            printf("Unable to load texture %s\n", filename.c_str());
+            delete texture;
             id = -1;
+        }
 
         return id;
     }
@@ -120,7 +145,6 @@ namespace GLSLPT
         std::vector<RadeonRays::bbox> bounds;
         bounds.resize(meshInstances.size());
 
-        #pragma omp parallel for
         for (int i = 0; i < meshInstances.size(); i++)
         {
             RadeonRays::bbox bbox = meshes[meshInstances[i].meshID]->bvh->Bounds();
@@ -182,19 +206,21 @@ namespace GLSLPT
         instancesModified = true;
     }
 
-    void Scene::CreateAccelerationStructures()
+    void Scene::ProcessScene()
     {
+        printf("Processing scene data\n");
         createBLAS();
 
         printf("Building scene BVH\n");
         createTLAS();
 
         // Flatten BVH
+        printf("Flattening BVH\n");
         bvhTranslator.Process(sceneBvh, meshes, meshInstances);
 
+        // Copy mesh data
         int verticesCnt = 0;
-
-        //Copy mesh data
+        printf("Copying Mesh Data\n");
         for (int i = 0; i < meshes.size(); i++)
         {
             // Copy indices from BVH and not from Mesh
@@ -217,19 +243,43 @@ namespace GLSLPT
             verticesCnt += meshes[i]->verticesUVX.size();
         }
 
-        //Copy transforms
+        // Copy transforms
+        printf("Copying transforms\n");
         transforms.resize(meshInstances.size());
-        #pragma omp parallel for
         for (int i = 0; i < meshInstances.size(); i++)
             transforms[i] = meshInstances[i].transform;
 
-        //Copy Textures
+        // Copy textures
+        if(!textures.empty())
+            printf("Copying and resizing textures\n");
         for (int i = 0; i < textures.size(); i++)
         {
-            texWidth = textures[i]->width;
-            texHeight = textures[i]->height;
-            int texSize = texWidth * texHeight;
-            textureMapsArray.insert(textureMapsArray.end(), &textures[i]->texData[0], &textures[i]->texData[texSize * 3]);
+            int texWidth = textures[i]->width;
+            int texHeight = textures[i]->height;
+            int reqWidth = renderOptions.texArrayWidth;
+            int reqHeight = renderOptions.texArrayHeight;
+
+            // Resize textures to fit 2D texture array
+            if (texWidth != reqWidth || texHeight != reqHeight)
+            {
+                unsigned char* resizedTex = new unsigned char[reqWidth * reqHeight * 4];
+                stbir_resize_uint8(&textures[i]->texData[0], texWidth, texHeight, 0, resizedTex, reqWidth, reqHeight, 0, 4);
+                textureMapsArray.insert(textureMapsArray.end(), resizedTex, resizedTex + (reqWidth * reqHeight * 4));
+                delete[] resizedTex;
+            }
+            else
+                textureMapsArray.insert(textureMapsArray.end(), textures[i]->texData.begin(), textures[i]->texData.end());
         }
+
+        // Add a default camera
+        if (!camera)
+        {
+            RadeonRays::bbox bounds = sceneBvh->Bounds();
+            Vec3 extents = bounds.extents() * 5.0f;
+            Vec3 center = bounds.center();
+            AddCamera(Vec3(extents.x, center.y, extents.z), center, 45.0f);
+        }
+
+        initialized = true;
     }
 }

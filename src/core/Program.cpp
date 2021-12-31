@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include "Program.h"
 #include <stdexcept>
+#include "Program.h"
 
 namespace GLSLPT
 {

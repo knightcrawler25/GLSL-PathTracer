@@ -25,17 +25,13 @@ freely, subject to the following restrictions:
     Link to original code: https://github.com/mmacklin/tinsel
 */
 
+#include <cstring>
 #include "Loader.h"
-#include <tiny_obj_loader.h>
-#include <iostream>
-#include <iterator>
-#include <algorithm>
-#include <stdio.h>
+#include "GLTFLoader.h"
 
 namespace GLSLPT
 {
     static const int kMaxLineLength = 2048;
-    int(*Log)(const char* szFormat, ...) = printf;
 
     bool LoadSceneFromFile(const std::string &filename, Scene *scene, RenderOptions& renderOptions)
     {
@@ -44,11 +40,11 @@ namespace GLSLPT
 
         if (!file)
         {
-            Log("Couldn't open %s for reading\n", filename.c_str());
+            printf("Couldn't open %s for reading\n", filename.c_str());
             return false;
         }
 
-        Log("Loading Scene..\n");
+        printf("Loading Scene..\n");
 
         struct MaterialData
         {
@@ -69,8 +65,6 @@ namespace GLSLPT
         Material defaultMat;
         scene->AddMaterial(defaultMat);
 
-        bool cameraAdded = false;
-
         while (fgets(line, kMaxLineLength, file))
         {
             // skip comments
@@ -90,6 +84,7 @@ namespace GLSLPT
                 char metallicRoughnessTexName[100] = "None";
                 char normalTexName[100] = "None";
                 char emissionTexName[100] = "None";
+                char alphaMode[20] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -98,6 +93,9 @@ namespace GLSLPT
                         break;
 
                     sscanf(line, " color %f %f %f", &material.baseColor.x, &material.baseColor.y, &material.baseColor.z);
+                    sscanf(line, " opacity %f", &material.opacity);
+                    sscanf(line, " alphaMode %s", alphaMode);
+                    sscanf(line, " alphaCutoff %f", &material.alphaCutoff);
                     sscanf(line, " emission %f %f %f", &material.emission.x, &material.emission.y, &material.emission.z);
                     sscanf(line, " metallic %f", &material.metallic);
                     sscanf(line, " roughness %f", &material.roughness);
@@ -120,7 +118,7 @@ namespace GLSLPT
 
                 // Albedo Texture
                 if (strcmp(albedoTexName, "None") != 0)
-                    material.albedoTexID = scene->AddTexture(path + albedoTexName);
+                    material.baseColorTexId = scene->AddTexture(path + albedoTexName);
              
                 // MetallicRoughness Texture
                 if (strcmp(metallicRoughnessTexName, "None") != 0)
@@ -133,6 +131,14 @@ namespace GLSLPT
                 // Emission Map Texture
                 if (strcmp(emissionTexName, "None") != 0)
                     material.emissionmapTexID = scene->AddTexture(path + emissionTexName);
+
+                // AlphaMode
+                if (strcmp(alphaMode, "Opaque") == 0)
+                    material.alphaMode = AlphaMode::Opaque;
+                else if (strcmp(alphaMode, "Blend") == 0)
+                    material.alphaMode = AlphaMode::Blend;
+                else if (strcmp(alphaMode, "Mask") == 0)
+                    material.alphaMode = AlphaMode::Mask;
 
                 // add material to map
                 if (materialMap.find(name) == materialMap.end()) // New material
@@ -149,7 +155,7 @@ namespace GLSLPT
             {
                 Light light;
                 Vec3 v1, v2;
-                char light_type[20] = "None";
+                char lightType[20] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -163,22 +169,22 @@ namespace GLSLPT
                     sscanf(line, " radius %f", &light.radius);
                     sscanf(line, " v1 %f %f %f", &v1.x, &v1.y, &v1.z);
                     sscanf(line, " v2 %f %f %f", &v2.x, &v2.y, &v2.z);
-                    sscanf(line, " type %s", light_type);
+                    sscanf(line, " type %s", lightType);
                 }
 
-                if (strcmp(light_type, "Quad") == 0)
+                if (strcmp(lightType, "Quad") == 0)
                 {
                     light.type = LightType::RectLight;
                     light.u = v1 - light.position;
                     light.v = v2 - light.position;
                     light.area = Vec3::Length(Vec3::Cross(light.u, light.v));
                 }
-                else if (strcmp(light_type, "Sphere") == 0)
+                else if (strcmp(lightType, "Sphere") == 0)
                 {
                     light.type = LightType::SphereLight;
                     light.area = 4.0f * PI * light.radius * light.radius;
                 }
-                else if (strcmp(light_type, "Distant") == 0)
+                else if (strcmp(lightType, "Distant") == 0)
                 {
                     light.type = LightType::DistantLight;
                     light.area = 0.0f;
@@ -214,7 +220,6 @@ namespace GLSLPT
                 scene->AddCamera(position, lookAt, fov);
                 scene->camera->aperture = aperture;
                 scene->camera->focalDist = focalDist;
-                cameraAdded = true;
             }
 
             //--------------------------------------------
@@ -224,6 +229,12 @@ namespace GLSLPT
             {
                 char envMap[200] = "None";
                 char enableRR[10] = "None";
+                char useAces[10] = "None";
+                char openglNormalMap[10] = "None";
+                char hideEmitters[10] = "None";
+                char transparentBackground[10] = "None";
+                char enableBackground[10] = "None";
+                char independentRenderSize[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -232,14 +243,23 @@ namespace GLSLPT
                         break;
 
                     sscanf(line, " envMap %s", envMap);
-                    sscanf(line, " resolution %d %d", &renderOptions.resolution.x, &renderOptions.resolution.y);
+                    sscanf(line, " resolution %d %d", &renderOptions.renderResolution.x, &renderOptions.renderResolution.y);
+                    sscanf(line, " windowResolution %d %d", &renderOptions.windowResolution.x, &renderOptions.windowResolution.y);
                     sscanf(line, " hdrMultiplier %f", &renderOptions.hdrMultiplier);
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
                     sscanf(line, " tileWidth %i", &renderOptions.tileWidth);
                     sscanf(line, " tileHeight %i", &renderOptions.tileHeight);
                     sscanf(line, " enableRR %s", enableRR);
                     sscanf(line, " RRDepth %i", &renderOptions.RRDepth);
-                    sscanf(line, " useAces %s", &renderOptions.useAces);
+                    sscanf(line, " useAces %s", useAces);
+                    sscanf(line, " texArrayWidth %i", &renderOptions.texArrayWidth);
+                    sscanf(line, " texArrayHeight %i", &renderOptions.texArrayHeight);
+                    sscanf(line, " openglNormalMap %s", openglNormalMap);
+                    sscanf(line, " hideEmitters %s", hideEmitters);
+                    sscanf(line, " enableBackground %s", enableBackground);
+                    sscanf(line, " transparentBackground %s", transparentBackground);
+                    sscanf(line, " backgroundColor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
+                    sscanf(line, " independentRenderSize %s", independentRenderSize);
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -247,11 +267,46 @@ namespace GLSLPT
                     scene->AddHDR(path + envMap);
                     renderOptions.useEnvMap = true;
                 }
+                else
+                    renderOptions.useEnvMap = false;
+                    
+                if (strcmp(useAces, "False") == 0)
+                    renderOptions.useAces = false;
+                else if (strcmp(useAces, "True") == 0)
+                    renderOptions.useAces = true;
 
                 if (strcmp(enableRR, "False") == 0)
                     renderOptions.enableRR = false;
                 else if (strcmp(enableRR, "True") == 0)
                     renderOptions.enableRR = true;
+
+                if (strcmp(openglNormalMap, "False") == 0)
+                    renderOptions.openglNormalMap = false;
+                else if (strcmp(openglNormalMap, "True") == 0)
+                    renderOptions.openglNormalMap = true;
+
+                if (strcmp(hideEmitters, "False") == 0)
+                    renderOptions.hideEmitters = false;
+                else if (strcmp(hideEmitters, "True") == 0)
+                    renderOptions.hideEmitters = true;
+
+                if (strcmp(enableBackground, "False") == 0)
+                    renderOptions.enableBackground = false;
+                else if (strcmp(enableBackground, "True") == 0)
+                    renderOptions.enableBackground = true;
+
+                if (strcmp(transparentBackground, "False") == 0)
+                    renderOptions.transparentBackground = false;
+                else if (strcmp(transparentBackground, "True") == 0)
+                    renderOptions.transparentBackground = true;
+
+                if (strcmp(independentRenderSize, "False") == 0)
+                    renderOptions.independentRenderSize = false;
+                else if (strcmp(independentRenderSize, "True") == 0)
+                    renderOptions.independentRenderSize = true;
+
+                if (!renderOptions.independentRenderSize)
+                    renderOptions.windowResolution = renderOptions.renderResolution;
             }
 
 
@@ -261,9 +316,8 @@ namespace GLSLPT
             if (strstr(line, "mesh"))
             {
                 std::string filename;
-                Vec3 pos;
-                Vec3 scale;
-                Mat4 xform;
+                Vec4 rotQuat;
+                Mat4 translate, rot, scale;
                 int material_id = 0; // Default Material ID
                 char meshName[200] = "None";
 
@@ -292,13 +346,16 @@ namespace GLSLPT
                         }
                         else
                         {
-                            Log("Could not find material %s\n", matName);
+                            printf("Could not find material %s\n", matName);
                         }
                     }
 
-                    sscanf(line, " position %f %f %f", &xform[3][0], &xform[3][1], &xform[3][2]);
-                    sscanf(line, " scale %f %f %f", &xform[0][0], &xform[1][1], &xform[2][2]);
+                    sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
+                    sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
+                    sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w);
+                    rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
                 }
+
                 if (!filename.empty())
                 {
                     int mesh_id = scene->AddMesh(filename);
@@ -316,19 +373,65 @@ namespace GLSLPT
                             instanceName = filename.substr(pos + 1);
                         }
                         
-                        MeshInstance instance1(instanceName, mesh_id, xform, material_id);
-                        scene->AddMeshInstance(instance1);
+                        Mat4 xform = scale * rot * translate;
+                        MeshInstance instance(instanceName, mesh_id, xform, material_id);
+                        scene->AddMeshInstance(instance);
+                    }
+                }
+            }
+
+            //--------------------------------------------
+            // GLTF
+
+            if (strstr(line, "gltf"))
+            {
+                std::string filename;
+                Vec4 rotQuat;
+                Mat4 translate, rot, scale;
+
+                while (fgets(line, kMaxLineLength, file))
+                {
+                    // end group
+                    if (strchr(line, '}'))
+                        break;
+
+                    char file[2048];
+
+                    if (sscanf(line, " file %s", file) == 1)
+                    {
+                        filename = path + file;
+                    }
+
+                    sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
+                    sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
+                    sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w);
+                    rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
+                }
+
+                if (!filename.empty())
+                {
+                    std::string ext = filename.substr(filename.find_last_of(".") + 1);
+
+                    bool success = false;
+                    Mat4 xform = scale * rot * translate;
+
+                    // TODO: Add support for instancing.
+                    // If the same gltf is loaded multiple times then mesh data gets duplicated
+                    if (ext == "gltf")
+                        success = LoadGLTF(filename, scene, renderOptions, xform, false);
+                    else if (ext == "glb")
+                        success = LoadGLTF(filename, scene, renderOptions, xform, true);
+
+                    if (!success)
+                    {
+                        printf("Unable to load gltf %s\n", filename);
+                        exit(0);
                     }
                 }
             }
         }
 
         fclose(file);
-
-        if (!cameraAdded)
-            scene->AddCamera(Vec3(0.0f, 0.0f, 10.0f), Vec3(0.0f, 0.0f, -10.0f), 35.0f);
-
-        scene->CreateAccelerationStructures();
 
         return true;
     }

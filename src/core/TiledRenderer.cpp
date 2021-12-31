@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
+#include <string>
 #include "Config.h"
 #include "TiledRenderer.h"
 #include "ShaderIncludes.h"
 #include "Camera.h"
 #include "Scene.h"
-#include <string>
 
 namespace GLSLPT
 {
@@ -56,6 +56,8 @@ namespace GLSLPT
 
     TiledRenderer::~TiledRenderer() 
     {
+        if (initialized)
+            this->Finish();
     }
 
     void TiledRenderer::Init()
@@ -69,11 +71,11 @@ namespace GLSLPT
         currentBuffer = 0;
         frameCounter = 1;
 
-        invNumTiles.x = (float)tileWidth / screenSize.x;
-        invNumTiles.y = (float)tileHeight / screenSize.y;
+        invNumTiles.x = (float)tileWidth / renderSize.x;
+        invNumTiles.y = (float)tileHeight / renderSize.y;
 
-        numTiles.x = ceil((float)screenSize.x / tileWidth);
-        numTiles.y = ceil((float)screenSize.y / tileHeight);
+        numTiles.x = ceil((float)renderSize.x / tileWidth);
+        numTiles.y = ceil((float)renderSize.y / tileHeight);
 
         pixelRatio = 0.25f;
 
@@ -92,17 +94,33 @@ namespace GLSLPT
 
         // Add preprocessor defines for conditional compilation
         std::string pathtraceDefines = "";
+        std::string tonemapDefines = "";
+
         if (scene->renderOptions.useEnvMap && scene->hdrData != nullptr)
-            pathtraceDefines += "#define ENVMAP\n";
+            pathtraceDefines += "#define OPT_ENVMAP\n";
         if (!scene->lights.empty())
-            pathtraceDefines += "#define LIGHTS\n";
+            pathtraceDefines += "#define OPT_LIGHTS\n";
         if (scene->renderOptions.enableRR)
         {
-            pathtraceDefines += "#define RR\n";
-            pathtraceDefines += "#define RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
+            pathtraceDefines += "#define OPT_RR\n";
+            pathtraceDefines += "#define OPT_RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
         }
-        if (scene->renderOptions.useConstantBg)
-            pathtraceDefines += "#define CONSTANT_BG\n";
+        if (scene->renderOptions.useUniformLight)
+            pathtraceDefines += "#define OPT_UNIFORM_LIGHT\n";
+        if (scene->renderOptions.openglNormalMap)
+            pathtraceDefines += "#define OPT_OPENGL_NORMALMAP\n";
+        if (scene->renderOptions.hideEmitters)
+            pathtraceDefines += "#define OPT_HIDE_EMITTERS\n";
+        if (scene->renderOptions.enableBackground)
+        {
+            pathtraceDefines += "#define OPT_BACKGROUND\n";
+            tonemapDefines += "#define OPT_BACKGROUND\n";
+        }
+        if (scene->renderOptions.transparentBackground)
+        {
+            pathtraceDefines += "#define OPT_TRANSPARENT_BACKGROUND\n";
+            tonemapDefines += "#define OPT_TRANSPARENT_BACKGROUND\n";
+        }
 
         if (pathtraceDefines.size() > 0)
         {
@@ -121,13 +139,26 @@ namespace GLSLPT
             pathTraceShaderLowResSrcObj.src.insert(idx + 1, pathtraceDefines);
         }
 
+        if (tonemapDefines.size() > 0)
+        {
+            size_t idx = tonemapShaderSrcObj.src.find("#version");
+            if (idx != -1)
+                idx = tonemapShaderSrcObj.src.find("\n", idx);
+            else
+                idx = 0;
+            tonemapShaderSrcObj.src.insert(idx + 1, tonemapDefines);
+        }
+
         pathTraceShader       = LoadShaders(vertexShaderSrcObj, pathTraceShaderSrcObj);
         pathTraceShaderLowRes = LoadShaders(vertexShaderSrcObj, pathTraceShaderLowResSrcObj);
         outputShader          = LoadShaders(vertexShaderSrcObj, outputShaderSrcObj);
         tonemapShader         = LoadShaders(vertexShaderSrcObj, tonemapShaderSrcObj);
 
-        printf("Screen Resolution : %d %d\n", screenSize.x, screenSize.y);
-        printf("Preview Resolution : %d %d\n", tileWidth, tileHeight);
+        printf("Window Resolution : %d %d\n", windowSize.x, windowSize.y);
+        printf("Render Resolution : %d %d\n", renderSize.x, renderSize.y);
+        printf("Preview Resolution : %d %d\n", (int)((float)windowSize.x * pixelRatio), (int)((float)windowSize.y * pixelRatio));
+        printf("Tile Size : %d %d\n", tileWidth, tileHeight);
+
         //----------------------------------------------------------
         // FBO Setup
         //----------------------------------------------------------
@@ -139,7 +170,7 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &pathTraceTexture);
         glBindTexture(GL_TEXTURE_2D, pathTraceTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, tileWidth, tileHeight, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, tileWidth, tileHeight, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -153,7 +184,7 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &pathTraceTextureLowRes);
         glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x * pixelRatio, screenSize.y * pixelRatio, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, windowSize.x * pixelRatio, windowSize.y * pixelRatio, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -169,7 +200,7 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &accumTexture);
         glBindTexture(GL_TEXTURE_2D, accumTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, renderSize.x, renderSize.y, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -183,14 +214,14 @@ namespace GLSLPT
         //Create Texture for FBO
         glGenTextures(1, &tileOutputTexture[0]);
         glBindTexture(GL_TEXTURE_2D, tileOutputTexture[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, renderSize.x, renderSize.y, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
 
         glGenTextures(1, &tileOutputTexture[1]);
         glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, renderSize.x, renderSize.y, 0, GL_RGBA, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -198,13 +229,13 @@ namespace GLSLPT
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tileOutputTexture[currentBuffer], 0);
 
         //For Denoiser
-        denoiserInputFramePtr = new Vec3[screenSize.x * screenSize.y];
-        frameOutputPtr = new Vec3[screenSize.x * screenSize.y];
+        denoiserInputFramePtr = new Vec3[renderSize.x * renderSize.y];
+        frameOutputPtr = new Vec3[renderSize.x * renderSize.y];
         denoised = false;
 
         glGenTextures(1, &denoisedTexture);
         glBindTexture(GL_TEXTURE_2D, denoisedTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, renderSize.x, renderSize.y, 0, GL_RGB, GL_FLOAT, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -216,7 +247,7 @@ namespace GLSLPT
 
         glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
-        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(renderSize.x), float(renderSize.y));
         glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), invNumTiles.x, invNumTiles.y);
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
@@ -239,7 +270,7 @@ namespace GLSLPT
 
         glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
-        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(screenSize.x), float(screenSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(renderSize.x), float(renderSize.y));
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
         glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
@@ -302,8 +333,8 @@ namespace GLSLPT
         delete outputShader;
         delete tonemapShader;
 
-        delete denoiserInputFramePtr;
-        delete frameOutputPtr;
+        delete[] denoiserInputFramePtr;
+        delete[] frameOutputPtr;
 
         Renderer::Finish();
     }
@@ -322,7 +353,7 @@ namespace GLSLPT
         {
             // Renders a low res preview if camera/instances are modified
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
-            glViewport(0, 0, screenSize.x * pixelRatio, screenSize.y * pixelRatio);
+            glViewport(0, 0, windowSize.x * pixelRatio, windowSize.y * pixelRatio);
             quad->Draw(pathTraceShaderLowRes);
             scene->instancesModified = false;
         }
@@ -346,7 +377,7 @@ namespace GLSLPT
             // When all tiles are rendered, we flip the bound texture and start rendering to the other one
             glBindFramebuffer(GL_FRAMEBUFFER, outputFBO);
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tileOutputTexture[currentBuffer], 0);
-            glViewport(0, 0, screenSize.x, screenSize.y);
+            glViewport(0, 0, renderSize.x, renderSize.y);
             glBindTexture(GL_TEXTURE_2D, accumTexture);
             quad->Draw(tonemapShader);
         }
@@ -383,10 +414,10 @@ namespace GLSLPT
 
     void TiledRenderer::GetOutputBuffer(unsigned char** data, int &w, int &h)
     {
-        w = scene->renderOptions.resolution.x;
-        h = scene->renderOptions.resolution.y;
+        w = renderSize.x;
+        h = renderSize.y;
 
-        *data = new unsigned char[w * h * 3];
+        *data = new unsigned char[w * h * 4];
 
         glActiveTexture(GL_TEXTURE0);
 
@@ -395,7 +426,7 @@ namespace GLSLPT
         else
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
         
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, *data);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, *data);
     }
 
     int TiledRenderer::GetSampleCount() const
@@ -410,6 +441,7 @@ namespace GLSLPT
         // Denoise Image
         if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0)
         {
+            // FIXME: Figure out a way to have transparency with denoiser
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
 
@@ -419,8 +451,8 @@ namespace GLSLPT
 
             // Create a denoising filter
             oidn::FilterRef filter = device.newFilter("RT"); // generic ray tracing filter
-            filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, screenSize.x, screenSize.y);
-            filter.setImage("output", frameOutputPtr, oidn::Format::Float3, screenSize.x, screenSize.y);
+            filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, renderSize.x, renderSize.y, 0, 0, 0);
+            filter.setImage("output", frameOutputPtr, oidn::Format::Float3, renderSize.x, renderSize.y, 0, 0, 0);
             filter.set("hdr", false);
             filter.commit();
 
@@ -434,7 +466,7 @@ namespace GLSLPT
 
             // Copy the denoised data to denoisedTexture
             glBindTexture(GL_TEXTURE_2D, denoisedTexture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screenSize.x, screenSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, renderSize.x, renderSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
 
             denoised = true;
         }
@@ -485,7 +517,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
         glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tile.x * invNumTiles.x, (float)tile.y * invNumTiles.y);
-        glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
+        glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
         glUniform1i(glGetUniformLocation(shaderObject, "frameNum"), frameCounter);
         pathTraceShader->StopUsing();
 
@@ -502,7 +534,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->camera->isMoving || scene->instancesModified ? 2: scene->renderOptions.maxDepth);
         glUniform3f(glGetUniformLocation(shaderObject, "camera.position"), scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
-        glUniform3f(glGetUniformLocation(shaderObject, "bgColor"), scene->renderOptions.bgColor.x, scene->renderOptions.bgColor.y, scene->renderOptions.bgColor.z);
+        glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
         pathTraceShaderLowRes->StopUsing();
 
         tonemapShader->Use();
@@ -511,6 +543,7 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "enableTonemap"), scene->renderOptions.enableTonemap);
         glUniform1i(glGetUniformLocation(shaderObject, "useAces"), scene->renderOptions.useAces);
         glUniform1i(glGetUniformLocation(shaderObject, "simpleAcesFit"), scene->renderOptions.simpleAcesFit);
+        glUniform3f(glGetUniformLocation(shaderObject, "backgroundCol"), scene->renderOptions.backgroundCol.x, scene->renderOptions.backgroundCol.y, scene->renderOptions.backgroundCol.z);
         tonemapShader->StopUsing();
     }
 }

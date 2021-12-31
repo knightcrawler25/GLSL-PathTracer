@@ -35,8 +35,8 @@ namespace GLSLPT
         renderOptions.tileWidth = 200;
         renderOptions.hdrMultiplier = 1.0f;
         renderOptions.useEnvMap = true;
-        renderOptions.resolution.x = 800;
-        renderOptions.resolution.y = 800;
+        renderOptions.renderResolution.x = 800;
+        renderOptions.renderResolution.y = 800;
         scene->AddCamera(Vec3(0.276f, 0.275f, -0.75f), Vec3(0.276f, 0.275f, 0), 40.0f);
 
         int ceiling_mesh_id = scene->AddMesh("./assets/cornell_box/cbox_ceiling.obj");
@@ -89,8 +89,6 @@ namespace GLSLPT
         scene->AddMeshInstance(instance7);
 
         scene->AddHDR("./assets/HDR/sunset.hdr");
-
-        scene->CreateAccelerationStructures();
 
     }
 }

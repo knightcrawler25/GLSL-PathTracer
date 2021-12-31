@@ -24,12 +24,11 @@
 
 #pragma once
 
+#include <vector>
 #include "Quad.h"
 #include "Program.h"
-#include <Vec2.h>
-#include <Vec3.h>
-
-#include <vector>
+#include "Vec2.h"
+#include "Vec3.h"
 
 namespace GLSLPT
 {
@@ -43,32 +42,51 @@ namespace GLSLPT
             tileWidth = 100;
             tileHeight = 100;
             useEnvMap = false;
-            resolution = iVec2(1280, 720);
+            renderResolution = iVec2(1280, 720);
+            windowResolution = iVec2(1280, 720);
+            independentRenderSize = false; // Is render resolution independent of window resolution
             hdrMultiplier = 1.0f;
             enableRR = true;
-            useConstantBg = false;
+            useUniformLight = false;
             RRDepth = 2;
-            bgColor = Vec3(0.3f, 0.3f, 0.3f);
+            uniformLightCol = Vec3(0.3f, 0.3f, 0.3f);
             denoiserFrameCnt = 20;
             enableDenoiser = false;
             enableTonemap = true;
             useAces = false;
+            texArrayWidth = 4096;
+            texArrayHeight = 4096;
+            openglNormalMap = true;
+            hideEmitters = false;
+            enableBackground = false;
+            backgroundCol = Vec3(1.0f, 1.0f, 1.0f);
+            transparentBackground = false;
         }
-        iVec2 resolution;
+
+        iVec2 renderResolution;
+        iVec2 windowResolution;
         int maxDepth;
         int tileWidth;
         int tileHeight;
         bool useEnvMap;
         bool enableRR;
         bool enableDenoiser;
-        bool useConstantBg;
+        bool useUniformLight;
         bool enableTonemap;
         bool useAces;
         bool simpleAcesFit;
         int RRDepth;
         int denoiserFrameCnt;
         float hdrMultiplier;
-        Vec3 bgColor;
+        Vec3 uniformLightCol;
+        int texArrayWidth;
+        int texArrayHeight;
+        bool openglNormalMap;
+        bool hideEmitters;
+        Vec3 backgroundCol;
+        bool enableBackground;
+        bool transparentBackground;
+        bool independentRenderSize;
     };
 
     class Scene;
@@ -79,7 +97,8 @@ namespace GLSLPT
         Scene *scene;
         Quad* quad;
 
-        iVec2 screenSize;
+        iVec2 renderSize;
+        iVec2 windowSize;
         std::string shadersDirectory;
 
         GLuint BVHBuffer;
@@ -104,8 +123,6 @@ namespace GLSLPT
     public:
         Renderer(Scene *scene, const std::string& shadersDirectory);
         virtual ~Renderer();
-
-        const iVec2 GetScreenSize() const { return screenSize; }
 
         virtual void Init();
         virtual void Finish();

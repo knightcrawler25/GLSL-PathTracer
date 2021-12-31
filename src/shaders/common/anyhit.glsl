@@ -25,7 +25,7 @@
 bool AnyHit(Ray r, float maxDist)
 {
 
-#ifdef LIGHTS
+#ifdef OPT_LIGHTS
     // Intersect Emitters
     for (int i = 0; i < numOfLights; i++)
     {

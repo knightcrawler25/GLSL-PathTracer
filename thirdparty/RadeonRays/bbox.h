@@ -27,12 +27,11 @@ THE SOFTWARE.
 #include <cmath>
 #include <algorithm>
 #include <limits>
-
-#include <Config.h>
-#include <Mat4.h>
-#include <Vec2.h>
-#include <Vec3.h>
-#include <Vec4.h>
+#include "Config.h"
+#include "Mat4.h"
+#include "Vec2.h"
+#include "Vec3.h"
+#include "Vec4.h"
 
 using namespace GLSLPT;
 

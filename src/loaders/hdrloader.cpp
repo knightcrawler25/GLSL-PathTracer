@@ -11,11 +11,10 @@
     This is a modified version of the original code. Added code to build marginal & conditional cdf for importance sampling
 */
 
-#include "hdrloader.h"
-
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
+#include "hdrloader.h"
 
 typedef unsigned char RGBE[4];
 #define R            0
