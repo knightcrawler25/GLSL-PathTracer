@@ -5,10 +5,12 @@ A physically based path tracer that runs in a GLSL fragment shader.
 
 ![Jinx](./screenshots/Jinx.png)
 
+![Slum](./screenshots/Slum.png)
+
 Features
 --------
 - Unidirectional path tracer
-- RadeonRays 2.0 as a BVH builder (BVH traversal doesn't use RadeonRays as it is done in a fragment shader)
+- BVH builder from RadeonRays 2.0
 - Disney BSDF
 - Texture Mapping (Albedo, Metallic-Roughness, Normal, Emission)
 - Analytic Lights (Sphere, Rect, Directional)

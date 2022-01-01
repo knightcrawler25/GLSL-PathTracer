@@ -235,6 +235,7 @@ namespace GLSLPT
                 char transparentBackground[10] = "None";
                 char enableBackground[10] = "None";
                 char independentRenderSize[10] = "None";
+                char enableTonemap[10] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -252,6 +253,7 @@ namespace GLSLPT
                     sscanf(line, " tileHeight %i", &renderOptions.tileHeight);
                     sscanf(line, " enableRR %s", enableRR);
                     sscanf(line, " RRDepth %i", &renderOptions.RRDepth);
+                    sscanf(line, " enableTonemap %s", enableTonemap);
                     sscanf(line, " useAces %s", useAces);
                     sscanf(line, " texArrayWidth %i", &renderOptions.texArrayWidth);
                     sscanf(line, " texArrayHeight %i", &renderOptions.texArrayHeight);
@@ -305,6 +307,11 @@ namespace GLSLPT
                     renderOptions.independentRenderSize = false;
                 else if (strcmp(independentRenderSize, "True") == 0)
                     renderOptions.independentRenderSize = true;
+
+                if (strcmp(enableTonemap, "False") == 0)
+                    renderOptions.enableTonemap = false;
+                else if (strcmp(enableTonemap, "True") == 0)
+                    renderOptions.enableTonemap = true;
 
                 if (!renderOptions.independentRenderSize)
                     renderOptions.windowResolution = renderOptions.renderResolution;

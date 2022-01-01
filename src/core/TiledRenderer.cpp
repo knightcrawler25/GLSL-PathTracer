@@ -446,37 +446,42 @@ namespace GLSLPT
         Renderer::Update(secondsElapsed);
 
         // Denoise Image
-        if (scene->renderOptions.enableDenoiser && !denoised || (frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0))
+        if (scene->renderOptions.enableDenoiser && sampleCounter > 1)
         {
-            // FIXME: Figure out a way to have transparency with denoiser
-            glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
-            glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
+            if (!denoised || (frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0))
+            {
+                // FIXME: Figure out a way to have transparency with denoiser
+                glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, denoiserInputFramePtr);
 
-            // Create an Intel Open Image Denoise device
-            oidn::DeviceRef device = oidn::newDevice();
-            device.commit();
+                // Create an Intel Open Image Denoise device
+                oidn::DeviceRef device = oidn::newDevice();
+                device.commit();
 
-            // Create a denoising filter
-            oidn::FilterRef filter = device.newFilter("RT"); // generic ray tracing filter
-            filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, renderSize.x, renderSize.y, 0, 0, 0);
-            filter.setImage("output", frameOutputPtr, oidn::Format::Float3, renderSize.x, renderSize.y, 0, 0, 0);
-            filter.set("hdr", false);
-            filter.commit();
+                // Create a denoising filter
+                oidn::FilterRef filter = device.newFilter("RT"); // generic ray tracing filter
+                filter.setImage("color", denoiserInputFramePtr, oidn::Format::Float3, renderSize.x, renderSize.y, 0, 0, 0);
+                filter.setImage("output", frameOutputPtr, oidn::Format::Float3, renderSize.x, renderSize.y, 0, 0, 0);
+                filter.set("hdr", false);
+                filter.commit();
 
-            // Filter the image
-            filter.execute();
+                // Filter the image
+                filter.execute();
 
-            // Check for errors
-            const char* errorMessage;
-            if (device.getError(errorMessage) != oidn::Error::None)
-                std::cout << "Error: " << errorMessage << std::endl;
+                // Check for errors
+                const char* errorMessage;
+                if (device.getError(errorMessage) != oidn::Error::None)
+                    std::cout << "Error: " << errorMessage << std::endl;
 
-            // Copy the denoised data to denoisedTexture
-            glBindTexture(GL_TEXTURE_2D, denoisedTexture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, renderSize.x, renderSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
+                // Copy the denoised data to denoisedTexture
+                glBindTexture(GL_TEXTURE_2D, denoisedTexture);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, renderSize.x, renderSize.y, 0, GL_RGB, GL_FLOAT, frameOutputPtr);
 
-            denoised = true;
+                denoised = true;
+            }
         }
+        else
+            denoised = false;
 
         if (scene->dirty)
         {

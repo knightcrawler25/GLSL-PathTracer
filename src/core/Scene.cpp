@@ -278,7 +278,7 @@ namespace GLSLPT
             RadeonRays::bbox bounds = sceneBvh->Bounds();
             Vec3 extents = bounds.extents() * 5.0f;
             Vec3 center = bounds.center();
-            AddCamera(Vec3(extents.x, center.y, extents.z), center, 45.0f);
+            AddCamera(Vec3(0, center.y, extents.x), center, 45.0f);
         }
 
         initialized = true;

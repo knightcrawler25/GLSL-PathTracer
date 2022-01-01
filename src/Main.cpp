@@ -121,9 +121,9 @@ void LoadScene(std::string sceneName)
     // Add a default HDR if there are no lights in the scene
     if (!scene->hdrData)
     {
-        scene->AddHDR(assetsDir + "HDR/san_giuseppe_bridge_blurred.hdr");
+        scene->AddHDR(assetsDir + "HDR/white_cliff_top_1k.hdr");
         renderOptions.useEnvMap = scene->lights.empty() ? true : false;
-        renderOptions.hdrMultiplier = 1.0f;
+        renderOptions.hdrMultiplier = 1.5f;
     }
 
     scene->renderOptions = renderOptions;
@@ -374,7 +374,6 @@ void MainLoop(void* arg)
             scene->camera->aperture = aperture / 1000.0f;
             optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
             ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
-            ImGui::Text("Dir: %.2f, %.2f, %.2f", scene->camera->forward.x, scene->camera->forward.y, scene->camera->forward.z);
         }
 
         scene->dirty = false;
