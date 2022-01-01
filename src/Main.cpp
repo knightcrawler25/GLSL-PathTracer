@@ -182,7 +182,7 @@ void Update(float secondsElapsed)
             scene->camera->Strafe(mouseSensitivity * mouseDelta.x, mouseSensitivity * mouseDelta.y);
             ImGui::ResetMouseDragDelta(2);
         }
-        scene->camera->isMoving = true;
+        scene->dirty = true;
     }
 
     renderer->Update(secondsElapsed);
@@ -297,6 +297,7 @@ void MainLoop(void* arg)
         ImGui::BulletText("LMB + drag to rotate");
         ImGui::BulletText("MMB + drag to pan");
         ImGui::BulletText("RMB + drag to zoom in/out");
+        ImGui::BulletText("CRTL + click on a slider to edit its value");
 
         if (ImGui::Button("Save Screenshot"))
         {
@@ -319,7 +320,7 @@ void MainLoop(void* arg)
 
         bool optionsChanged = false;
 
-        optionsChanged |= ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.01f, 1.0f);
+        optionsChanged |= ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.001f, 1.0f);
 
         if (ImGui::CollapsingHeader("Render Settings"))
         {
@@ -327,6 +328,7 @@ void MainLoop(void* arg)
             Vec3* uniformLightCol = &renderOptions.uniformLightCol;
             Vec3* backgroundCol = &renderOptions.backgroundCol;
 
+            optionsChanged |= ImGui::SliderInt("Max Spp", &renderOptions.maxSpp, -1, 256);
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
             requiresReload |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
             optionsChanged |= ImGui::SliderFloat("HDR multiplier", &renderOptions.hdrMultiplier, 0.1f, 10.0f);
@@ -375,12 +377,12 @@ void MainLoop(void* arg)
             ImGui::Text("Dir: %.2f, %.2f, %.2f", scene->camera->forward.x, scene->camera->forward.y, scene->camera->forward.z);
         }
 
-        scene->camera->isMoving = false;
+        scene->dirty = false;
 
         if (optionsChanged)
         {
             scene->renderOptions = renderOptions;
-            scene->camera->isMoving = true;
+            scene->dirty = true;
         }
 
         if (ImGui::CollapsingHeader("Objects"))
@@ -450,6 +452,8 @@ void MainLoop(void* arg)
             }
         }
         ImGui::End();
+
+        printf("MaxSpp: %d Current Spp: %d Progress: %.1f%%   \r", scene->renderOptions.maxSpp, renderer->GetSampleCount(), renderer->GetProgress());
     }
 
     double presentTime = SDL_GetTicks();

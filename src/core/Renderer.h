@@ -61,6 +61,7 @@ namespace GLSLPT
             enableBackground = false;
             backgroundCol = Vec3(1.0f, 1.0f, 1.0f);
             transparentBackground = false;
+            maxSpp = -1;
         }
 
         iVec2 renderResolution;
@@ -87,6 +88,7 @@ namespace GLSLPT
         bool enableBackground;
         bool transparentBackground;
         bool independentRenderSize;
+        int maxSpp;
     };
 
     class Scene;

@@ -66,7 +66,7 @@ namespace GLSLPT
     class Scene
     {
     public:
-        Scene() : camera(nullptr), hdrData(nullptr), initialized(false) {
+        Scene() : camera(nullptr), hdrData(nullptr), initialized(false), dirty(true) {
             sceneBvh = new RadeonRays::Bvh(10.0f, 64, false);
         }
         ~Scene();
@@ -117,6 +117,7 @@ namespace GLSLPT
         std::vector<Texture *> textures;
         std::vector<unsigned char> textureMapsArray;
         bool initialized;
+        bool dirty;
 
     private:
         RadeonRays::Bvh *sceneBvh;

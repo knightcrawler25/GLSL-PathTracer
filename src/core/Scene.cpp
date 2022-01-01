@@ -204,6 +204,7 @@ namespace GLSLPT
             transforms[i] = meshInstances[i].transform;
 
         instancesModified = true;
+        dirty = true;
     }
 
     void Scene::ProcessScene()

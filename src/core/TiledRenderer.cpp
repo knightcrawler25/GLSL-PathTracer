@@ -51,6 +51,7 @@ namespace GLSLPT
         , numTiles(0,0)
         , currentBuffer(0)
         , sampleCounter(0)
+        , denoised(false)
     {
     }
 
@@ -154,11 +155,6 @@ namespace GLSLPT
         outputShader          = LoadShaders(vertexShaderSrcObj, outputShaderSrcObj);
         tonemapShader         = LoadShaders(vertexShaderSrcObj, tonemapShaderSrcObj);
 
-        printf("Window Resolution : %d %d\n", windowSize.x, windowSize.y);
-        printf("Render Resolution : %d %d\n", renderSize.x, renderSize.y);
-        printf("Preview Resolution : %d %d\n", (int)((float)windowSize.x * pixelRatio), (int)((float)windowSize.y * pixelRatio));
-        printf("Tile Size : %d %d\n", tileWidth, tileHeight);
-
         //----------------------------------------------------------
         // FBO Setup
         //----------------------------------------------------------
@@ -231,7 +227,6 @@ namespace GLSLPT
         //For Denoiser
         denoiserInputFramePtr = new Vec3[renderSize.x * renderSize.y];
         frameOutputPtr = new Vec3[renderSize.x * renderSize.y];
-        denoised = false;
 
         glGenTextures(1, &denoisedTexture);
         glBindTexture(GL_TEXTURE_2D, denoisedTexture);
@@ -309,6 +304,11 @@ namespace GLSLPT
         glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
         glActiveTexture(GL_TEXTURE11);
         glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
+
+        printf("Window Resolution : %d %d\n", windowSize.x, windowSize.y);
+        printf("Render Resolution : %d %d\n", renderSize.x, renderSize.y);
+        printf("Preview Resolution : %d %d\n", (int)((float)windowSize.x* pixelRatio), (int)((float)windowSize.y* pixelRatio));
+        printf("Tile Size : %d %d\n", tileWidth, tileHeight);
     }
 
     void TiledRenderer::Finish()
@@ -347,9 +347,12 @@ namespace GLSLPT
             return;
         }
 
+        if (!scene->dirty && scene->renderOptions.maxSpp != -1 && sampleCounter >= scene->renderOptions.maxSpp)
+            return;
+
         glActiveTexture(GL_TEXTURE0);
         
-        if (scene->camera->isMoving || scene->instancesModified)
+        if (scene->dirty)
         {
             // Renders a low res preview if camera/instances are modified
             glBindFramebuffer(GL_FRAMEBUFFER, pathTraceFBOLowRes);
@@ -391,7 +394,7 @@ namespace GLSLPT
         glActiveTexture(GL_TEXTURE0);
 
         // For the first sample or if the camera is moving, we do not have an image ready with all the tiles rendered, so we display a low res preview.
-        if (scene->camera->isMoving || sampleCounter == 1)
+        if (scene->dirty || sampleCounter == 1)
         {
             glBindTexture(GL_TEXTURE_2D, pathTraceTextureLowRes);
             quad->Draw(tonemapShader);
@@ -409,7 +412,8 @@ namespace GLSLPT
 
     float TiledRenderer::GetProgress() const
     {
-        return float((numTiles.y - tile.y - 1) * numTiles.x + tile.x) / float(numTiles.x * numTiles.y);
+        int maxSpp = scene->renderOptions.maxSpp;
+        return maxSpp <= 0 ? 0.0f : sampleCounter * 100.0f / maxSpp;
     }
 
     void TiledRenderer::GetOutputBuffer(unsigned char** data, int &w, int &h)
@@ -436,10 +440,13 @@ namespace GLSLPT
 
     void TiledRenderer::Update(float secondsElapsed)
     {
+        if (!scene->dirty && scene->renderOptions.maxSpp != -1 && sampleCounter >= scene->renderOptions.maxSpp)
+            return;
+
         Renderer::Update(secondsElapsed);
 
         // Denoise Image
-        if (scene->renderOptions.enableDenoiser && frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0)
+        if (scene->renderOptions.enableDenoiser && !denoised || (frameCounter % (scene->renderOptions.denoiserFrameCnt * (numTiles.x * numTiles.y)) == 0))
         {
             // FIXME: Figure out a way to have transparency with denoiser
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
@@ -471,7 +478,7 @@ namespace GLSLPT
             denoised = true;
         }
 
-        if (scene->camera->isMoving || scene->instancesModified)
+        if (scene->dirty)
         {
             tile.x = -1;
             tile.y = numTiles.y - 1;
@@ -532,7 +539,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
         glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
-        glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->camera->isMoving || scene->instancesModified ? 2: scene->renderOptions.maxDepth);
+        glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->dirty ? 2: scene->renderOptions.maxDepth);
         glUniform3f(glGetUniformLocation(shaderObject, "camera.position"), scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
         glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
         pathTraceShaderLowRes->StopUsing();

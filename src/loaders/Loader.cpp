@@ -247,6 +247,7 @@ namespace GLSLPT
                     sscanf(line, " windowResolution %d %d", &renderOptions.windowResolution.x, &renderOptions.windowResolution.y);
                     sscanf(line, " hdrMultiplier %f", &renderOptions.hdrMultiplier);
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
+                    sscanf(line, " maxSpp %i", &renderOptions.maxSpp);
                     sscanf(line, " tileWidth %i", &renderOptions.tileWidth);
                     sscanf(line, " tileHeight %i", &renderOptions.tileHeight);
                     sscanf(line, " enableRR %s", enableRR);
