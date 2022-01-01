@@ -359,6 +359,7 @@ namespace GLSLPT
             glViewport(0, 0, windowSize.x * pixelRatio, windowSize.y * pixelRatio);
             quad->Draw(pathTraceShaderLowRes);
             scene->instancesModified = false;
+            scene->dirty = false;
         }
         else
         {
