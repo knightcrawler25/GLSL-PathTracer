@@ -224,7 +224,8 @@ namespace GLSLPT
         printf("Copying Mesh Data\n");
         for (int i = 0; i < meshes.size(); i++)
         {
-            // Copy indices from BVH and not from Mesh
+            // Copy indices from BVH and not from Mesh. 
+            // Required if splitBVH is used as a triangle can be shared by leaf nodes
             int numIndices = meshes[i]->bvh->GetNumIndices();
             const int * triIndices = meshes[i]->bvh->GetIndices();
 
@@ -276,9 +277,9 @@ namespace GLSLPT
         if (!camera)
         {
             RadeonRays::bbox bounds = sceneBvh->Bounds();
-            Vec3 extents = bounds.extents() * 5.0f;
+            Vec3 extents = bounds.extents();
             Vec3 center = bounds.center();
-            AddCamera(Vec3(0, center.y, extents.x), center, 45.0f);
+            AddCamera(Vec3(center.x, center.y, center.z + Vec3::Length(extents) * 2.0f), center, 45.0f);
         }
 
         initialized = true;

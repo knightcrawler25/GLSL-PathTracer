@@ -53,16 +53,19 @@ Scene* scene = nullptr;
 Renderer* renderer = nullptr;
 
 std::vector<string> sceneFiles;
+std::vector<string> envMaps;
 
 float mouseSensitivity = 0.01f;
 bool keyPressed = false;
-int sampleSceneIndex = 0;
+int sampleSceneIdx = 0;
 int selectedInstance = 0;
 double lastTime = SDL_GetTicks();
+int envMapIdx = 0;
 bool done = false;
 
 std::string shadersDir = "../src/shaders/";
 std::string assetsDir = "../assets/";
+std::string envMapDir = "../assets/HDR/";
 
 RenderOptions renderOptions;
 
@@ -87,6 +90,27 @@ void GetSceneFiles()
         if (ext == "scene" || ext == "gltf" || ext == "glb")
         {
             sceneFiles.push_back(assetsDir + std::string(file.name));
+        }
+    }
+
+    tinydir_close(&dir);
+}
+
+void GetEnvMaps()
+{
+    tinydir_dir dir;
+    int i;
+    tinydir_open_sorted(&dir, envMapDir.c_str());
+
+    for (i = 0; i < dir.n_files; i++)
+    {
+        tinydir_file file;
+        tinydir_readfile_n(&dir, &file, i);
+
+        std::string ext = std::string(file.extension);
+        if (ext == "hdr")
+        {
+            envMaps.push_back(envMapDir + std::string(file.name));
         }
     }
 
@@ -304,17 +328,27 @@ void MainLoop(void* arg)
             SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".png");
         }
 
+        // Scenes
         std::vector<const char*> scenes;
         for (int i = 0; i < sceneFiles.size(); ++i)
-        {
             scenes.push_back(sceneFiles[i].c_str());
-        }
 
-        if (ImGui::Combo("Scene", &sampleSceneIndex, scenes.data(), scenes.size()))
+        if (ImGui::Combo("Scene", &sampleSceneIdx, scenes.data(), scenes.size()))
         {
-            LoadScene(sceneFiles[sampleSceneIndex]);
+            LoadScene(sceneFiles[sampleSceneIdx]);
             SDL_RestoreWindow(loopdata.mWindow);
             SDL_SetWindowSize(loopdata.mWindow, renderOptions.windowResolution.x, renderOptions.windowResolution.y);
+            InitRenderer();
+        }
+
+        // Environment maps
+        std::vector<const char*> envMapsList;
+        for (int i = 0; i < envMaps.size(); ++i)
+            envMapsList.push_back(envMaps[i].c_str());
+        
+        if (ImGui::Combo("EnvMaps", &envMapIdx, envMapsList.data(), envMapsList.size()))
+        {
+            scene->AddHDR(envMaps[envMapIdx]);
             InitRenderer();
         }
 
@@ -498,7 +532,8 @@ int main(int argc, char** argv)
     else
     {
         GetSceneFiles();
-        LoadScene(sceneFiles[sampleSceneIndex]);
+        GetEnvMaps();
+        LoadScene(sceneFiles[sampleSceneIdx]);
     }
 
     // Setup SDL
