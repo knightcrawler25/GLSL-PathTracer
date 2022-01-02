@@ -253,7 +253,6 @@ vec4 PathTrace(Ray r)
 
 #ifdef OPT_ALPHA_TEST
         // Ignore intersection based on alpha test
-        // TODO: Alphatest for anyhit()
         bool ignoreHit = false;
 
         if (state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff)

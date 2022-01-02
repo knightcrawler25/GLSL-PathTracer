@@ -198,10 +198,12 @@ namespace GLSLPT
 
             if (strstr(line, "Camera"))
             {
+                Mat4 xform;
                 Vec3 position;
                 Vec3 lookAt;
                 float fov;
                 float aperture = 0, focalDist = 1;
+                bool matrixProvided = false;
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -214,9 +216,25 @@ namespace GLSLPT
                     sscanf(line, " aperture %f ", &aperture);
                     sscanf(line, " focaldist %f", &focalDist);
                     sscanf(line, " fov %f", &fov);
+
+                    if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
+                        &xform[0][0], &xform[1][0], &xform[2][0], &xform[3][0],
+                        &xform[0][1], &xform[1][1], &xform[2][1], &xform[3][1],
+                        &xform[0][2], &xform[1][2], &xform[2][2], &xform[3][2],
+                        &xform[0][3], &xform[1][3], &xform[2][3], &xform[3][3]
+                    ) != 0)
+                        matrixProvided = true;
                 }
 
                 delete scene->camera;
+
+                if (matrixProvided)
+                {
+                    Vec3 forward = Vec3(xform[2][0], xform[2][1], xform[2][2]);
+                    position = Vec3(xform[3][0], xform[3][1], xform[3][2]);
+                    lookAt = position + forward;
+                }
+
                 scene->AddCamera(position, lookAt, fov);
                 scene->camera->aperture = aperture;
                 scene->camera->focalDist = focalDist;
@@ -325,9 +343,10 @@ namespace GLSLPT
             {
                 std::string filename;
                 Vec4 rotQuat;
-                Mat4 translate, rot, scale;
+                Mat4 xform, translate, rot, scale;
                 int material_id = 0; // Default Material ID
                 char meshName[200] = "None";
+                bool matrixProvided = false;
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -358,10 +377,18 @@ namespace GLSLPT
                         }
                     }
 
+                    if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
+                        &xform[0][0], &xform[1][0], &xform[2][0], &xform[3][0],
+                        &xform[0][1], &xform[1][1], &xform[2][1], &xform[3][1],
+                        &xform[0][2], &xform[1][2], &xform[2][2], &xform[3][2],
+                        &xform[0][3], &xform[1][3], &xform[2][3], &xform[3][3]
+                    ) != 0)
+                        matrixProvided = true;
+
                     sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
                     sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
-                    sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w);
-                    rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
+                    if(sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w) != 0)
+                        rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
                 }
 
                 if (!filename.empty())
@@ -381,8 +408,14 @@ namespace GLSLPT
                             instanceName = filename.substr(pos + 1);
                         }
                         
-                        Mat4 xform = scale * rot * translate;
-                        MeshInstance instance(instanceName, mesh_id, xform, material_id);
+                        Mat4 transformMat;
+
+                        if (matrixProvided)
+                            transformMat = xform;
+                        else
+                            transformMat = scale * rot * translate;
+
+                        MeshInstance instance(instanceName, mesh_id, transformMat, material_id);
                         scene->AddMeshInstance(instance);
                     }
                 }
@@ -395,7 +428,8 @@ namespace GLSLPT
             {
                 std::string filename;
                 Vec4 rotQuat;
-                Mat4 translate, rot, scale;
+                Mat4 xform, translate, rot, scale;
+                bool matrixProvided = false;
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -410,10 +444,18 @@ namespace GLSLPT
                         filename = path + file;
                     }
 
+                    if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
+                        &xform[0][0], &xform[1][0], &xform[2][0], &xform[3][0],
+                        &xform[0][1], &xform[1][1], &xform[2][1], &xform[3][1],
+                        &xform[0][2], &xform[1][2], &xform[2][2], &xform[3][2],
+                        &xform[0][3], &xform[1][3], &xform[2][3], &xform[3][3]
+                    ) != 0)
+                        matrixProvided = true;
+
                     sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
                     sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
-                    sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w);
-                    rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
+                    if (sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w) != 0)
+                        rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
                 }
 
                 if (!filename.empty())
@@ -421,14 +463,19 @@ namespace GLSLPT
                     std::string ext = filename.substr(filename.find_last_of(".") + 1);
 
                     bool success = false;
-                    Mat4 xform = scale * rot * translate;
+                    Mat4 transformMat;
+
+                    if (matrixProvided)
+                        transformMat = xform;
+                    else
+                        transformMat = scale * rot * translate;
 
                     // TODO: Add support for instancing.
                     // If the same gltf is loaded multiple times then mesh data gets duplicated
                     if (ext == "gltf")
-                        success = LoadGLTF(filename, scene, renderOptions, xform, false);
+                        success = LoadGLTF(filename, scene, renderOptions, transformMat, false);
                     else if (ext == "glb")
-                        success = LoadGLTF(filename, scene, renderOptions, xform, true);
+                        success = LoadGLTF(filename, scene, renderOptions, transformMat, true);
 
                     if (!success)
                     {
