@@ -71,6 +71,9 @@ bool AnyHit(Ray r, float maxDist)
     float leftHit = 0.0;
     float rightHit = 0.0;
 
+#ifdef OPT_ALPHA_TEST
+    int currMatID = 0;
+#endif
     bool BLAS = false;
 
     Ray rTrans;
@@ -111,7 +114,38 @@ bool AnyHit(Ray r, float maxDist)
                 uvt.w = 1.0 - uvt.x - uvt.y;
 
                 if (all(greaterThanEqual(uvt, vec4(0.0))) && uvt.z < maxDist)
+                {
+#ifdef OPT_ALPHA_TEST
+                    vec2 t0 = vec2(v0.w, texelFetch(normalsTex, vertIndices.x).w);
+                    vec2 t1 = vec2(v1.w, texelFetch(normalsTex, vertIndices.y).w);
+                    vec2 t2 = vec2(v2.w, texelFetch(normalsTex, vertIndices.z).w);
+
+                    vec2 texCoord = t0 * uvt.w + t1 * uvt.x + t2 * uvt.y;
+
+                    vec4 texIDs      = texelFetch(materialsTex, ivec2(currMatID * 8 + 6, 0), 0);
+                    vec4 alphaParams = texelFetch(materialsTex, ivec2(currMatID * 8 + 7, 0), 0);
+                    
+                    float alpha = texture(textureMapsArrayTex, vec3(texCoord, texIDs.x)).a;
+
+                    float opacity = alphaParams.x;
+                    int alphaMode = int(alphaParams.y);
+                    float alphaCutoff = alphaParams.z;
+                    opacity *= alpha;
+
+                    bool ignoreHit = false;
+
+                    if (alphaMode == ALPHA_MODE_MASK && opacity < alphaCutoff)
+                        ignoreHit = true;
+                    else if (alphaMode == ALPHA_MODE_BLEND && rand() > opacity)
+                        ignoreHit = true;
+
+                    if (!ignoreHit)
+                        return true;
+#else
                     return true;
+#endif
+                }
+                    
             }
         }
         else if (leaf < 0) // Leaf node of TLAS
@@ -131,6 +165,9 @@ bool AnyHit(Ray r, float maxDist)
 
             index = leftIndex;
             BLAS = true;
+#ifdef OPT_ALPHA_TEST
+            currMatID = rightIndex;
+#endif
             continue;
         }
         else
@@ -177,7 +214,6 @@ bool AnyHit(Ray r, float maxDist)
 
             rTrans.origin = r.origin;
             rTrans.direction = r.direction;
-            continue;
         }
     }
 

@@ -24,7 +24,7 @@
 
 void GetMaterials(inout State state, in Ray r)
 {
-    int index = state.matID * 7;
+    int index = state.matID * 8;
     Material mat;
 
     vec4 param1 = texelFetch(materialsTex, ivec2(index + 0, 0), 0);
@@ -34,16 +34,15 @@ void GetMaterials(inout State state, in Ray r)
     vec4 param5 = texelFetch(materialsTex, ivec2(index + 4, 0), 0);
     vec4 param6 = texelFetch(materialsTex, ivec2(index + 5, 0), 0);
     vec4 param7 = texelFetch(materialsTex, ivec2(index + 6, 0), 0);
+    vec4 param8 = texelFetch(materialsTex, ivec2(index + 7, 0), 0);
 
     mat.baseColor          = param1.rgb;
-    mat.opacity            = param1.a;
+    mat.anisotropic        = param1.w;
                            
     mat.emission           = param2.rgb;
-    mat.anisotropic        = param2.w;
                            
     mat.metallic           = param3.x;
-    mat.roughness          = max(param3.y, 0.001);
-                           
+    mat.roughness          = max(param3.y, 0.001);      
     mat.subsurface         = param3.z;
     mat.specularTint       = param3.w;
                            
@@ -55,12 +54,14 @@ void GetMaterials(inout State state, in Ray r)
     mat.specTrans          = param5.x;
     mat.ior                = param5.y;
     mat.atDistance         = param5.z;
-    mat.alphaMode          = int(param5.w);
                            
     mat.extinction         = param6.rgb;
-    mat.alphaCutoff        = param6.w;
                            
     ivec4 texIDs           = ivec4(param7);
+
+    mat.opacity            = param8.x;
+    mat.alphaMode          = int(param8.y);
+    mat.alphaCutoff        = param8.z;
 
     // Base Color Map
     if (texIDs.x >= 0)
@@ -69,10 +70,6 @@ void GetMaterials(inout State state, in Ray r)
         mat.baseColor.rgb *= pow(col.rgb, vec3(2.2));
         mat.opacity *= col.a;
     }
-
-    // Set opacity to 1.0 for opaque materials
-    if (mat.alphaMode == ALPHA_MODE_OPAQUE)
-        mat.opacity = 1.0;
 
     // Metallic Roughness Map
     if (texIDs.y >= 0)
@@ -254,6 +251,7 @@ vec4 PathTrace(Ray r)
         }
 #endif
 
+#ifdef OPT_ALPHA_TEST
         // Ignore intersection based on alpha test
         // TODO: Alphatest for anyhit()
         bool ignoreHit = false;
@@ -269,6 +267,7 @@ vec4 PathTrace(Ray r)
             r.origin = state.fhp + r.direction * EPS;
             continue;
         }
+#endif
 
         // Add absoption
         throughput *= exp(-absorption * state.hitDist);

@@ -122,6 +122,15 @@ namespace GLSLPT
             pathtraceDefines += "#define OPT_TRANSPARENT_BACKGROUND\n";
             tonemapDefines += "#define OPT_TRANSPARENT_BACKGROUND\n";
         }
+        for (int i = 0; i < scene->materials.size(); i++)
+        {
+            if (scene->materials[i].alphaMode != AlphaMode::Opaque)
+            {
+                pathtraceDefines += "#define OPT_ALPHA_TEST\n";
+                tonemapDefines += "#define OPT_ALPHA_TEST\n";
+                break;
+            }
+        }
 
         if (pathtraceDefines.size() > 0)
         {

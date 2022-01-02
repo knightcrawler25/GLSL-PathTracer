@@ -42,46 +42,51 @@ namespace GLSLPT
         Material()
         {
             baseColor = Vec3(1.0f, 1.0f, 1.0f);
-            opacity   = 0.0f;
+            anisotropic = 0.0f; // Unused for now
 
-            emission    = Vec3(0.0f, 0.0f, 0.0f);
-            anisotropic = 0.0f; // Not used
+            emission = Vec3(0.0f, 0.0f, 0.0f);
+            // padding1
 
             metallic     = 0.0f;
             roughness    = 0.5f;
             subsurface   = 0.0f;
             specularTint = 0.0f;
-            
+
             sheen          = 0.0f;
             sheenTint      = 0.0f;
             clearcoat      = 0.0f;
             clearcoatGloss = 0.0f;
 
-            specTrans   = 0.0f;
-            ior         = 1.5f;
-            atDistance  = 1.0f;
-            alphaMode   = 0.0f;
+            specTrans  = 0.0f;
+            ior        = 1.5f;
+            atDistance = 1.0f;
+            // padding2
 
-            extinction  = Vec3(1.0f, 1.0f, 1.0f);
-            alphaCutoff = 0.0f;
+            extinction = Vec3(1.0f, 1.0f, 1.0f);
+            // padding3
 
             baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
             normalmapTexID         = -1.0f;
             emissionmapTexID       = -1.0f;
+
+            opacity     = 0.0f;
+            alphaMode   = 0.0f;
+            alphaCutoff = 0.0f;
+            // padding4
         };
 
         Vec3 baseColor;
-        float opacity;
+        float anisotropic;
 
         Vec3 emission;
-        float anisotropic;
+        float padding1;
 
         float metallic;
         float roughness;
         float subsurface;
         float specularTint;
-        
+
         float sheen;
         float sheenTint;
         float clearcoat;
@@ -90,14 +95,19 @@ namespace GLSLPT
         float specTrans;
         float ior;
         float atDistance;
-        float alphaMode;
-
+        float padding2;
+        
         Vec3 extinction;
-        float alphaCutoff;
+        float padding3;
 
         float baseColorTexId;
         float metallicRoughnessTexID;
         float normalmapTexID;
         float emissionmapTexID;
+
+        float opacity;
+        float alphaMode;
+        float alphaCutoff;
+        float padding4;
     };
 }

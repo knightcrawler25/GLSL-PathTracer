@@ -145,7 +145,7 @@ void LoadScene(std::string sceneName)
     // Add a default HDR if there are no lights in the scene
     if (!scene->hdrData && !envMaps.empty())
     {
-        scene->AddHDR(envMaps[0]);
+        scene->AddHDR(envMaps[envMapIdx]);
         renderOptions.useEnvMap = scene->lights.empty() ? true : false;
         renderOptions.hdrMultiplier = 1.5f;
     }
