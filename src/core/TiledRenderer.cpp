@@ -127,7 +127,6 @@ namespace GLSLPT
             if (scene->materials[i].alphaMode != AlphaMode::Opaque)
             {
                 pathtraceDefines += "#define OPT_ALPHA_TEST\n";
-                tonemapDefines += "#define OPT_ALPHA_TEST\n";
                 break;
             }
         }
