@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2019-2021 Asif Ali
+ * Copyright(c) 2019 Asif Ali
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+// Much of this is from accompanying code for Ray Tracing Gems II, Chapter 14: The Reference Path Tracer
+// and was adapted for this project. See https://github.com/boksajak/referencePT for the original
 
 #pragma once
 

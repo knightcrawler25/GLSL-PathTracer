@@ -20,9 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ********************************************************************/
 
-/*
-	Modified version of code from https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK
-*/
+//	Modified version of code from https://github.com/GPUOpen-LibrariesAndSDKs/RadeonRays_SDK 
 
 #include <cassert>
 #include <stack>

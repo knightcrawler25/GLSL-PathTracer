@@ -1,8 +1,3 @@
-#pragma once
-
-#include <string>
-#include <fstream>
-#include <iostream>
 
 //    ===========
 //    Shadinclude
@@ -61,6 +56,12 @@ MISCELLANEOUS
 - Date        :    10th - 12th of April 2018
 - Language    :    C++ (can easily be converted into other languages)
 */
+
+#pragma once
+
+#include <string>
+#include <fstream>
+#include <iostream>
 
 namespace GLSLPT
 {
