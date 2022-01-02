@@ -22,30 +22,36 @@
  * SOFTWARE.
  */
 
-uniform bool isCameraMoving;
-uniform vec3 randomVector;
-uniform vec2 screenResolution;
-uniform float hdrTexSize;
-uniform vec2 tileOffset;
-uniform vec2 invNumTiles;
+// Code is based on PBRT-v3 https://github.com/mmp/pbrt-v3/blob/master/src/core/sampling.h
 
-uniform sampler2D accumTexture;
-uniform samplerBuffer BVH;
-uniform isamplerBuffer vertexIndicesTex;
-uniform samplerBuffer verticesTex;
-uniform samplerBuffer normalsTex;
-uniform sampler2D materialsTex;
-uniform sampler2D transformsTex;
-uniform sampler2D lightsTex;
-uniform sampler2DArray textureMapsArrayTex;
+#pragma once
 
-uniform sampler2D hdrTex;
-uniform sampler2D hdrLookupTex;
+#include <vector>
+#include <algorithm>
+#include <Vec2.h>
 
-uniform float hdrMultiplier;
-uniform vec3 uniformLightCol;
-uniform int numOfLights;
-uniform int maxDepth;
-uniform int topBVHIndex;
-uniform int vertIndicesSize;
-uniform int frameNum;
+namespace GLSLPT
+{
+    class Distribution1D
+    {
+    public:
+        Distribution1D(const float* f, int n);
+        float SampleContinuous(float r, float& pdf, int& offset);
+        int SampleDiscrete(float r, float& pdf);
+        float DiscretePdf(int offset);
+
+        std::vector<float> func, cdf;
+        float integral;
+    };
+
+    class Distribution2D
+    {
+    public:
+        Distribution2D(const float* data, int w, int h);
+        ~Distribution2D();
+        Vec2 SampleContinuous(float r1, float r2, float& pdf);
+
+        std::vector<Distribution1D*> condDist;
+        Distribution1D* marginalDist;
+    };
+}

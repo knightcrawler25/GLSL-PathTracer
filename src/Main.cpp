@@ -143,9 +143,9 @@ void LoadScene(std::string sceneName)
     selectedInstance = 0;
 
     // Add a default HDR if there are no lights in the scene
-    if (!scene->hdrData)
+    if (!scene->hdrData && !envMaps.empty())
     {
-        scene->AddHDR(assetsDir + "HDR/white_cliff_top_1k.hdr");
+        scene->AddHDR(envMaps[0]);
         renderOptions.useEnvMap = scene->lights.empty() ? true : false;
         renderOptions.hdrMultiplier = 1.5f;
     }

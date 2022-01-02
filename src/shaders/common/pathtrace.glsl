@@ -225,7 +225,6 @@ vec4 PathTrace(Ray r)
 
                 if (depth > 0)
                 {
-                    // TODO: Fix NaNs when using certain HDRs
                     float lightPdf = EnvMapPdf(r);
                     misWeight = PowerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
