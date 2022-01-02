@@ -40,8 +40,10 @@ uniform sampler2D lightsTex;
 uniform sampler2DArray textureMapsArrayTex;
 
 uniform sampler2D hdrTex;
-uniform sampler2D hdrLookupTex;
+uniform sampler2D hdrMarginalDistTex;
+uniform sampler2D hdrCondDistTex;
 
+uniform float hdrResolution;
 uniform float hdrMultiplier;
 uniform vec3 uniformLightCol;
 uniform int numOfLights;

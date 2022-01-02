@@ -15,17 +15,19 @@
 
 #include <iostream>
 #include <Vec3.h>
+#include <Vec2.h>
 
 using namespace GLSLPT;
 
 class HDRData {
 public:
-    HDRData() : width(0), height(0), cols(nullptr), lookupData(nullptr) {}
-    ~HDRData() { delete[] cols; delete[] lookupData; }
+    HDRData() : width(0), height(0), cols(nullptr), marginalDistData(nullptr), conditionalDistData(nullptr) {}
+    ~HDRData() { delete[] cols; delete marginalDistData; delete conditionalDistData; }
     int width, height;
     // each pixel takes 3 float32, each component can be of any value...
     float *cols;
-    Vec3 *lookupData;
+    Vec2* marginalDistData;
+    Vec2* conditionalDistData;
 };
 
 class HDRLoader {

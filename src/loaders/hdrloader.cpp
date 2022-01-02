@@ -35,42 +35,96 @@ float luminance(const Vec3 &c)
     return 0.212671f * c.x + 0.715160f * c.y + 0.072169f * c.z;
 }
 
+int lowerBound(const float* array, int lower, int upper, const float value)
+{
+    while (lower < upper)
+    {
+        int mid = lower + (upper - lower) / 2;
+
+        if (array[mid] < value)
+            lower = mid + 1;
+        else
+            upper = mid;
+    }
+
+    return lower;
+}
+
 void HDRLoader::buildDistributions(HDRData* res)
 {
     int width = res->width;
     int height = res->height;
 
-    // Gather weights for building a 2D distribution
-    float* weights = new float[width * height];
-    for (int v = 0; v < height; v++)
+    float* pdf2D = new float[width * height];
+    float* cdf2D = new float[width * height];
+
+    float* pdf1D = new float[height];
+    float* cdf1D = new float[height];
+
+    res->marginalDistData = new Vec2[height];
+    res->conditionalDistData = new Vec2[width * height];
+
+    float colWeightSum = 0.0f;
+
+    for (int j = 0; j < height; j++)
     {
-        float sinTheta = sin(PI * (v + 1) / height);
-        for (int u = 0; u < width; u++)
+        float rowWeightSum = 0.0f;
+
+        for (int i = 0; i < width; ++i)
         {
-            int imgIdx = v * width * 3 + u * 3;
-            weights[u + v * width] = luminance(Vec3(res->cols[imgIdx + 0], res->cols[imgIdx + 1], res->cols[imgIdx + 2]));
-            weights[u + v * width] *= sinTheta;
+            int index = j * width * 3 + i * 3;
+            float weight = luminance(Vec3(res->cols[index + 0], res->cols[index + 1], res->cols[index + 2]));
+
+            rowWeightSum += weight;
+
+            pdf2D[j * width + i] = weight;
+            cdf2D[j * width + i] = rowWeightSum;
+        }
+
+        // Normalize
+        for (int i = 0; i < width; i++)
+        {
+            pdf2D[j * width + i] /= rowWeightSum;
+            cdf2D[j * width + i] /= rowWeightSum;
+        }
+
+        colWeightSum += rowWeightSum;
+
+        pdf1D[j] = rowWeightSum;
+        cdf1D[j] = colWeightSum;
+    }
+
+    // Normalize
+    for (int j = 0; j < height; j++)
+    {
+        cdf1D[j] /= colWeightSum;
+        pdf1D[j] /= colWeightSum;
+    }
+
+    // Precalculate row and col to avoid binary search during lookup in the shader
+    for (int i = 0; i < height; i++)
+    {
+        float invHeight = (float)(i + 1) / height;
+        int row = lowerBound(cdf1D, 0, height, invHeight);
+        res->marginalDistData[i].x = row / (float)height;
+        res->marginalDistData[i].y = pdf1D[i];
+    }
+
+    for (int j = 0; j < height; j++)
+    {
+        for (int i = 0; i < width; i++)
+        {
+            float invWidth = (float)(i + 1) / width;
+            int col = lowerBound(cdf2D, j * width, (j + 1) * width, invWidth) - j * width;
+            res->conditionalDistData[j * width + i].x = col / (float)width;
+            res->conditionalDistData[j * width + i].y = pdf2D[j * width + i];
         }
     }
 
-    Distribution2D *dist = new Distribution2D(&weights[0], width, height);
-    
-    // Generate a lookup table with row and col to avoid binary search in the shader
-    res->lookupData = new Vec3[width * height];
-    for (int v = 0; v < height; v++)
-    {
-        for (int u = 0; u < width; u++)
-        {
-            float r1 = (float)(v + 1) / height;
-            float r2 = (float)(u + 1) / width;
-            float pdf;
-            Vec2 rowCol = dist->SampleContinuous(r1, r2, pdf);
-            res->lookupData[u + v * width] = Vec3(rowCol.x, rowCol.y, pdf);
-        }
-    }
-
-    delete dist;
-    delete[] weights;
+    delete[] pdf2D;
+    delete[] pdf1D;
+    delete[] cdf2D;
+    delete[] cdf1D;
 }
 
 HDRData* HDRLoader::load(const char *fileName)

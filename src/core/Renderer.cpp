@@ -47,7 +47,8 @@ namespace GLSLPT
         , lightsTex(0)
         , textureMapsArrayTex(0)
         , hdrTex(0)
-        , hdrLookupTex(0)
+        , hdrMarginalDistTex(0)
+        , hdrConditionalDistTex(0)
         , scene(scene)
         , quad(nullptr)
         , initialized(false)
@@ -80,7 +81,8 @@ namespace GLSLPT
         glDeleteTextures(1, &lightsTex);
         glDeleteTextures(1, &textureMapsArrayTex);
         glDeleteTextures(1, &hdrTex);
-        glDeleteTextures(1, &hdrLookupTex);
+        glDeleteTextures(1, &hdrMarginalDistTex);
+        glDeleteTextures(1, &hdrConditionalDistTex);
 
         initialized = false;
         printf("Renderer finished!\n");
@@ -185,9 +187,16 @@ namespace GLSLPT
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glBindTexture(GL_TEXTURE_2D, 0);
 
-            glGenTextures(1, &hdrLookupTex);
-            glBindTexture(GL_TEXTURE_2D, hdrLookupTex);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->hdrData->width, scene->hdrData->height, 0, GL_RGB, GL_FLOAT, scene->hdrData->lookupData);
+            glGenTextures(1, &hdrMarginalDistTex);
+            glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->hdrData->height, 1, 0, GL_RG, GL_FLOAT, scene->hdrData->marginalDistData);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            glGenTextures(1, &hdrConditionalDistTex);
+            glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->hdrData->width, scene->hdrData->height, 0, GL_RG, GL_FLOAT, scene->hdrData->conditionalDistData);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glBindTexture(GL_TEXTURE_2D, 0);

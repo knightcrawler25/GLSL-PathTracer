@@ -248,6 +248,7 @@ namespace GLSLPT
         pathTraceShader->Use();
         shaderObject = pathTraceShader->getObject();
 
+        glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(renderSize.x), float(renderSize.y));
         glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), invNumTiles.x, invNumTiles.y);
@@ -262,13 +263,15 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 7);
         glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 8);
         glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 9);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrLookupTex"), 10);
+        glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 10);
+        glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 11);
 
         pathTraceShader->StopUsing();
 
         pathTraceShaderLowRes->Use();
         shaderObject = pathTraceShaderLowRes->getObject();
 
+        glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(renderSize.x), float(renderSize.y));
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
@@ -282,7 +285,8 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 7);
         glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 8);
         glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 9);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrLookupTex"), 10);
+        glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 10);
+        glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 11);
 
         pathTraceShaderLowRes->StopUsing();
 
@@ -305,7 +309,9 @@ namespace GLSLPT
         glActiveTexture(GL_TEXTURE9);
         glBindTexture(GL_TEXTURE_2D, hdrTex);
         glActiveTexture(GL_TEXTURE10);
-        glBindTexture(GL_TEXTURE_2D, hdrLookupTex);
+        glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
+        glActiveTexture(GL_TEXTURE11);
+        glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
 
         printf("Window Resolution : %d %d\n", windowSize.x, windowSize.y);
         printf("Render Resolution : %d %d\n", renderSize.x, renderSize.y);

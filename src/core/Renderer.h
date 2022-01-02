@@ -116,7 +116,8 @@ namespace GLSLPT
         GLuint lightsTex;
         GLuint textureMapsArrayTex;
         GLuint hdrTex;
-        GLuint hdrLookupTex;
+        GLuint hdrMarginalDistTex;
+        GLuint hdrConditionalDistTex;
 
         int numOfLights;
         bool initialized;
