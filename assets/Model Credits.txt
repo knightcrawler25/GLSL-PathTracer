@@ -24,9 +24,6 @@ https://benedikt-bitterli.me/resources/
 ajax
 https://github.com/mmacklin/tinsel
 
-coffee_cart
-https://3dmodelhaven.com/model/?m=CoffeeCart_01
-
 diningroom
 https://www.blendswap.com/blend/18762
 
@@ -42,5 +39,21 @@ https://www.blendswap.com/blend/13953
 Mustang
 https://wirewheelsclub.com/free-3d-models/
 
-Jinx
+RenderMan teapot
+https://renderman.pixar.com/official-swatch
+Textures: https://www.cgbookcase.com/
+
+GLTF files
+https://polyhaven.com/
+
+Jinx:
 https://sketchfab.com/3d-models/jinx-794dfd320a694a36a5e5a79fb594a5ef
+
+Silent-Ash
+https://sketchfab.com/3d-models/silent-ash-bc44272e8c1047148b33c913e659fcfa
+
+WW2 Cityscene
+https://sketchfab.com/3d-models/ww2-cityscene-carentan-inspired-639dc3d330a940a2b9d7f40542eabdf3
+
+Slumhouse
+https://sketchfab.com/3d-models/slum-house-e902e0af80804d01924387da6af8eecf

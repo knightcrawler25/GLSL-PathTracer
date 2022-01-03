@@ -31,6 +31,7 @@ in vec2 TexCoords;
 #include common/globals.glsl
 #include common/intersection.glsl
 #include common/sampling.glsl
+#include common/envmap.glsl
 #include common/anyhit.glsl
 #include common/closest_hit.glsl
 #include common/disney.glsl
@@ -41,7 +42,7 @@ void main(void)
 {
     vec2 coordsTile = mix(tileOffset, tileOffset + invNumTiles, TexCoords);
 
-    InitRNG(coordsTile * screenResolution, frameNum);
+    InitRNG(gl_FragCoord.xy, frameNum);
 
     float r1 = 2.0 * rand();
     float r2 = 2.0 * rand();
@@ -50,11 +51,11 @@ void main(void)
     jitter.x = r1 < 1.0 ? sqrt(r1) - 1.0 : 1.0 - sqrt(2.0 - r1);
     jitter.y = r2 < 1.0 ? sqrt(r2) - 1.0 : 1.0 - sqrt(2.0 - r2);
 
-    jitter /= (screenResolution * 0.5);
+    jitter /= (resolution * 0.5);
     vec2 d = (coordsTile * 2.0 - 1.0) + jitter;
 
     float scale = tan(camera.fov * 0.5);
-    d.y *= screenResolution.y / screenResolution.x * scale;
+    d.y *= resolution.y / resolution.x * scale;
     d.x *= scale;
     vec3 rayDir = normalize(d.x * camera.right + d.y * camera.up + camera.forward);
 

@@ -46,9 +46,8 @@ namespace GLSLPT
         , transformsTex(0)
         , lightsTex(0)
         , textureMapsArrayTex(0)
-        , hdrTex(0)
-        , hdrMarginalDistTex(0)
-        , hdrConditionalDistTex(0)
+        , envMapTex(0)
+        , envMapCDFTex(0)
         , scene(scene)
         , quad(nullptr)
         , initialized(false)
@@ -80,9 +79,8 @@ namespace GLSLPT
         glDeleteTextures(1, &transformsTex);
         glDeleteTextures(1, &lightsTex);
         glDeleteTextures(1, &textureMapsArrayTex);
-        glDeleteTextures(1, &hdrTex);
-        glDeleteTextures(1, &hdrMarginalDistTex);
-        glDeleteTextures(1, &hdrConditionalDistTex);
+        glDeleteTextures(1, &envMapTex);
+        glDeleteTextures(1, &envMapCDFTex);
 
         initialized = false;
         printf("Renderer finished!\n");
@@ -106,7 +104,7 @@ namespace GLSLPT
 
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-        //Create Buffer and Texture for BVH Tree
+        // Create buffer and texture for BVH
         glGenBuffers(1, &BVHBuffer);
         glBindBuffer(GL_TEXTURE_BUFFER, BVHBuffer);
         glBufferData(GL_TEXTURE_BUFFER, sizeof(RadeonRays::BvhTranslator::Node) * scene->bvhTranslator.nodes.size(), &scene->bvhTranslator.nodes[0], GL_STATIC_DRAW);
@@ -114,7 +112,7 @@ namespace GLSLPT
         glBindTexture(GL_TEXTURE_BUFFER, BVHTex);
         glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, BVHBuffer);
 
-        //Create Buffer and Texture for VertexIndices
+        // Create buffer and texture for vertex indices
         glGenBuffers(1, &vertexIndicesBuffer);
         glBindBuffer(GL_TEXTURE_BUFFER, vertexIndicesBuffer);
         glBufferData(GL_TEXTURE_BUFFER, sizeof(Indices) * scene->vertIndices.size(), &scene->vertIndices[0], GL_STATIC_DRAW);
@@ -122,7 +120,7 @@ namespace GLSLPT
         glBindTexture(GL_TEXTURE_BUFFER, vertexIndicesTex);
         glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32I, vertexIndicesBuffer);
 
-        //Create Buffer and Texture for Vertices
+        // Create buffer and texture for vertices
         glGenBuffers(1, &verticesBuffer);
         glBindBuffer(GL_TEXTURE_BUFFER, verticesBuffer);
         glBufferData(GL_TEXTURE_BUFFER, sizeof(Vec4) * scene->verticesUVX.size(), &scene->verticesUVX[0], GL_STATIC_DRAW);
@@ -130,7 +128,7 @@ namespace GLSLPT
         glBindTexture(GL_TEXTURE_BUFFER, verticesTex);
         glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, verticesBuffer);
 
-        //Create Buffer and Texture for Normals
+        // Create buffer and texture for normals
         glGenBuffers(1, &normalsBuffer);
         glBindBuffer(GL_TEXTURE_BUFFER, normalsBuffer);
         glBufferData(GL_TEXTURE_BUFFER, sizeof(Vec4) * scene->normalsUVY.size(), &scene->normalsUVY[0], GL_STATIC_DRAW);
@@ -138,7 +136,7 @@ namespace GLSLPT
         glBindTexture(GL_TEXTURE_BUFFER, normalsTex);
         glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, normalsBuffer);
 
-        //Create texture for Materials
+        // Create texture for materials
         glGenTextures(1, &materialsTex);
         glBindTexture(GL_TEXTURE_2D, materialsTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Material) / sizeof(Vec4)) * scene->materials.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->materials[0]);
@@ -146,7 +144,7 @@ namespace GLSLPT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        //Create texture for Transforms
+        // Create texture for transforms
         glGenTextures(1, &transformsTex);
         glBindTexture(GL_TEXTURE_2D, transformsTex);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Mat4) / sizeof(Vec4)) * scene->transforms.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
@@ -154,8 +152,8 @@ namespace GLSLPT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        //Create texture for Lights
-        if (numOfLights > 0)
+        // Create texture for lights
+        if (!scene->lights.empty())
         {
             //Create texture for lights
             glGenTextures(1, &lightsTex);
@@ -166,6 +164,7 @@ namespace GLSLPT
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
+        // Create texture for scene textures
         if (!scene->textures.empty())
         {
             glGenTextures(1, &textureMapsArrayTex);
@@ -177,26 +176,19 @@ namespace GLSLPT
             glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
         }
 
-        // Environment Map
-        if (scene->hdrData != nullptr)
+        // Create texture for environment map
+        if (scene->envMap != nullptr)
         {
-            glGenTextures(1, &hdrTex);
-            glBindTexture(GL_TEXTURE_2D, hdrTex);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->hdrData->width, scene->hdrData->height, 0, GL_RGB, GL_FLOAT, scene->hdrData->cols);
+            glGenTextures(1, &envMapTex);
+            glBindTexture(GL_TEXTURE_2D, envMapTex);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, scene->envMap->width, scene->envMap->height, 0, GL_RGB, GL_FLOAT, scene->envMap->img);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glBindTexture(GL_TEXTURE_2D, 0);
 
-            glGenTextures(1, &hdrMarginalDistTex);
-            glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->hdrData->height, 1, 0, GL_RG, GL_FLOAT, scene->hdrData->marginalDistData);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glBindTexture(GL_TEXTURE_2D, 0);
-
-            glGenTextures(1, &hdrConditionalDistTex);
-            glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, scene->hdrData->width, scene->hdrData->height, 0, GL_RG, GL_FLOAT, scene->hdrData->conditionalDistData);
+            glGenTextures(1, &envMapCDFTex);
+            glBindTexture(GL_TEXTURE_2D, envMapCDFTex);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, scene->envMap->width, scene->envMap->height, 0, GL_RED, GL_FLOAT, scene->envMap->cdf);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glBindTexture(GL_TEXTURE_2D, 0);

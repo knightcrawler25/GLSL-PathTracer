@@ -22,8 +22,6 @@
  * SOFTWARE.
  */
 
-#define _USE_MATH_DEFINES
-
 #include <time.h>
 #include <math.h>
 #include <string>
@@ -35,8 +33,6 @@
 #include "imgui_impl_opengl3.h"
 #include "ImGuizmo.h"
 #include "tinydir.h"
-#include "stb_image.h"
-#include "stb_image_write.h"
 
 #include "Scene.h"
 #include "Loader.h"
@@ -45,6 +41,11 @@
 #include "boyTestScene.h"
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image.h"
+#include "stb_image_write.h"
 
 using namespace std;
 using namespace GLSLPT;
@@ -143,11 +144,11 @@ void LoadScene(std::string sceneName)
     selectedInstance = 0;
 
     // Add a default HDR if there are no lights in the scene
-    if (!scene->hdrData && !envMaps.empty())
+    if (!scene->envMap && !envMaps.empty())
     {
-        scene->AddHDR(envMaps[envMapIdx]);
+        scene->AddEnvMap(envMaps[envMapIdx]);
         renderOptions.useEnvMap = scene->lights.empty() ? true : false;
-        renderOptions.hdrMultiplier = 1.5f;
+        renderOptions.envMapIntensity = 1.5f;
     }
 
     scene->renderOptions = renderOptions;
@@ -348,7 +349,7 @@ void MainLoop(void* arg)
         
         if (ImGui::Combo("EnvMaps", &envMapIdx, envMapsList.data(), envMapsList.size()))
         {
-            scene->AddHDR(envMaps[envMapIdx]);
+            scene->AddEnvMap(envMaps[envMapIdx]);
             InitRenderer();
         }
 
@@ -365,7 +366,8 @@ void MainLoop(void* arg)
             optionsChanged |= ImGui::SliderInt("Max Spp", &renderOptions.maxSpp, -1, 256);
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
             requiresReload |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
-            optionsChanged |= ImGui::SliderFloat("HDR multiplier", &renderOptions.hdrMultiplier, 0.1f, 10.0f);
+            optionsChanged |= ImGui::SliderFloat("Enviornment Map Intensity", &renderOptions.envMapIntensity, 0.1f, 10.0f);
+            optionsChanged |= ImGui::SliderFloat("Enviornment Map Rotation", &renderOptions.envMapRot, 0.0f, 360.0f);
             requiresReload |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
             requiresReload |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
             requiresReload |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
@@ -486,7 +488,7 @@ void MainLoop(void* arg)
         }
         ImGui::End();
 
-        printf("MaxSpp: %d Current Spp: %d Progress: %.1f%%   \r", scene->renderOptions.maxSpp, renderer->GetSampleCount(), renderer->GetProgress());
+        //printf("MaxSpp: %d Current Spp: %d Progress: %.1f%%   \r", scene->renderOptions.maxSpp, renderer->GetSampleCount(), renderer->GetProgress());
     }
 
     double presentTime = SDL_GetTicks();

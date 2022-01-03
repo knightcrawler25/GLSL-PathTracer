@@ -48,8 +48,8 @@ namespace GLSLPT
         if(sceneBvh)
             delete sceneBvh;
 
-        if(hdrData)
-            delete hdrData;
+        if(envMap)
+            delete envMap;
     };
 
     void Scene::AddCamera(Vec3 pos, Vec3 lookAt, float fov)
@@ -112,16 +112,16 @@ namespace GLSLPT
         return id;
     }
 
-    void Scene::AddHDR(const std::string& filename)
+    void Scene::AddEnvMap(const std::string& filename)
     {
-        delete hdrData;
-        hdrData = HDRLoader::load(filename.c_str());
-        if (hdrData == nullptr)
-            printf("Unable to load HDR\n");
+        delete envMap;
+        envMap = new EnvironmentMap;
+        if (envMap->LoadMap(filename.c_str()))
+            printf("HDR %s loaded\n", filename.c_str());
         else
         {
-            printf("HDR %s loaded\n", filename.c_str());
-            renderOptions.useEnvMap = true;
+            printf("Unable to load HDR\n");
+            delete envMap;
         }
     }
 

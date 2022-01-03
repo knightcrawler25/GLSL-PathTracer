@@ -134,7 +134,7 @@ vec3 DirectLight(in Ray r, in State state)
             {
                 float misWeight = PowerHeuristic(lightPdf, bsdfSampleRec.pdf);
                 if (misWeight > 0.0)
-                    Li += misWeight * bsdfSampleRec.f * color / lightPdf;
+                    Li += misWeight * bsdfSampleRec.f * color * envMapIntensity / lightPdf;
             }
         }
     }
@@ -217,18 +217,20 @@ vec4 PathTrace(Ray r)
 #else
 #ifdef OPT_ENVMAP
             {
-                float misWeight = 1.0f;
-                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, acos(r.direction.y) * INV_PI);
-
+                float misWeight = 1.0;
+                float theta = acos(clamp(r.direction.y, -1.0, 1.0));
+                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI) + vec2(envMapRot, 0.0);
+                vec3 envMapCol = texture(envMapTex, uv).xyz;
+                
                 if (depth > 0)
                 {
-                    float lightPdf = EnvMapPdf(r);
+                    float lightPdf = EnvMapPdf(envMapCol) / sin(theta);
                     misWeight = PowerHeuristic(bsdfSampleRec.pdf, lightPdf);
                 }
 #ifdef OPT_HIDE_EMITTERS
                 if (state.depth > 0)
 #endif
-                    radiance += misWeight * texture(hdrTex, uv).xyz * throughput * hdrMultiplier;
+                    radiance += misWeight * envMapCol * throughput * envMapIntensity;
             }
 #endif
 #endif

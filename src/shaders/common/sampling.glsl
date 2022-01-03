@@ -247,40 +247,6 @@ void SampleOneLight(in Light light, in vec3 surfacePos, inout LightSampleRec lig
         SampleDistantLight(light, surfacePos, lightSampleRec);
 }
 
-#ifdef OPT_ENVMAP
-#ifndef OPT_UNIFORM_LIGHT
-
-float EnvMapPdf(in Ray r)
-{
-    float theta = acos(clamp(r.direction.y, -1.0, 1.0));
-    vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI);
-    float pdf = texture(hdrCondDistTex, uv).y * texture(hdrMarginalDistTex, vec2(uv.y, 0.0)).y;
-    return (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta));
-}
-
-vec4 SampleEnvMap(inout vec3 color)
-{
-    float r1 = rand();
-    float r2 = rand();
-
-    float v = texture(hdrMarginalDistTex, vec2(r1, 0.0)).x;
-    float u = texture(hdrCondDistTex, vec2(r2, v)).x;
-
-    color = texture(hdrTex, vec2(u, v)).xyz * hdrMultiplier;
-    float pdf = texture(hdrCondDistTex, vec2(u, v)).y * texture(hdrMarginalDistTex, vec2(v, 0.0)).y;
-
-    float phi = u * TWO_PI;
-    float theta = v * PI;
-
-    if (sin(theta) == 0.0)
-        pdf = 0.0;
-
-    return vec4(-sin(theta) * cos(phi), cos(theta), -sin(theta) * sin(phi), (pdf * hdrResolution) / (2.0 * PI * PI * sin(theta)));
-}
-
-#endif
-#endif
-
 vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, in BsdfSampleRec bsdfSampleRec)
 {
     vec3 Le;

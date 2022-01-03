@@ -45,7 +45,7 @@ namespace GLSLPT
             renderResolution = iVec2(1280, 720);
             windowResolution = iVec2(1280, 720);
             independentRenderSize = false; // Is render resolution independent of window resolution
-            hdrMultiplier = 1.0f;
+            envMapIntensity = 1.0f;
             enableRR = true;
             useUniformLight = false;
             RRDepth = 2;
@@ -62,6 +62,7 @@ namespace GLSLPT
             backgroundCol = Vec3(1.0f, 1.0f, 1.0f);
             transparentBackground = false;
             maxSpp = -1;
+            envMapRot = 0.0f;
         }
 
         iVec2 renderResolution;
@@ -78,7 +79,7 @@ namespace GLSLPT
         bool simpleAcesFit;
         int RRDepth;
         int denoiserFrameCnt;
-        float hdrMultiplier;
+        float envMapIntensity;
         Vec3 uniformLightCol;
         int texArrayWidth;
         int texArrayHeight;
@@ -89,6 +90,7 @@ namespace GLSLPT
         bool transparentBackground;
         bool independentRenderSize;
         int maxSpp;
+        float envMapRot;
     };
 
     class Scene;
@@ -115,9 +117,8 @@ namespace GLSLPT
         GLuint transformsTex;
         GLuint lightsTex;
         GLuint textureMapsArrayTex;
-        GLuint hdrTex;
-        GLuint hdrMarginalDistTex;
-        GLuint hdrConditionalDistTex;
+        GLuint envMapTex;
+        GLuint envMapCDFTex;
 
         int numOfLights;
         bool initialized;

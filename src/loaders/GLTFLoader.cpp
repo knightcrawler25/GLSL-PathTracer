@@ -26,8 +26,6 @@
 // and was adapted for this project. See https://github.com/boksajak/referencePT for the original
 
 #define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include <map>
 #include <cstdint>

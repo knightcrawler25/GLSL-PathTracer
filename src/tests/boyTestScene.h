@@ -33,7 +33,7 @@ namespace GLSLPT
         renderOptions.maxDepth = 2;
         renderOptions.tileHeight = 256;
         renderOptions.tileWidth = 144;
-        renderOptions.hdrMultiplier = 1.0f;
+        renderOptions.envMapIntensity = 1.0f;
         renderOptions.renderResolution = iVec2(1280, 720);
         renderOptions.useEnvMap = false;
         scene->AddCamera(Vec3(0.3f, 0.11f, 0.0f), Vec3(0.2f, 0.095f, 0.0f), 60.0f);

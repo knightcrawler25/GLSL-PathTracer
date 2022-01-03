@@ -264,7 +264,7 @@ namespace GLSLPT
                     sscanf(line, " envMap %s", envMap);
                     sscanf(line, " resolution %d %d", &renderOptions.renderResolution.x, &renderOptions.renderResolution.y);
                     sscanf(line, " windowResolution %d %d", &renderOptions.windowResolution.x, &renderOptions.windowResolution.y);
-                    sscanf(line, " hdrMultiplier %f", &renderOptions.hdrMultiplier);
+                    sscanf(line, " hdrMultiplier %f", &renderOptions.envMapIntensity); // TODO: Rename option in all scene files
                     sscanf(line, " maxDepth %i", &renderOptions.maxDepth);
                     sscanf(line, " maxSpp %i", &renderOptions.maxSpp);
                     sscanf(line, " tileWidth %i", &renderOptions.tileWidth);
@@ -281,11 +281,12 @@ namespace GLSLPT
                     sscanf(line, " transparentBackground %s", transparentBackground);
                     sscanf(line, " backgroundColor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
                     sscanf(line, " independentRenderSize %s", independentRenderSize);
+                    sscanf(line, " envMapRotation %f", &renderOptions.envMapRot);
                 }
 
                 if (strcmp(envMap, "None") != 0)
                 {
-                    scene->AddHDR(path + envMap);
+                    scene->AddEnvMap(path + envMap);
                     renderOptions.useEnvMap = true;
                 }
                 else

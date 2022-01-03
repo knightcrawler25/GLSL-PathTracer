@@ -24,8 +24,7 @@
 
 uniform bool isCameraMoving;
 uniform vec3 randomVector;
-uniform vec2 screenResolution;
-uniform float hdrTexSize;
+uniform vec2 resolution;
 uniform vec2 tileOffset;
 uniform vec2 invNumTiles;
 
@@ -39,15 +38,15 @@ uniform sampler2D transformsTex;
 uniform sampler2D lightsTex;
 uniform sampler2DArray textureMapsArrayTex;
 
-uniform sampler2D hdrTex;
-uniform sampler2D hdrMarginalDistTex;
-uniform sampler2D hdrCondDistTex;
+uniform sampler2D envMapTex;
+uniform sampler2D envMapCDFTex;
 
-uniform float hdrResolution;
-uniform float hdrMultiplier;
+uniform vec2 envMapRes;
+uniform float envMapTotalSum;
+uniform float envMapIntensity;
+uniform float envMapRot;
 uniform vec3 uniformLightCol;
 uniform int numOfLights;
 uniform int maxDepth;
 uniform int topBVHIndex;
-uniform int vertIndicesSize;
 uniform int frameNum;

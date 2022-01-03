@@ -33,7 +33,7 @@ namespace GLSLPT
         renderOptions.maxDepth = 2;
         renderOptions.tileHeight = 128;
         renderOptions.tileWidth = 128;
-        renderOptions.hdrMultiplier = 5.0f;
+        renderOptions.envMapIntensity = 5.0f;
         renderOptions.useEnvMap = true;
         scene->AddCamera(Vec3(0.0f, 0.125f, -0.45f), Vec3(0.0f, 0.125f, 0.0f), 60.0f);
 
@@ -74,7 +74,7 @@ namespace GLSLPT
         scene->AddMeshInstance(instance1);
         scene->AddMeshInstance(instance2);
 
-        scene->AddHDR("./assets/HDR/sunset.hdr");
+        scene->AddEnvMap("./assets/HDR/sunset.hdr");
 
     }
 }

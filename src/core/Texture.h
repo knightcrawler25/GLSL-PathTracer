@@ -26,7 +26,6 @@
 
 #include <vector>
 #include <algorithm>
-#include "split_bvh.h"
 
 namespace GLSLPT
 {    

@@ -97,7 +97,7 @@ namespace GLSLPT
         std::string pathtraceDefines = "";
         std::string tonemapDefines = "";
 
-        if (scene->renderOptions.useEnvMap && scene->hdrData != nullptr)
+        if (scene->renderOptions.useEnvMap && scene->envMap != nullptr)
             pathtraceDefines += "#define OPT_ENVMAP\n";
         if (!scene->lights.empty())
             pathtraceDefines += "#define OPT_LIGHTS\n";
@@ -248,9 +248,10 @@ namespace GLSLPT
         pathTraceShader->Use();
         shaderObject = pathTraceShader->getObject();
 
-        glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
+        glUniform2f(glGetUniformLocation(shaderObject, "envMapRes"), scene->envMap == nullptr ? 0, 0 : (float)scene->envMap->width, (float)scene->envMap->height);
+        glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap->totalSum);
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
-        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(renderSize.x), float(renderSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "resolution"), float(renderSize.x), float(renderSize.y));
         glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), invNumTiles.x, invNumTiles.y);
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
@@ -262,18 +263,18 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 6);
         glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 7);
         glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 8);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 9);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 10);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 11);
+        glUniform1i(glGetUniformLocation(shaderObject, "envMapTex"), 9);
+        glUniform1i(glGetUniformLocation(shaderObject, "envMapCDFTex"), 10);
 
         pathTraceShader->StopUsing();
 
         pathTraceShaderLowRes->Use();
         shaderObject = pathTraceShaderLowRes->getObject();
 
-        glUniform1f(glGetUniformLocation(shaderObject, "hdrResolution"), scene->hdrData == nullptr ? 0 : float(scene->hdrData->width * scene->hdrData->height));
+        glUniform2f(glGetUniformLocation(shaderObject, "envMapRes"), scene->envMap == nullptr ? 0, 0 : (float)scene->envMap->width, (float)scene->envMap->height);
+        glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap->totalSum);
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
-        glUniform2f(glGetUniformLocation(shaderObject, "screenResolution"), float(renderSize.x), float(renderSize.y));
+        glUniform2f(glGetUniformLocation(shaderObject, "resolution"), float(renderSize.x), float(renderSize.y));
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), numOfLights);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTexture"), 0);
         glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
@@ -284,9 +285,8 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 6);
         glUniform1i(glGetUniformLocation(shaderObject, "lightsTex"), 7);
         glUniform1i(glGetUniformLocation(shaderObject, "textureMapsArrayTex"), 8);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrTex"), 9);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrMarginalDistTex"), 10);
-        glUniform1i(glGetUniformLocation(shaderObject, "hdrCondDistTex"), 11);
+        glUniform1i(glGetUniformLocation(shaderObject, "envMapTex"), 9);
+        glUniform1i(glGetUniformLocation(shaderObject, "envMapCDFTex"), 10);
 
         pathTraceShaderLowRes->StopUsing();
 
@@ -307,11 +307,9 @@ namespace GLSLPT
         glActiveTexture(GL_TEXTURE8);
         glBindTexture(GL_TEXTURE_2D_ARRAY, textureMapsArrayTex);
         glActiveTexture(GL_TEXTURE9);
-        glBindTexture(GL_TEXTURE_2D, hdrTex);
+        glBindTexture(GL_TEXTURE_2D, envMapTex);
         glActiveTexture(GL_TEXTURE10);
-        glBindTexture(GL_TEXTURE_2D, hdrMarginalDistTex);
-        glActiveTexture(GL_TEXTURE11);
-        glBindTexture(GL_TEXTURE_2D, hdrConditionalDistTex);
+        glBindTexture(GL_TEXTURE_2D, envMapCDFTex);
 
         printf("Window Resolution : %d %d\n", windowSize.x, windowSize.y);
         printf("Render Resolution : %d %d\n", renderSize.x, renderSize.y);
@@ -534,8 +532,9 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "camera.fov"), scene->camera->fov);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
-        glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
-        glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
+        glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->envMap == nullptr ? false : scene->renderOptions.useEnvMap);
+        glUniform1f(glGetUniformLocation(shaderObject, "envMapIntensity"), scene->renderOptions.envMapIntensity);
+        glUniform1f(glGetUniformLocation(shaderObject, "envMapRot"), scene->renderOptions.envMapRot / 360.0f);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
         glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tile.x * invNumTiles.x, (float)tile.y * invNumTiles.y);
         glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
@@ -551,8 +550,9 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "camera.fov"), scene->camera->fov);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
-        glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->hdrData == nullptr ? false : scene->renderOptions.useEnvMap);
-        glUniform1f(glGetUniformLocation(shaderObject, "hdrMultiplier"), scene->renderOptions.hdrMultiplier);
+        glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->envMap == nullptr ? false : scene->renderOptions.useEnvMap);
+        glUniform1f(glGetUniformLocation(shaderObject, "envMapIntensity"), scene->renderOptions.envMapIntensity);
+        glUniform1f(glGetUniformLocation(shaderObject, "envMapRot"), scene->renderOptions.envMapRot / 360.0f);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->dirty ? 2: scene->renderOptions.maxDepth);
         glUniform3f(glGetUniformLocation(shaderObject, "camera.position"), scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
         glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);

@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "hdrloader.h"
+#include "EnvironmentMap.h"
 #include "bvh.h"
 #include "Renderer.h"
 #include "Mesh.h"
@@ -66,7 +66,7 @@ namespace GLSLPT
     class Scene
     {
     public:
-        Scene() : camera(nullptr), hdrData(nullptr), initialized(false), dirty(true) {
+        Scene() : camera(nullptr), envMap(nullptr), initialized(false), dirty(true) {
             sceneBvh = new RadeonRays::Bvh(10.0f, 64, false);
         }
         ~Scene();
@@ -78,15 +78,15 @@ namespace GLSLPT
         int AddLight(const Light &light);
 
         void AddCamera(Vec3 eye, Vec3 lookat, float fov);
-        void AddHDR(const std::string &filename);
+        void AddEnvMap(const std::string &filename);
 
         void ProcessScene();
         void RebuildInstances();
 
-        //Options
+        // Options
         RenderOptions renderOptions;
 
-        //Meshs
+        // Meshes
         std::vector<Mesh*> meshes;
 
         // Scene Mesh Data 
@@ -95,29 +95,33 @@ namespace GLSLPT
         std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
         std::vector<Mat4> transforms;
 
-        //Instances
+        // Instances
         std::vector<Material> materials;
-        std::vector<MeshInstance> meshInstances;
-        bool instancesModified = false;
 
-        //Lights
+        // Instances
+        std::vector<MeshInstance> meshInstances;
+
+        // Lights
         std::vector<Light> lights;
 
-        //HDR
-        HDRData *hdrData;
+        // Environment Map
+        EnvironmentMap *envMap;
 
-        //Camera
+        // Camera
         Camera *camera;
 
-        //Bvh
+        // Bvh
         RadeonRays::BvhTranslator bvhTranslator; // Produces a flat bvh array for GPU consumption
         RadeonRays::bbox sceneBounds;
 
-        //Texture Data
+        // Texture Data
         std::vector<Texture *> textures;
         std::vector<unsigned char> textureMapsArray;
+
         bool initialized;
         bool dirty;
+        // To check if scene elements need to be resent to GPU
+        bool instancesModified = false;
 
     private:
         RadeonRays::Bvh *sceneBvh;
