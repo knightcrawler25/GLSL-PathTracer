@@ -27,31 +27,31 @@
 
 vec2 BinarySearch(float value)
 {
-    vec2 uv;
-    float lower = 0.0;
-    float upper = envMapRes.y - 1.0;
-    while ((lower + 0.5) < upper)
+    ivec2 envMapResInt = ivec2(envMapRes);
+    int lower = 0;
+    int upper = envMapResInt.y - 1;
+    while (lower < upper)
     {
-        float mid = floor((lower + upper) * 0.5);
-        if (value < texture(envMapCDFTex, vec2(envMapRes.x - 0.5, mid + 0.5) / envMapRes).r)
+        int mid = (lower + upper) >> 1;
+        if (value < texelFetch(envMapCDFTex, ivec2(envMapResInt.x - 1, mid), 0).r)
             upper = mid;
         else
-            lower = mid + 1.0;
+            lower = mid + 1;
     }
-    uv.y =  clamp(lower, 0.0, envMapRes.y - 1.0);
+    int y = clamp(lower, 0, envMapResInt.y - 1);
 
-    lower = 0.0;
-    upper = envMapRes.x - 1.0;
-    while ((lower + 0.5) < upper)
+    lower = 0;
+    upper = envMapResInt.x - 1;
+    while (lower < upper)
     {
-        float mid = floor((lower + upper) * 0.5);
-        if (value < texture(envMapCDFTex, vec2(mid + 0.5, uv.y + 0.5) / envMapRes).r)
+        int mid = (lower + upper) >> 1;
+        if (value < texelFetch(envMapCDFTex, ivec2(mid, y), 0).r)
             upper = mid;
         else
-            lower = mid + 1.0;
+            lower = mid + 1;
     }
-    uv.x = clamp(lower, 0.0, envMapRes.x - 1.0);
-    return uv / envMapRes;
+    int x = clamp(lower, 0, envMapResInt.x - 1);
+    return vec2(x, y) / envMapRes;
 }
 
 float EnvMapPdf(vec3 color)
