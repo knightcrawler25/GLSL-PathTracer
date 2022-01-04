@@ -40,12 +40,14 @@ namespace GLSLPT
         float* weights = new float[width * height];
         for (int v = 0; v < height; v++)
         {
-            float sinTheta = sin(PI * (v + 0.5f) / height);
             for (int u = 0; u < width; u++)
             {
                 int imgIdx = v * width * 3 + u * 3;
                 weights[u + v * width] = Luminance(img[imgIdx + 0], img[imgIdx + 1], img[imgIdx + 2]);
-                weights[u + v * width] *= sinTheta;
+                // weights[u + v * width] *= sinTheta; 
+                // Commenting out since it produces slightly brighter images compared to Mitsuba. Not sure why.
+                // This will not affect the sampling correctness. See:
+                // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources#InfiniteAreaLights
             }
         }
 
@@ -53,7 +55,7 @@ namespace GLSLPT
         cdf = new float[width * height];
         cdf[0] = weights[0];
         for (int i = 1; i < width * height; i++)
-            cdf[i] = cdf[i - 1] + weights[i - 1];
+            cdf[i] = cdf[i - 1] + weights[i];
 
         totalSum = cdf[width * height - 1];
 
