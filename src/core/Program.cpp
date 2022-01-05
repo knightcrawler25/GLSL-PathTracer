@@ -43,7 +43,7 @@ namespace GLSLPT
             std::string msg("Error while linking program\n");
             GLint logSize = 0;
             glGetProgramiv(object, GL_INFO_LOG_LENGTH, &logSize);
-            char *info = new char[logSize + 1];
+            char* info = new char[logSize + 1];
             glGetShaderInfoLog(object, logSize, NULL, info);
             msg += info;
             delete[] info;

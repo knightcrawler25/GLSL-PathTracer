@@ -42,30 +42,30 @@ namespace RadeonRays
         // Constructor
         BvhTranslator() = default;
 
-		struct Node
-		{
-			Vec3 bboxmin;
-			Vec3 bboxmax;
-			Vec3 LRLeaf;
-		};
+        struct Node
+        {
+            Vec3 bboxmin;
+            Vec3 bboxmax;
+            Vec3 LRLeaf;
+        };
 
-		void ProcessBLAS();
-		void ProcessTLAS();
-		void UpdateTLAS(const Bvh *topLevelBvh, const std::vector<GLSLPT::MeshInstance> &instances);
-		void Process(const Bvh *topLevelBvh, const std::vector<GLSLPT::Mesh*> &meshes, const std::vector<GLSLPT::MeshInstance> &instances);
-		int topLevelIndex = 0;
-		std::vector<Node> nodes;
-		int nodeTexWidth;
+        void ProcessBLAS();
+        void ProcessTLAS();
+        void UpdateTLAS(const Bvh* topLevelBvh, const std::vector<GLSLPT::MeshInstance>& instances);
+        void Process(const Bvh* topLevelBvh, const std::vector<GLSLPT::Mesh*>& meshes, const std::vector<GLSLPT::MeshInstance>& instances);
+        int topLevelIndex = 0;
+        std::vector<Node> nodes;
+        int nodeTexWidth;
 
     private:
-		int curNode = 0;
-		int curTriIndex = 0;
-		std::vector<int> bvhRootStartIndices;
-		int ProcessBLASNodes(const Bvh::Node *root);
-		int ProcessTLASNodes(const Bvh::Node *root);
-		std::vector<GLSLPT::MeshInstance> meshInstances;
-		std::vector<GLSLPT::Mesh *> meshes;
-		const Bvh *TLBvh;
+        int curNode = 0;
+        int curTriIndex = 0;
+        std::vector<int> bvhRootStartIndices;
+        int ProcessBLASNodes(const Bvh::Node* root);
+        int ProcessTLASNodes(const Bvh::Node* root);
+        std::vector<GLSLPT::MeshInstance> meshInstances;
+        std::vector<GLSLPT::Mesh*> meshes;
+        const Bvh* topLevelBvh;
     };
 }
 

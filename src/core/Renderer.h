@@ -38,58 +38,58 @@ namespace GLSLPT
     {
         RenderOptions()
         {
-            maxDepth = 2;
-            tileWidth = 100;
-            tileHeight = 100;
-            useEnvMap = false;
             renderResolution = iVec2(1280, 720);
             windowResolution = iVec2(1280, 720);
-            independentRenderSize = false; // Is render resolution independent of window resolution
-            envMapIntensity = 1.0f;
-            enableRR = true;
-            useUniformLight = false;
-            RRDepth = 2;
             uniformLightCol = Vec3(0.3f, 0.3f, 0.3f);
+            backgroundCol = Vec3(1.0f, 1.0f, 1.0f);
+            tileWidth = 100;
+            tileHeight = 100;
+            maxDepth = 2;
+            maxSpp = -1;
+            RRDepth = 2;
+            texArrayWidth = 4096;
+            texArrayHeight = 4096;
             denoiserFrameCnt = 20;
+            enableRR = true;
             enableDenoiser = false;
             enableTonemap = true;
             useAces = false;
-            texArrayWidth = 4096;
-            texArrayHeight = 4096;
             openglNormalMap = true;
+            useEnvMap = false;
+            useUniformLight = false;
             hideEmitters = false;
             enableBackground = false;
-            backgroundCol = Vec3(1.0f, 1.0f, 1.0f);
             transparentBackground = false;
-            maxSpp = -1;
+            independentRenderSize = false;
+            envMapIntensity = 1.0f;
             envMapRot = 0.0f;
         }
 
         iVec2 renderResolution;
         iVec2 windowResolution;
-        int maxDepth;
+        Vec3 uniformLightCol;
+        Vec3 backgroundCol;
         int tileWidth;
         int tileHeight;
-        bool useEnvMap;
+        int maxDepth;
+        int maxSpp;
+        int RRDepth;
+        int texArrayWidth;
+        int texArrayHeight;
+        int denoiserFrameCnt;
         bool enableRR;
         bool enableDenoiser;
-        bool useUniformLight;
         bool enableTonemap;
         bool useAces;
         bool simpleAcesFit;
-        int RRDepth;
-        int denoiserFrameCnt;
-        float envMapIntensity;
-        Vec3 uniformLightCol;
-        int texArrayWidth;
-        int texArrayHeight;
         bool openglNormalMap;
+        bool useEnvMap;
+        bool useUniformLight;
         bool hideEmitters;
-        Vec3 backgroundCol;
         bool enableBackground;
         bool transparentBackground;
         bool independentRenderSize;
-        int maxSpp;
+        float envMapIntensity;
         float envMapRot;
     };
 
@@ -98,13 +98,10 @@ namespace GLSLPT
     class Renderer
     {
     protected:
-        Scene *scene;
+        Scene* scene;
         Quad* quad;
 
-        iVec2 renderSize;
-        iVec2 windowSize;
-        std::string shadersDirectory;
-
+        // Opengl buffer objects and textures for storing scene data on the GPU
         GLuint BVHBuffer;
         GLuint BVHTex;
         GLuint vertexIndicesBuffer;
@@ -120,21 +117,64 @@ namespace GLSLPT
         GLuint envMapTex;
         GLuint envMapCDFTex;
 
-        int numOfLights;
+        // FBOs
+        GLuint pathTraceFBO;
+        GLuint pathTraceFBOLowRes;
+        GLuint accumFBO;
+        GLuint outputFBO;
+
+        // Shaders
+        std::string shadersDirectory;
+        Program* pathTraceShader;
+        Program* pathTraceShaderLowRes;
+        Program* outputShader;
+        Program* tonemapShader;
+
+        // Render textures
+        GLuint pathTraceTextureLowRes;
+        GLuint pathTraceTexture;
+        GLuint accumTexture;
+        GLuint tileOutputTexture[2];
+        GLuint denoisedTexture;
+
+        // Render resolution and window resolution
+        iVec2 renderSize;
+        iVec2 windowSize;
+        
+        // Variables to track rendering status
+        iVec2 tile;
+        iVec2 numTiles;
+        Vec2 invNumTiles;
+        int tileWidth;
+        int tileHeight;
+        int currentBuffer;
+        int frameCounter;
+        int sampleCounter;
+        float pixelRatio;
+
+        // Denoiser output
+        Vec3* denoiserInputFramePtr;
+        Vec3* frameOutputPtr;
+        bool denoised;
+
         bool initialized;
 
     public:
-        Renderer(Scene *scene, const std::string& shadersDirectory);
-        virtual ~Renderer();
+        Renderer(Scene* scene, const std::string& shadersDirectory);
+        ~Renderer();
 
-        virtual void Init();
-        virtual void Finish();
+        void ResizeRenderer();
+        void ReloadShaders();
+        void Render();
+        void Present();
+        void Update(float secondsElapsed);
+        float GetProgress();
+        int GetSampleCount();
+        void GetOutputBuffer(unsigned char**, int& w, int& h);
 
-        virtual void Render() = 0;
-        virtual void Present() const = 0;
-        virtual void Update(float secondsElapsed);
-        virtual float GetProgress() const = 0;
-        virtual int GetSampleCount() const = 0;
-        virtual void GetOutputBuffer(unsigned char**, int &w, int &h) = 0;
+    private:
+        void InitGPUDataBuffers();
+        void InitFBOs();
+        void InitShaders();
     };
 }

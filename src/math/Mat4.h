@@ -101,20 +101,20 @@ namespace GLSLPT
     {
         Mat4 out;
 
-        const float x2 = x + x;  
-        const float y2 = y + y;  
+        const float x2 = x + x;
+        const float y2 = y + y;
         const float z2 = z + z;
 
-        const float xx = x * x2; 
-        const float xy = x * y2; 
+        const float xx = x * x2;
+        const float xy = x * y2;
         const float xz = x * z2;
 
-        const float yy = y * y2; 
-        const float yz = y * z2; 
+        const float yy = y * y2;
+        const float yz = y * z2;
         const float zz = z * z2;
 
-        const float wx = w * x2; 
-        const float wy = w * y2; 
+        const float wx = w * x2;
+        const float wy = w * y2;
         const float wz = w * z2;
 
         out.data[0][0] = 1.0f - (yy + zz);

@@ -34,6 +34,7 @@ namespace GLSLPT
         return 0.212671f * r + 0.715160f * g + 0.072169f * b;
     }
 
+    // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources#InfiniteAreaLights
     void EnvironmentMap::BuildCDF()
     {
         // Gather weights for CDF
@@ -44,10 +45,6 @@ namespace GLSLPT
             {
                 int imgIdx = v * width * 3 + u * 3;
                 weights[u + v * width] = Luminance(img[imgIdx + 0], img[imgIdx + 1], img[imgIdx + 2]);
-                // weights[u + v * width] *= sinTheta; 
-                // Commenting out since it produces slightly brighter images compared to Mitsuba. Not sure why.
-                // This will not affect the sampling correctness. See:
-                // https://pbr-book.org/3ed-2018/Light_Transport_I_Surface_Reflection/Sampling_Light_Sources#InfiniteAreaLights
             }
         }
 

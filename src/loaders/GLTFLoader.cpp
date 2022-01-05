@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-// Much of this is from accompanying code for Ray Tracing Gems II, Chapter 14: The Reference Path Tracer
-// and was adapted for this project. See https://github.com/boksajak/referencePT for the original
+ // Much of this is from accompanying code for Ray Tracing Gems II, Chapter 14: The Reference Path Tracer
+ // and was adapted for this project. See https://github.com/boksajak/referencePT for the original
 
 #define TINYGLTF_IMPLEMENTATION
 
@@ -43,7 +43,7 @@ namespace GLSLPT
     // Note: A GLTF mesh can contain multiple primitives and each primitive can potentially have a different material applied.
     // The two level BVH in this repo holds material ids per mesh and not per primitive, so this function loads each primitive from the gltf mesh as a new mesh
     void LoadMeshes(Scene* scene, tinygltf::Model& gltfModel, std::map<int, std::vector<Primitive>>& meshPrimMap)
-    { 
+    {
         for (int gltfMeshIdx = 0; gltfMeshIdx < gltfModel.meshes.size(); gltfMeshIdx++)
         {
             tinygltf::Mesh gltfMesh = gltfModel.meshes[gltfMeshIdx];
@@ -275,7 +275,7 @@ namespace GLSLPT
             {
                 const auto& ext = gltfMaterial.extensions.find("KHR_materials_transmission")->second;
                 if (ext.Has("transmissionFactor"))
-                    material.specTrans =(float)(ext.Get("transmissionFactor").Get<double>());
+                    material.specTrans = (float)(ext.Get("transmissionFactor").Get<double>());
             }
 
             scene->AddMaterial(material);
@@ -289,35 +289,35 @@ namespace GLSLPT
         }
     }
 
-    void TraverseNodes(Scene* scene, tinygltf::Model& gltfModel, int nodeIdx, Mat4 &parentMat, std::map<int, std::vector<Primitive>>& meshPrimMap)
+    void TraverseNodes(Scene* scene, tinygltf::Model& gltfModel, int nodeIdx, Mat4& parentMat, std::map<int, std::vector<Primitive>>& meshPrimMap)
     {
         tinygltf::Node gltfNode = gltfModel.nodes[nodeIdx];
 
         Mat4 localMat;
 
-        if (gltfNode.matrix.size() > 0) 
+        if (gltfNode.matrix.size() > 0)
         {
-            localMat.data[0][0] = gltfNode.matrix[0];  
-            localMat.data[0][1] = gltfNode.matrix[1];  
-            localMat.data[0][2] = gltfNode.matrix[2];  
+            localMat.data[0][0] = gltfNode.matrix[0];
+            localMat.data[0][1] = gltfNode.matrix[1];
+            localMat.data[0][2] = gltfNode.matrix[2];
             localMat.data[0][3] = gltfNode.matrix[3];
 
-            localMat.data[1][0] = gltfNode.matrix[4];  
-            localMat.data[1][1] = gltfNode.matrix[5];  
-            localMat.data[1][2] = gltfNode.matrix[6];  
+            localMat.data[1][0] = gltfNode.matrix[4];
+            localMat.data[1][1] = gltfNode.matrix[5];
+            localMat.data[1][2] = gltfNode.matrix[6];
             localMat.data[1][3] = gltfNode.matrix[7];
 
-            localMat.data[2][0] = gltfNode.matrix[8];  
-            localMat.data[2][1] = gltfNode.matrix[9];  
-            localMat.data[2][2] = gltfNode.matrix[10]; 
+            localMat.data[2][0] = gltfNode.matrix[8];
+            localMat.data[2][1] = gltfNode.matrix[9];
+            localMat.data[2][2] = gltfNode.matrix[10];
             localMat.data[2][3] = gltfNode.matrix[11];
 
-            localMat.data[3][0] = gltfNode.matrix[12]; 
-            localMat.data[3][1] = gltfNode.matrix[13]; 
-            localMat.data[3][2] = gltfNode.matrix[14]; 
+            localMat.data[3][0] = gltfNode.matrix[12];
+            localMat.data[3][1] = gltfNode.matrix[13];
+            localMat.data[3][2] = gltfNode.matrix[14];
             localMat.data[3][3] = gltfNode.matrix[15];
         }
-        else 
+        else
         {
             Mat4 translate, rot, scale;
 
@@ -344,7 +344,7 @@ namespace GLSLPT
         }
 
         Mat4 xform = localMat * parentMat;
-        
+
         // When at a leaf node, add an instance to the scene (if a mesh exists for it)
         if (gltfNode.children.size() == 0 && gltfNode.mesh != -1)
         {
@@ -358,7 +358,7 @@ namespace GLSLPT
                 if (strcmp(name.c_str(), "") == 0)
                     name = "Mesh " + std::to_string(gltfNode.mesh) + " Prim" + std::to_string(prims[i].primitiveId);
 
-                MeshInstance instance(name, prims[i].primitiveId, xform, prims[i].materialId);
+                MeshInstance instance(name, prims[i].primitiveId, xform, prims[i].materialId < 0 ? 0 : prims[i].materialId);
                 scene->AddMeshInstance(instance);
             }
         }
@@ -379,7 +379,7 @@ namespace GLSLPT
         }
     }
 
-    bool LoadGLTF(const std::string &filename, Scene *scene, RenderOptions& renderOptions, Mat4 xform, bool binary)
+    bool LoadGLTF(const std::string& filename, Scene* scene, RenderOptions& renderOptions, Mat4 xform, bool binary)
     {
         tinygltf::Model gltfModel;
         tinygltf::TinyGLTF loader;

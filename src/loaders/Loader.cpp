@@ -20,8 +20,8 @@ freely, subject to the following restrictions:
 
 */
 
-/* 
-    This is a modified version of the original code 
+/*
+    This is a modified version of the original code
     Link to original code: https://github.com/mmacklin/tinsel
 */
 
@@ -33,7 +33,7 @@ namespace GLSLPT
 {
     static const int kMaxLineLength = 2048;
 
-    bool LoadSceneFromFile(const std::string &filename, Scene *scene, RenderOptions& renderOptions)
+    bool LoadSceneFromFile(const std::string& filename, Scene* scene, RenderOptions& renderOptions)
     {
         FILE* file;
         file = fopen(filename.c_str(), "r");
@@ -119,11 +119,11 @@ namespace GLSLPT
                 // Albedo Texture
                 if (strcmp(albedoTexName, "None") != 0)
                     material.baseColorTexId = scene->AddTexture(path + albedoTexName);
-             
+
                 // MetallicRoughness Texture
                 if (strcmp(metallicRoughnessTexName, "None") != 0)
                     material.metallicRoughnessTexID = scene->AddTexture(path + metallicRoughnessTexName);
-    
+
                 // Normal Map Texture
                 if (strcmp(normalTexName, "None") != 0)
                     material.normalmapTexID = scene->AddTexture(path + normalTexName);
@@ -291,7 +291,7 @@ namespace GLSLPT
                 }
                 else
                     renderOptions.useEnvMap = false;
-                    
+
                 if (strcmp(useAces, "False") == 0)
                     renderOptions.useAces = false;
                 else if (strcmp(useAces, "True") == 0)
@@ -388,7 +388,7 @@ namespace GLSLPT
 
                     sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
                     sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
-                    if(sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w) != 0)
+                    if (sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w) != 0)
                         rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
                 }
 
@@ -408,7 +408,7 @@ namespace GLSLPT
                             std::size_t pos = filename.find_last_of("/\\");
                             instanceName = filename.substr(pos + 1);
                         }
-                        
+
                         Mat4 transformMat;
 
                         if (matrixProvided)

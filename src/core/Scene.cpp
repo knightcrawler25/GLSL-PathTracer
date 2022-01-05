@@ -33,7 +33,7 @@
 namespace GLSLPT
 {
     Scene::~Scene()
-    { 
+    {
         for (int i = 0; i < meshes.size(); i++)
             delete meshes[i];
         meshes.clear();
@@ -42,13 +42,13 @@ namespace GLSLPT
             delete textures[i];
         textures.clear();
 
-        if(camera)
+        if (camera)
             delete camera;
 
-        if(sceneBvh)
+        if (sceneBvh)
             delete sceneBvh;
 
-        if(envMap)
+        if (envMap)
             delete envMap;
     };
 
@@ -123,16 +123,18 @@ namespace GLSLPT
             printf("Unable to load HDR\n");
             delete envMap;
         }
+        envMapModified = true;
+        dirty = true;
     }
 
-    int Scene::AddMeshInstance(const MeshInstance &meshInstance)
+    int Scene::AddMeshInstance(const MeshInstance& meshInstance)
     {
         int id = meshInstances.size();
         meshInstances.push_back(meshInstance);
         return id;
     }
 
-    int Scene::AddLight(const Light &light)
+    int Scene::AddLight(const Light& light)
     {
         int id = lights.size();
         lights.push_back(light);
@@ -183,14 +185,14 @@ namespace GLSLPT
     void Scene::createBLAS()
     {
         // Loop through all meshes and build BVHs
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < meshes.size(); i++)
         {
             printf("Building BVH for %s\n", meshes[i]->name.c_str());
             meshes[i]->BuildBVH();
         }
     }
-    
+
     void Scene::RebuildInstances()
     {
         delete sceneBvh;
@@ -227,7 +229,7 @@ namespace GLSLPT
             // Copy indices from BVH and not from Mesh. 
             // Required if splitBVH is used as a triangle can be shared by leaf nodes
             int numIndices = meshes[i]->bvh->GetNumIndices();
-            const int * triIndices = meshes[i]->bvh->GetIndices();
+            const int* triIndices = meshes[i]->bvh->GetIndices();
 
             for (int j = 0; j < numIndices; j++)
             {
@@ -252,7 +254,7 @@ namespace GLSLPT
             transforms[i] = meshInstances[i].transform;
 
         // Copy textures
-        if(!textures.empty())
+        if (!textures.empty())
             printf("Copying and resizing textures\n");
         for (int i = 0; i < textures.size(); i++)
         {

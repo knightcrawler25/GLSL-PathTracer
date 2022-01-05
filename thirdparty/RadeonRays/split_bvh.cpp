@@ -354,7 +354,7 @@ namespace RadeonRays
         auto invarea = 1.f / req.bounds.surface_area();
 
         // If there are too few primitives don't split them
-        if (Vec3::Dot(extents,extents) == 0.f)
+        if (Vec3::Dot(extents, extents) == 0.f)
         {
             return split;
         }
@@ -456,7 +456,7 @@ namespace RadeonRays
                 rightcount -= bins[axis][i - 1].exit;
                 // Calc SAH
                 float sah = m_traversal_cost + (leftbox.surface_area() *
-                    +rightbounds[i - 1].surface_area() * rightcount)  * invarea;
+                    +rightbounds[i - 1].surface_area() * rightcount) * invarea;
 
                 // Update SAH if it is needed
                 if (sah < split.sah)

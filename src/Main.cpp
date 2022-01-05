@@ -37,7 +37,7 @@
 #include "Scene.h"
 #include "Loader.h"
 #include "GLTFLoader.h"
-#include "TiledRenderer.h"
+#include "Renderer.h"
 #include "boyTestScene.h"
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
@@ -157,8 +157,7 @@ void LoadScene(std::string sceneName)
 bool InitRenderer()
 {
     delete renderer;
-    renderer = new TiledRenderer(scene, shadersDir);
-    renderer->Init();
+    renderer = new Renderer(scene, shadersDir);
     return true;
 }
 
@@ -290,7 +289,7 @@ void MainLoop(void* arg)
         }
         if (event.type == SDL_WINDOWEVENT)
         {
-            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
                 renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
                 
@@ -298,7 +297,7 @@ void MainLoop(void* arg)
                     renderOptions.renderResolution = renderOptions.windowResolution;
 
                 scene->renderOptions = renderOptions;
-                InitRenderer();
+                renderer->ResizeRenderer();
             }
 
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
@@ -350,7 +349,6 @@ void MainLoop(void* arg)
         if (ImGui::Combo("EnvMaps", &envMapIdx, envMapsList.data(), envMapsList.size()))
         {
             scene->AddEnvMap(envMaps[envMapIdx]);
-            InitRenderer();
         }
 
         bool optionsChanged = false;
@@ -359,23 +357,23 @@ void MainLoop(void* arg)
 
         if (ImGui::CollapsingHeader("Render Settings"))
         {
-            bool requiresReload = false;
+            bool reloadShaders = false;
             Vec3* uniformLightCol = &renderOptions.uniformLightCol;
             Vec3* backgroundCol = &renderOptions.backgroundCol;
 
             optionsChanged |= ImGui::SliderInt("Max Spp", &renderOptions.maxSpp, -1, 256);
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
+            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Intensity", &renderOptions.envMapIntensity, 0.1f, 10.0f);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Rotation", &renderOptions.envMapRot, 0.0f, 360.0f);
-            requiresReload |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
-            requiresReload |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
+            reloadShaders |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
+            reloadShaders |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
+            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
             optionsChanged |= ImGui::ColorEdit3("Uniform Light Color", (float*)uniformLightCol, 0);
-            requiresReload |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
-            requiresReload |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
+            reloadShaders |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
+            reloadShaders |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
             optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)backgroundCol, 0);
-            requiresReload |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
+            reloadShaders |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
             ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);
@@ -387,10 +385,11 @@ void MainLoop(void* arg)
                     ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
             }
 
-            if (requiresReload)
+            if (reloadShaders)
             {
                 scene->renderOptions = renderOptions;
-                InitRenderer();
+                scene->dirty = true;
+                renderer->ReloadShaders();
             }
 
             scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
@@ -411,8 +410,6 @@ void MainLoop(void* arg)
             optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
             ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
         }
-
-        scene->dirty = false;
 
         if (optionsChanged)
         {

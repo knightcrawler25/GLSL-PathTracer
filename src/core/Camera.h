@@ -52,7 +52,7 @@ namespace GLSLPT
         float aperture;
         float fov;
         bool isMoving;
-        
+
     private:
         void UpdateCamera();
 

@@ -30,18 +30,18 @@
 
 namespace GLSLPT
 {
-    float sphericalTheta(const Vec3& v) 
+    float sphericalTheta(const Vec3& v)
     {
         return acosf(Math::Clamp(v.y, -1.f, 1.f));
     }
 
-    float sphericalPhi(const Vec3& v) 
+    float sphericalPhi(const Vec3& v)
     {
         float p = atan2f(v.z, v.x);
         return (p < 0.f) ? p + 2.f * PI : p;
     }
 
-    bool Mesh::LoadFromFile(const std::string &filename)
+    bool Mesh::LoadFromFile(const std::string& filename)
     {
         name = filename;
         tinyobj::attrib_t attrib;
@@ -57,7 +57,7 @@ namespace GLSLPT
         }
 
         // Loop over shapes
-        for (size_t s = 0; s < shapes.size(); s++) 
+        for (size_t s = 0; s < shapes.size(); s++)
         {
             // Loop over faces(polygon)
             size_t index_offset = 0;
@@ -77,7 +77,7 @@ namespace GLSLPT
                     tinyobj::real_t nz = attrib.normals[3 * idx.normal_index + 2];
 
                     tinyobj::real_t tx, ty;
-                    
+
                     if (!attrib.texcoords.empty())
                     {
                         tx = attrib.texcoords[2 * idx.texcoord_index + 0];
@@ -96,7 +96,7 @@ namespace GLSLPT
                     verticesUVX.push_back(Vec4(vx, vy, vz, tx));
                     normalsUVY.push_back(Vec4(nx, ny, nz, ty));
                 }
-    
+
                 index_offset += 3;
             }
         }
@@ -106,7 +106,7 @@ namespace GLSLPT
         for (int i = 0; i < verticesUVX.size(); i++)
             center = center + Vec3(verticesUVX[i]);
         center = center * (1.0 / verticesUVX.size());
-            
+
         for (int i = 0; i < verticesUVX.size(); i++)
         {
             Vec3 diff = Vec3(verticesUVX[i]) - center;
@@ -123,7 +123,7 @@ namespace GLSLPT
         const int numTris = verticesUVX.size() / 3;
         std::vector<RadeonRays::bbox> bounds(numTris);
 
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < numTris; ++i)
         {
             const Vec3 v1 = Vec3(verticesUVX[i * 3 + 0]);
