@@ -340,23 +340,12 @@ vec4 PathTrace(Ray r)
     vec3 throughput = vec3(1.0);
     State state;
 
-    for (int depth = 0; depth < 2; depth++)
-    {
-        bool hit = ClosestHit(r, state);
+    bool hit = ClosestHit(r, state);
 
-        if (!hit)
-        {
-            radiance += vec3(1.0) * throughput;
-            return vec4(radiance, 1.0);
-        }
-
-        throughput *= vec3(0.8);
-
-        r.direction = reflect(r.direction, state.ffnormal);
-        r.origin = state.fhp + r.direction * EPS;
-    }
-
-    return vec4(radiance, 1.0);
+    if (!hit)
+        return vec4(1.0);
+    else
+        return vec4(state.ffnormal, 1.0);
 }
 
 void main(void)
