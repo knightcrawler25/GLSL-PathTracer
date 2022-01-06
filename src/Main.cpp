@@ -31,7 +31,6 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
-#include "ImGuizmo.h"
 #include "tinydir.h"
 
 #include "Scene.h"
@@ -54,19 +53,15 @@ Scene* scene = nullptr;
 Renderer* renderer = nullptr;
 
 std::vector<string> sceneFiles;
-std::vector<string> envMaps;
 
 float mouseSensitivity = 0.01f;
 bool keyPressed = false;
 int sampleSceneIdx = 0;
-int selectedInstance = 0;
 double lastTime = SDL_GetTicks();
-int envMapIdx = 0;
 bool done = false;
 
 std::string shadersDir = "../src/shaders/";
 std::string assetsDir = "../assets/";
-std::string envMapDir = "../assets/HDR/";
 
 RenderOptions renderOptions;
 
@@ -97,27 +92,6 @@ void GetSceneFiles()
     tinydir_close(&dir);
 }
 
-void GetEnvMaps()
-{
-    tinydir_dir dir;
-    int i;
-    tinydir_open_sorted(&dir, envMapDir.c_str());
-
-    for (i = 0; i < dir.n_files; i++)
-    {
-        tinydir_file file;
-        tinydir_readfile_n(&dir, &file, i);
-
-        std::string ext = std::string(file.extension);
-        if (ext == "hdr")
-        {
-            envMaps.push_back(envMapDir + std::string(file.name));
-        }
-    }
-
-    tinydir_close(&dir);
-}
-
 void LoadScene(std::string sceneName)
 {
     delete scene;
@@ -139,18 +113,6 @@ void LoadScene(std::string sceneName)
         printf("Unable to load scene\n");
         exit(0);
     }
-
-    //loadCornellTestScene(scene, renderOptions);
-    selectedInstance = 0;
-
-    // Add a default HDR if there are no lights in the scene
-    if (!scene->envMap && !envMaps.empty())
-    {
-        scene->AddEnvMap(envMaps[envMapIdx]);
-        renderOptions.useEnvMap = scene->lights.empty() ? true : false;
-        renderOptions.envMapIntensity = 1.5f;
-    }
-
     scene->renderOptions = renderOptions;
 }
 
@@ -159,17 +121,6 @@ bool InitRenderer()
     delete renderer;
     renderer = new Renderer(scene, shadersDir);
     return true;
-}
-
-void SaveFrame(const std::string filename)
-{
-    unsigned char* data = nullptr;
-    int w, h;
-    renderer->GetOutputBuffer(&data, w, h);
-    stbi_flip_vertically_on_write(true);
-    stbi_write_png(filename.c_str(), w, h, 4, data, w * 4);
-    printf("Frame saved: %s\n", filename.c_str());
-    delete[] data;
 }
 
 void Render()
@@ -186,7 +137,7 @@ void Update(float secondsElapsed)
 {
     keyPressed = false;
 
-    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver())
+    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && ImGui::IsAnyMouseDown())
     {
         if (ImGui::IsMouseDown(0))
         {
@@ -212,69 +163,6 @@ void Update(float secondsElapsed)
     renderer->Update(secondsElapsed);
 }
 
-void EditTransform(const float* view, const float* projection, float* matrix)
-{
-    static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
-    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
-
-    if (ImGui::IsKeyPressed(90))
-    {
-        mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-    }
-
-    if (ImGui::IsKeyPressed(69))
-    {
-        mCurrentGizmoOperation = ImGuizmo::ROTATE;
-    }
-
-    if (ImGui::IsKeyPressed(82))
-    {
-        mCurrentGizmoOperation = ImGuizmo::SCALE;
-    }
-
-    if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
-    {
-        mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-    }
-
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Rotate", mCurrentGizmoOperation == ImGuizmo::ROTATE))
-    {
-        mCurrentGizmoOperation = ImGuizmo::ROTATE;
-    }
-
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Scale", mCurrentGizmoOperation == ImGuizmo::SCALE))
-    {
-        mCurrentGizmoOperation = ImGuizmo::SCALE;
-    }
-
-    float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-    ImGuizmo::DecomposeMatrixToComponents(matrix, matrixTranslation, matrixRotation, matrixScale);
-    ImGui::InputFloat3("Tr", matrixTranslation);
-    ImGui::InputFloat3("Rt", matrixRotation);
-    ImGui::InputFloat3("Sc", matrixScale);
-    ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, matrix);
-
-    if (mCurrentGizmoOperation != ImGuizmo::SCALE)
-    {
-        if (ImGui::RadioButton("Local", mCurrentGizmoMode == ImGuizmo::LOCAL))
-        {
-            mCurrentGizmoMode = ImGuizmo::LOCAL;
-        }
-
-        ImGui::SameLine();
-        if (ImGui::RadioButton("World", mCurrentGizmoMode == ImGuizmo::WORLD))
-        {
-            mCurrentGizmoMode = ImGuizmo::WORLD;
-        }
-    }
-
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-    ImGuizmo::Manipulate(view, projection, mCurrentGizmoOperation, mCurrentGizmoMode, matrix, NULL, NULL);
-}
-
 void MainLoop(void* arg)
 {
     LoopData& loopdata = *(LoopData*)arg;
@@ -284,49 +172,14 @@ void MainLoop(void* arg)
     {
         ImGui_ImplSDL2_ProcessEvent(&event);
         if (event.type == SDL_QUIT)
-        {
             done = true;
-        }
-        if (event.type == SDL_WINDOWEVENT)
-        {
-            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
-            {
-                renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
-                
-                if (!renderOptions.independentRenderSize)
-                    renderOptions.renderResolution = renderOptions.windowResolution;
-
-                scene->renderOptions = renderOptions;
-                renderer->ResizeRenderer();
-            }
-
-            if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
-            {
-                done = true;
-            }
-        }
     }
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(loopdata.mWindow);
     ImGui::NewFrame();
-    ImGuizmo::SetOrthographic(false);
-
-    ImGuizmo::BeginFrame();
     {
         ImGui::Begin("Settings");
-
-        ImGui::Text("Samples: %d ", renderer->GetSampleCount());
-
-        ImGui::BulletText("LMB + drag to rotate");
-        ImGui::BulletText("MMB + drag to pan");
-        ImGui::BulletText("RMB + drag to zoom in/out");
-        ImGui::BulletText("CRTL + click on a slider to edit its value");
-
-        if (ImGui::Button("Save Screenshot"))
-        {
-            SaveFrame("./img_" + to_string(renderer->GetSampleCount()) + ".png");
-        }
 
         // Scenes
         std::vector<const char*> scenes;
@@ -341,151 +194,7 @@ void MainLoop(void* arg)
             InitRenderer();
         }
 
-        // Environment maps
-        std::vector<const char*> envMapsList;
-        for (int i = 0; i < envMaps.size(); ++i)
-            envMapsList.push_back(envMaps[i].c_str());
-        
-        if (ImGui::Combo("EnvMaps", &envMapIdx, envMapsList.data(), envMapsList.size()))
-        {
-            scene->AddEnvMap(envMaps[envMapIdx]);
-        }
-
-        bool optionsChanged = false;
-
-        optionsChanged |= ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.001f, 1.0f);
-
-        if (ImGui::CollapsingHeader("Render Settings"))
-        {
-            bool reloadShaders = false;
-            Vec3* uniformLightCol = &renderOptions.uniformLightCol;
-            Vec3* backgroundCol = &renderOptions.backgroundCol;
-
-            optionsChanged |= ImGui::SliderInt("Max Spp", &renderOptions.maxSpp, -1, 256);
-            optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
-            optionsChanged |= ImGui::SliderFloat("Enviornment Map Intensity", &renderOptions.envMapIntensity, 0.1f, 10.0f);
-            optionsChanged |= ImGui::SliderFloat("Enviornment Map Rotation", &renderOptions.envMapRot, 0.0f, 360.0f);
-            reloadShaders |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
-            reloadShaders |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
-            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
-            optionsChanged |= ImGui::ColorEdit3("Uniform Light Color", (float*)uniformLightCol, 0);
-            reloadShaders |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
-            reloadShaders |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
-            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)backgroundCol, 0);
-            reloadShaders |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
-            ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
-            ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
-            ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);
-
-            if (renderOptions.enableTonemap)
-            {
-                ImGui::Checkbox("Use ACES", &renderOptions.useAces);
-                if (renderOptions.useAces)
-                    ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
-            }
-
-            if (reloadShaders)
-            {
-                scene->renderOptions = renderOptions;
-                scene->dirty = true;
-                renderer->ReloadShaders();
-            }
-
-            scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
-            scene->renderOptions.denoiserFrameCnt = renderOptions.denoiserFrameCnt;
-            scene->renderOptions.enableTonemap = renderOptions.enableTonemap;
-            scene->renderOptions.useAces = renderOptions.useAces;
-            scene->renderOptions.simpleAcesFit = renderOptions.simpleAcesFit;
-        }
-
-        if (ImGui::CollapsingHeader("Camera"))
-        {
-            float fov = Math::Degrees(scene->camera->fov);
-            float aperture = scene->camera->aperture * 1000.0f;
-            optionsChanged |= ImGui::SliderFloat("Fov", &fov, 10, 90);
-            scene->camera->SetFov(fov);
-            optionsChanged |= ImGui::SliderFloat("Aperture", &aperture, 0.0f, 10.8f);
-            scene->camera->aperture = aperture / 1000.0f;
-            optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
-            ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
-        }
-
-        if (optionsChanged)
-        {
-            scene->renderOptions = renderOptions;
-            scene->dirty = true;
-        }
-
-        if (ImGui::CollapsingHeader("Objects"))
-        {
-            bool objectPropChanged = false;
-
-            std::vector<std::string> listboxItems;
-            for (int i = 0; i < scene->meshInstances.size(); i++)
-            {
-                listboxItems.push_back(scene->meshInstances[i].name);
-            }
-
-            // Object Selection
-            ImGui::ListBoxHeader("Instances");
-            for (int i = 0; i < scene->meshInstances.size(); i++)
-            {
-                bool is_selected = selectedInstance == i;
-                if (ImGui::Selectable(listboxItems[i].c_str(), is_selected))
-                {
-                    selectedInstance = i;
-                }
-            }
-            ImGui::ListBoxFooter();
-
-            ImGui::Separator();
-            ImGui::Text("Materials");
-
-            // Material Properties
-            Material* mat = &scene->materials[scene->meshInstances[selectedInstance].materialID];
-
-            objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)(&mat->baseColor), 0);
-            objectPropChanged |= ImGui::SliderFloat("Metallic", &mat->metallic, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Roughness", &mat->roughness, 0.001f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("SpecularTint", &mat->specularTint, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Subsurface", &mat->subsurface, 0.0f, 1.0f);
-            //objectPropChanged |= ImGui::SliderFloat("Anisotropic", &mat->anisotropic, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Sheen", &mat->sheen, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("SheenTint", &mat->sheenTint, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Clearcoat", &mat->clearcoat, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("ClearcoatGloss", &mat->clearcoatGloss, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Transmission", &mat->specTrans, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Ior", &mat->ior, 1.001f, 2.0f);
-
-            // Transforms Properties
-            ImGui::Separator();
-            ImGui::Text("Transforms");
-            {
-                float viewMatrix[16];
-                float projMatrix[16];
-
-                auto io = ImGui::GetIO();
-                scene->camera->ComputeViewProjectionMatrix(viewMatrix, projMatrix, io.DisplaySize.x / io.DisplaySize.y);
-                Mat4 xform = scene->meshInstances[selectedInstance].transform;
-
-                EditTransform(viewMatrix, projMatrix, (float*)&xform);
-
-                if (memcmp(&xform, &scene->meshInstances[selectedInstance].transform, sizeof(float) * 16))
-                {
-                    scene->meshInstances[selectedInstance].transform = xform;
-                    objectPropChanged = true;
-                }
-            }
-
-            if (objectPropChanged)
-            {
-                scene->RebuildInstances();
-            }
-        }
         ImGui::End();
-
-        //printf("MaxSpp: %d Current Spp: %d Progress: %.1f%%   \r", scene->renderOptions.maxSpp, renderer->GetSampleCount(), renderer->GetProgress());
     }
 
     double presentTime = SDL_GetTicks();
@@ -531,7 +240,6 @@ int main(int argc, char** argv)
     else
     {
         GetSceneFiles();
-        GetEnvMaps();
         LoadScene(sceneFiles[sampleSceneIdx]);
     }
 

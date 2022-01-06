@@ -113,68 +113,39 @@ namespace GLSLPT
         GLuint materialsTex;
         GLuint transformsTex;
         GLuint lightsTex;
-        GLuint textureMapsArrayTex;
-        GLuint envMapTex;
-        GLuint envMapCDFTex;
 
         // FBOs
         GLuint pathTraceFBO;
-        GLuint pathTraceFBOLowRes;
         GLuint accumFBO;
         GLuint outputFBO;
 
         // Shaders
         std::string shadersDirectory;
         Program* pathTraceShader;
-        Program* pathTraceShaderLowRes;
         Program* outputShader;
         Program* tonemapShader;
 
         // Render textures
-        GLuint pathTraceTextureLowRes;
         GLuint pathTraceTexture;
         GLuint accumTexture;
-        GLuint tileOutputTexture[2];
-        GLuint denoisedTexture;
 
         // Render resolution and window resolution
         iVec2 renderSize;
         iVec2 windowSize;
         
         // Variables to track rendering status
-        iVec2 tile;
-        iVec2 numTiles;
-        Vec2 invNumTiles;
-        int tileWidth;
-        int tileHeight;
-        int currentBuffer;
-        int frameCounter;
         int sampleCounter;
         float pixelRatio;
-
-        // Denoiser output
-        Vec3* denoiserInputFramePtr;
-        Vec3* frameOutputPtr;
-        bool denoised;
-
-        bool initialized;
 
     public:
         Renderer(Scene* scene, const std::string& shadersDirectory);
         ~Renderer();
 
-        void ResizeRenderer();
-        void ReloadShaders();
         void Render();
         void Present();
         void Update(float secondsElapsed);
-        float GetProgress();
-        int GetSampleCount();
-        void GetOutputBuffer(unsigned char**, int& w, int& h);
 
     private:
-        void InitGPUDataBuffers();
-        void InitFBOs();
-        void InitShaders();
+        void Init();
     };
 }
