@@ -25,6 +25,7 @@
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
+#include <string>
 #include "EnvironmentMap.h"
 
 namespace GLSLPT

@@ -480,7 +480,7 @@ namespace GLSLPT
 
                     if (!success)
                     {
-                        printf("Unable to load gltf %s\n", filename);
+                        printf("Unable to load gltf %s\n", filename.c_str());
                         exit(0);
                     }
                 }
