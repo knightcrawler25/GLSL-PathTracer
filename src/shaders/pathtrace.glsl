@@ -345,7 +345,7 @@ vec4 PathTrace(Ray r)
     if (!hit)
         return vec4(0.5);
     else
-        return vec4(log(state.hitDist));
+        return vec4(state.normal, 1.0);
 }
 
 void main(void)
