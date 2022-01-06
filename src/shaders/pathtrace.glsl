@@ -352,7 +352,7 @@ vec4 PathTrace(Ray r)
             return vec4(radiance, 1.0);
         }
 
-        state.mat.baseColor = texelFetch(materialsTex, ivec2(state.matID * 8, 0), 0).rgb;
+        state.mat.baseColor = vec3(0.8);
 
         bsdfSampleRec.f = LambertSample(state, -r.direction, state.ffnormal, bsdfSampleRec.L, bsdfSampleRec.pdf);
         throughput *= bsdfSampleRec.f / bsdfSampleRec.pdf;
