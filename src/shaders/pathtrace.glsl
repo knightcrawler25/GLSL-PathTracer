@@ -343,9 +343,9 @@ vec4 PathTrace(Ray r)
     bool hit = ClosestHit(r, state);
 
     if (!hit)
-        return vec4(1.0);
+        return vec4(0.5);
     else
-        return vec4(state.ffnormal, 1.0);
+        return vec4(log(state.hitDist));
 }
 
 void main(void)
