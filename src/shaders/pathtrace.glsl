@@ -339,25 +339,20 @@ vec4 PathTrace(Ray r)
     vec3 radiance = vec3(0.0);
     vec3 throughput = vec3(1.0);
     State state;
-    BsdfSampleRec bsdfSampleRec;
 
     for (int depth = 0; depth < 2; depth++)
     {
-        state.depth = depth;
         bool hit = ClosestHit(r, state);
 
         if (!hit)
         {
-            radiance += vec3(0.1) * throughput;
+            radiance += vec3(1.0) * throughput;
             return vec4(radiance, 1.0);
         }
 
-        state.mat.baseColor = vec3(0.8);
+        throughput *= vec3(0.8);
 
-        bsdfSampleRec.f = LambertSample(state, -r.direction, state.ffnormal, bsdfSampleRec.L, bsdfSampleRec.pdf);
-        throughput *= bsdfSampleRec.f / bsdfSampleRec.pdf;
-
-        r.direction = bsdfSampleRec.L;
+        r.direction = reflect(r.direction, state.ffnormal);
         r.origin = state.fhp + r.direction * EPS;
     }
 
