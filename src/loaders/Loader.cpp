@@ -281,7 +281,7 @@ namespace GLSLPT
                     sscanf(line, " transparentBackground %s", transparentBackground);
                     sscanf(line, " backgroundColor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
                     sscanf(line, " independentRenderSize %s", independentRenderSize);
-                    sscanf(line, " envMapRotation %f", &renderOptions.envMapRot);
+                    sscanf(line, " hdrRot %f", &renderOptions.envMapRot); // TODO: Rename option in all scene files
                 }
 
                 if (strcmp(envMap, "None") != 0)

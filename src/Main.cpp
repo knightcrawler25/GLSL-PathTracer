@@ -521,12 +521,8 @@ int main(int argc, char** argv)
     if (!sceneFile.empty())
     {
         scene = new Scene();
-
-        if (!LoadSceneFromFile(sceneFile, scene, renderOptions))
-            exit(0);
-
-        scene->renderOptions = renderOptions;
-        std::cout << "Scene Loaded\n\n";
+        GetEnvMaps();
+        LoadScene(sceneFile);
     }
     else
     {

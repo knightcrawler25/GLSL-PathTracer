@@ -479,8 +479,13 @@ namespace GLSLPT
         GLuint shaderObject;
         pathTraceShader->Use();
         shaderObject = pathTraceShader->getObject();
-        glUniform2f(glGetUniformLocation(shaderObject, "envMapRes"), scene->envMap == nullptr ? 0, 0 : (float)scene->envMap->width, (float)scene->envMap->height);
-        glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap == nullptr ? 0 : scene->envMap->totalSum);
+
+        if (scene->envMap)
+        {
+            glUniform2f(glGetUniformLocation(shaderObject, "envMapRes"), (float)scene->envMap->width, (float)scene->envMap->height);
+            glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap->totalSum);
+        }
+        
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "resolution"), float(renderSize.x), float(renderSize.y));
         glUniform2f(glGetUniformLocation(shaderObject, "invNumTiles"), invNumTiles.x, invNumTiles.y);
@@ -500,8 +505,12 @@ namespace GLSLPT
 
         pathTraceShaderLowRes->Use();
         shaderObject = pathTraceShaderLowRes->getObject();
-        glUniform2f(glGetUniformLocation(shaderObject, "envMapRes"), scene->envMap == nullptr ? 0, 0 : (float)scene->envMap->width, (float)scene->envMap->height);
-        glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap == nullptr ? 0 : scene->envMap->totalSum);
+
+        if (scene->envMap)
+        {
+            glUniform2f(glGetUniformLocation(shaderObject, "envMapRes"), (float)scene->envMap->width, (float)scene->envMap->height);
+            glUniform1f(glGetUniformLocation(shaderObject, "envMapTotalSum"), scene->envMap->totalSum);
+        }
         glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
         glUniform2f(glGetUniformLocation(shaderObject, "resolution"), float(renderSize.x), float(renderSize.y));
         glUniform1i(glGetUniformLocation(shaderObject, "numOfLights"), scene->lights.size());

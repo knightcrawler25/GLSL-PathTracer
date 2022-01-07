@@ -114,7 +114,9 @@ namespace GLSLPT
 
     void Scene::AddEnvMap(const std::string& filename)
     {
-        delete envMap;
+        if (envMap)
+            delete envMap;
+
         envMap = new EnvironmentMap;
         if (envMap->LoadMap(filename.c_str()))
             printf("HDR %s loaded\n", filename.c_str());
@@ -122,6 +124,7 @@ namespace GLSLPT
         {
             printf("Unable to load HDR\n");
             delete envMap;
+            envMap = nullptr;
         }
         envMapModified = true;
         dirty = true;
