@@ -25,6 +25,7 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 
 #include <iostream>
+#include <vector>
 #include "stb_image_resize.h"
 #include "stb_image.h"
 #include "Scene.h"
@@ -188,7 +189,7 @@ namespace GLSLPT
     void Scene::createBLAS()
     {
         // Loop through all meshes and build BVHs
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < meshes.size(); i++)
         {
             printf("Building BVH for %s\n", meshes[i]->name.c_str());
@@ -259,23 +260,28 @@ namespace GLSLPT
         // Copy textures
         if (!textures.empty())
             printf("Copying and resizing textures\n");
+
+        int reqWidth = renderOptions.texArrayWidth;
+        int reqHeight = renderOptions.texArrayHeight;
+        int texBytes = reqWidth * reqHeight * 4 ;
+        textureMapsArray.resize(texBytes * textures.size());
+        
+        #pragma omp parallel for
         for (int i = 0; i < textures.size(); i++)
         {
             int texWidth = textures[i]->width;
             int texHeight = textures[i]->height;
-            int reqWidth = renderOptions.texArrayWidth;
-            int reqHeight = renderOptions.texArrayHeight;
-
+            
             // Resize textures to fit 2D texture array
             if (texWidth != reqWidth || texHeight != reqHeight)
             {
-                unsigned char* resizedTex = new unsigned char[reqWidth * reqHeight * 4];
+                unsigned char* resizedTex = new unsigned char[texBytes];
                 stbir_resize_uint8(&textures[i]->texData[0], texWidth, texHeight, 0, resizedTex, reqWidth, reqHeight, 0, 4);
-                textureMapsArray.insert(textureMapsArray.end(), resizedTex, resizedTex + (reqWidth * reqHeight * 4));
+                std::copy(resizedTex, resizedTex + texBytes, &textureMapsArray[i * texBytes]);
                 delete[] resizedTex;
             }
             else
-                textureMapsArray.insert(textureMapsArray.end(), textures[i]->texData.begin(), textures[i]->texData.end());
+                std::copy(textures[i]->texData.begin(), textures[i]->texData.end(), &textureMapsArray[i * texBytes]);
         }
 
         // Add a default camera

@@ -47,8 +47,8 @@ namespace GLSLPT
             maxDepth = 2;
             maxSpp = -1;
             RRDepth = 2;
-            texArrayWidth = 4096;
-            texArrayHeight = 4096;
+            texArrayWidth = 2048;
+            texArrayHeight = 2048;
             denoiserFrameCnt = 20;
             enableRR = true;
             enableDenoiser = false;
