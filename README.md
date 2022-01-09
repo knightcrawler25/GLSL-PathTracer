@@ -44,7 +44,7 @@ Gallery
 --------
 ![Mustang](./screenshots/Mustang.jpg)
 --------
-![Mustang_Red](./screenshots/Mustang_red.jpg)
+![Mustang_Red](./screenshots/Mustang_Red.jpg)
 --------
 ![Hyperion](./screenshots/hyperion.jpg)
 --------
