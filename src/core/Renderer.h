@@ -61,8 +61,10 @@ namespace GLSLPT
             enableBackground = false;
             transparentBackground = false;
             independentRenderSize = false;
+            enableRoughnessMollification = false;
             envMapIntensity = 1.0f;
             envMapRot = 0.0f;
+            roughnessMollificationAmt = 0.0f;
         }
 
         iVec2 renderResolution;
@@ -89,8 +91,10 @@ namespace GLSLPT
         bool enableBackground;
         bool transparentBackground;
         bool independentRenderSize;
+        bool enableRoughnessMollification;
         float envMapIntensity;
         float envMapRot;
+        float roughnessMollificationAmt;
     };
 
     class Scene;
@@ -140,7 +144,7 @@ namespace GLSLPT
         // Render resolution and window resolution
         iVec2 renderSize;
         iVec2 windowSize;
-        
+
         // Variables to track rendering status
         iVec2 tile;
         iVec2 numTiles;

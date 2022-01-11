@@ -443,6 +443,9 @@ namespace GLSLPT
             }
         }
 
+        if (scene->renderOptions.enableRoughnessMollification)
+            pathtraceDefines += "#define OPT_ROUGHNESS_MOLLIFICATION\n";
+
         if (pathtraceDefines.size() > 0)
         {
             size_t idx = pathTraceShaderSrcObj.src.find("#version");
@@ -764,7 +767,8 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
         glUniform2f(glGetUniformLocation(shaderObject, "tileOffset"), (float)tile.x * invNumTiles.x, (float)tile.y * invNumTiles.y);
         glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
-        glUniform1i(glGetUniformLocation(shaderObject, "frameNum"), frameCounter);
+        glUniform1f(glGetUniformLocation(shaderObject, "roughnessMollificationAmt"), scene->renderOptions.roughnessMollificationAmt);
+        glUniform1i(glGetUniformLocation(shaderObject, "frameNum"), frameCounter);   
         pathTraceShader->StopUsing();
 
         pathTraceShaderLowRes->Use();
@@ -782,6 +786,7 @@ namespace GLSLPT
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->dirty ? 2 : scene->renderOptions.maxDepth);
         glUniform3f(glGetUniformLocation(shaderObject, "camera.position"), scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
         glUniform3f(glGetUniformLocation(shaderObject, "uniformLightCol"), scene->renderOptions.uniformLightCol.x, scene->renderOptions.uniformLightCol.y, scene->renderOptions.uniformLightCol.z);
+        glUniform1f(glGetUniformLocation(shaderObject, "roughnessMollificationAmt"), scene->renderOptions.roughnessMollificationAmt);
         pathTraceShaderLowRes->StopUsing();
 
         tonemapShader->Use();

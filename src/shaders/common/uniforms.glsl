@@ -50,3 +50,4 @@ uniform int numOfLights;
 uniform int maxDepth;
 uniform int topBVHIndex;
 uniform int frameNum;
+uniform float roughnessMollificationAmt;

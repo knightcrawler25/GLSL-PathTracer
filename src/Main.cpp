@@ -348,6 +348,8 @@ void MainLoop(void* arg)
             
             reloadShaders |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
             reloadShaders |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
+            reloadShaders |= ImGui::Checkbox("Enable Roughness Mollification", &renderOptions.enableRoughnessMollification);
+            optionsChanged |= ImGui::SliderFloat("Roughness Mollification Amount", &renderOptions.roughnessMollificationAmt, 0, 1);
         }
 
         if (ImGui::CollapsingHeader("Environment"))

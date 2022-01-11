@@ -42,7 +42,7 @@ void GetMaterials(inout State state, in Ray r)
     mat.emission           = param2.rgb;
                            
     mat.metallic           = param3.x;
-    mat.roughness          = max(param3.y, 0.001);      
+    mat.roughness          = max(param3.y, 0.001);
     mat.subsurface         = param3.z;
     mat.specularTint       = param3.w;
                            
@@ -93,6 +93,11 @@ void GetMaterials(inout State state, in Ray r)
         state.normal = normalize(state.tangent * texNormal.x + state.bitangent * texNormal.y + state.normal * texNormal.z);
         state.ffnormal = dot(origNormal, r.direction) <= 0.0 ? state.normal : -state.normal;
     }
+
+#ifdef OPT_ROUGHNESS_MOLLIFICATION
+    if(state.depth > 0)
+        mat.roughness = max(mix(0.0, state.mat.roughness, roughnessMollificationAmt), mat.roughness);
+#endif
 
     // Emission Map
     if (texIDs.w >= 0)
