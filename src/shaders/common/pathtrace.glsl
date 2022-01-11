@@ -110,9 +110,9 @@ void GetMaterials(inout State state, in Ray r)
 vec3 DirectLight(in Ray r, in State state)
 {
     vec3 Li = vec3(0.0);
-    vec3 surfacePos = state.fhp + state.normal * EPS;
+    vec3 scatterPos = state.fhp + state.normal * EPS;
 
-    BsdfSampleRec bsdfSample;
+    ScatterSampleRec scatterSample;
 
     // Environment Light
 #ifdef OPT_ENVMAP
@@ -123,18 +123,18 @@ vec3 DirectLight(in Ray r, in State state)
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
-        Ray shadowRay = Ray(surfacePos, lightDir);
+        Ray shadowRay = Ray(scatterPos, lightDir);
         bool inShadow = AnyHit(shadowRay, INF - EPS);
 
         if (!inShadow)
         {
-            bsdfSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, bsdfSample.pdf);
+            scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, scatterSample.pdf);
 
-            if (bsdfSample.pdf > 0.0)
+            if (scatterSample.pdf > 0.0)
             {
-                float misWeight = PowerHeuristic(lightPdf, bsdfSample.pdf);
+                float misWeight = PowerHeuristic(lightPdf, scatterSample.pdf);
                 if (misWeight > 0.0)
-                    Li += misWeight * bsdfSample.f * color * envMapIntensity / lightPdf;
+                    Li += misWeight * scatterSample.f * color * envMapIntensity / lightPdf;
             }
         }
     }
@@ -161,23 +161,23 @@ vec3 DirectLight(in Ray r, in State state)
         float type    = params.z; // 0->Rect, 1->Sphere, 2->Distant
 
         light = Light(position, emission, u, v, radius, area, type);
-        SampleOneLight(light, surfacePos, lightSample);
+        SampleOneLight(light, scatterPos, lightSample);
 
         if (dot(lightSample.direction, lightSample.normal) < 0.0) // Required for quad lights with single sided emission
         {
-            Ray shadowRay = Ray(surfacePos, lightSample.direction);
+            Ray shadowRay = Ray(scatterPos, lightSample.direction);
             bool inShadow = AnyHit(shadowRay, lightSample.dist - EPS);
 
             if (!inShadow)
             {
-                bsdfSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightSample.direction, bsdfSample.pdf);
+                scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightSample.direction, scatterSample.pdf);
 
                 float misWeight = 1.0;
                 if(light.area > 0.0) // No MIS for distant light
-                    misWeight = PowerHeuristic(lightSample.pdf, bsdfSample.pdf);
+                    misWeight = PowerHeuristic(lightSample.pdf, scatterSample.pdf);
 
                 if (misWeight > 0.0)
-                    Li += misWeight * bsdfSample.f * lightSample.emission / lightSample.pdf;
+                    Li += misWeight * scatterSample.f * lightSample.emission / lightSample.pdf;
             }
         }
     }
@@ -192,7 +192,7 @@ vec4 PathTrace(Ray r)
     vec3 throughput = vec3(1.0);
     State state;
     LightSampleRec lightSample;
-    BsdfSampleRec bsdfSample;
+    ScatterSampleRec scatterSample;
     vec3 absorption = vec3(0.0);
     // TODO: alpha from material opacity
     float alpha = 1.0;
@@ -225,7 +225,7 @@ vec4 PathTrace(Ray r)
                 if (depth > 0)
                 {
                     float lightPdf = EnvMapPdf(envMapCol) / sin(theta);
-                    misWeight = PowerHeuristic(bsdfSample.pdf, lightPdf);
+                    misWeight = PowerHeuristic(scatterSample.pdf, lightPdf);
                 }
 #ifdef OPT_HIDE_EMITTERS
                 if (state.depth > 0)
@@ -249,7 +249,7 @@ vec4 PathTrace(Ray r)
 #ifdef OPT_LIGHTS
         if (state.isEmitter)
         {
-            radiance += EmitterSample(r, state, lightSample, bsdfSample) * throughput;
+            radiance += EmitterSample(r, state, lightSample, scatterSample) * throughput;
             break;
         }
 #endif
@@ -276,14 +276,14 @@ vec4 PathTrace(Ray r)
 
         radiance += DirectLight(r, state) * throughput;
 
-        bsdfSample.f = DisneySample(state, -r.direction, state.ffnormal, bsdfSample.L, bsdfSample.pdf);
+        scatterSample.f = DisneySample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
 
         // Set absorption only if the ray is currently inside the object.
-        if (dot(state.ffnormal, bsdfSample.L) < 0.0)
+        if (dot(state.ffnormal, scatterSample.L) < 0.0)
             absorption = -log(state.mat.extinction) / state.mat.atDistance;
 
-        if (bsdfSample.pdf > 0.0)
-            throughput *= bsdfSample.f / bsdfSample.pdf;
+        if (scatterSample.pdf > 0.0)
+            throughput *= scatterSample.f / scatterSample.pdf;
         else
             break;
 
@@ -298,7 +298,7 @@ vec4 PathTrace(Ray r)
         }
 #endif
 
-        r.direction = bsdfSample.L;
+        r.direction = scatterSample.L;
         r.origin = state.fhp + r.direction * EPS;
     }
 
