@@ -361,21 +361,15 @@ namespace GLSLPT
                     sscanf(line, " name %[^\t\n]s", meshName);
 
                     if (sscanf(line, " file %s", file) == 1)
-                    {
                         filename = path + file;
-                    }
 
                     if (sscanf(line, " material %s", matName) == 1)
                     {
                         // look up material in dictionary
                         if (materialMap.find(matName) != materialMap.end())
-                        {
                             material_id = materialMap[matName].id;
-                        }
                         else
-                        {
                             printf("Could not find material %s\n", matName);
-                        }
                     }
 
                     if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
@@ -400,9 +394,7 @@ namespace GLSLPT
                         std::string instanceName;
 
                         if (strcmp(meshName, "None") != 0)
-                        {
                             instanceName = std::string(meshName);
-                        }
                         else
                         {
                             std::size_t pos = filename.find_last_of("/\\");
@@ -441,9 +433,7 @@ namespace GLSLPT
                     char file[2048];
 
                     if (sscanf(line, " file %s", file) == 1)
-                    {
                         filename = path + file;
-                    }
 
                     if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
                         &xform[0][0], &xform[1][0], &xform[2][0], &xform[3][0],

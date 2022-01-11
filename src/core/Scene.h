@@ -95,7 +95,7 @@ namespace GLSLPT
         std::vector<Vec4> normalsUVY; // Normal + texture Coord (v/t)
         std::vector<Mat4> transforms;
 
-        // Instances
+        // Materials
         std::vector<Material> materials;
 
         // Instances
