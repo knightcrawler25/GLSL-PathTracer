@@ -110,7 +110,7 @@ void GetMaterials(inout State state, in Ray r)
 vec3 DirectLight(in Ray r, in State state)
 {
     vec3 Li = vec3(0.0);
-    vec3 scatterPos = state.fhp + state.normal * EPS;
+    vec3 scatterPos = state.fhp + state.ffnormal * EPS;
 
     ScatterSampleRec scatterSample;
 
@@ -197,9 +197,8 @@ vec4 PathTrace(Ray r)
     // TODO: alpha from material opacity
     float alpha = 1.0;
     
-    for (int depth = 0; depth < maxDepth; depth++)
+    for (state.depth = 0;; state.depth++)
     {
-        state.depth = depth;
         bool hit = ClosestHit(r, state, lightSample);
 
         if (!hit)
@@ -222,7 +221,7 @@ vec4 PathTrace(Ray r)
                 vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI) + vec2(envMapRot, 0.0);
                 vec3 envMapCol = texture(envMapTex, uv).xyz;
                 
-                if (depth > 0)
+                if (state.depth > 0)
                 {
                     float lightPdf = EnvMapPdf(envMapCol) / sin(theta);
                     misWeight = PowerHeuristic(scatterSample.pdf, lightPdf);
@@ -240,10 +239,6 @@ vec4 PathTrace(Ray r)
 
         GetMaterials(state, r);
 
-        // Reset absorption when ray is going out of surface
-        if (dot(state.normal, state.ffnormal) > 0.0)
-            absorption = vec3(0.0);
-
         radiance += state.mat.emission * throughput;
 
 #ifdef OPT_LIGHTS
@@ -253,6 +248,9 @@ vec4 PathTrace(Ray r)
             break;
         }
 #endif
+
+        if(state.depth >= maxDepth)
+            break;
 
 #ifdef OPT_ALPHA_TEST
         // Ignore intersection based on alpha test
@@ -265,15 +263,20 @@ vec4 PathTrace(Ray r)
 
         if (ignoreHit)
         {
-            depth--;
+            state.depth--;
             r.origin = state.fhp + r.direction * EPS;
             continue;
         }
 #endif
 
+        // Reset absorption when ray is going out of surface
+        if (dot(state.normal, state.ffnormal) > 0.0)
+            absorption = vec3(0.0);
+
         // Add absoption
         throughput *= exp(-absorption * state.hitDist);
 
+        // Next event estimation
         radiance += DirectLight(r, state) * throughput;
 
         scatterSample.f = DisneySample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
@@ -289,7 +292,7 @@ vec4 PathTrace(Ray r)
 
 #ifdef OPT_RR
         // Russian roulette
-        if (depth >= OPT_RR_DEPTH)
+        if (state.depth >= OPT_RR_DEPTH)
         {
             float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
             if (rand() > q)
