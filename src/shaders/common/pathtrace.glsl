@@ -176,7 +176,7 @@ vec3 DirectLight(in Ray r, in State state)
                 if(light.area > 0.0) // No MIS for distant light
                     misWeight = PowerHeuristic(lightSample.pdf, scatterSample.pdf);
 
-                if (misWeight > 0.0)
+                if (scatterSample.pdf > 0.0)
                     Li += misWeight * scatterSample.f * lightSample.emission / lightSample.pdf;
             }
         }
