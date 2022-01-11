@@ -29,110 +29,110 @@ THE SOFTWARE.
 
 namespace RadeonRays
 {
-	int BvhTranslator::ProcessBLASNodes(const Bvh::Node *node)
-	{
-		RadeonRays::bbox bbox = node->bounds;
+    int BvhTranslator::ProcessBLASNodes(const Bvh::Node* node)
+    {
+        RadeonRays::bbox bbox = node->bounds;
 
-		nodes[curNode].bboxmin = bbox.pmin;
-		nodes[curNode].bboxmax = bbox.pmax;
-		nodes[curNode].LRLeaf.z = 0;
+        nodes[curNode].bboxmin = bbox.pmin;
+        nodes[curNode].bboxmax = bbox.pmax;
+        nodes[curNode].LRLeaf.z = 0;
 
-		int index = curNode;
+        int index = curNode;
 
-		if (node->type == RadeonRays::Bvh::NodeType::kLeaf)
-		{
-			nodes[curNode].LRLeaf.x = curTriIndex + node->startidx;
-			nodes[curNode].LRLeaf.y = node->numprims;
-			nodes[curNode].LRLeaf.z = 1;
-		}
-		else
-		{
-			curNode++;
-			nodes[index].LRLeaf.x = ProcessBLASNodes(node->lc);
-			curNode++;
-			nodes[index].LRLeaf.y = ProcessBLASNodes(node->rc);
-		}
-		return index;
-	}
+        if (node->type == RadeonRays::Bvh::NodeType::kLeaf)
+        {
+            nodes[curNode].LRLeaf.x = curTriIndex + node->startidx;
+            nodes[curNode].LRLeaf.y = node->numprims;
+            nodes[curNode].LRLeaf.z = 1;
+        }
+        else
+        {
+            curNode++;
+            nodes[index].LRLeaf.x = ProcessBLASNodes(node->lc);
+            curNode++;
+            nodes[index].LRLeaf.y = ProcessBLASNodes(node->rc);
+        }
+        return index;
+    }
 
-	int BvhTranslator::ProcessTLASNodes(const Bvh::Node *node)
-	{
-		RadeonRays::bbox bbox = node->bounds;
+    int BvhTranslator::ProcessTLASNodes(const Bvh::Node* node)
+    {
+        RadeonRays::bbox bbox = node->bounds;
 
-		nodes[curNode].bboxmin = bbox.pmin;
-		nodes[curNode].bboxmax = bbox.pmax;
-		nodes[curNode].LRLeaf.z = 0;
+        nodes[curNode].bboxmin = bbox.pmin;
+        nodes[curNode].bboxmax = bbox.pmax;
+        nodes[curNode].LRLeaf.z = 0;
 
-		int index = curNode;
+        int index = curNode;
 
-		if (node->type == RadeonRays::Bvh::NodeType::kLeaf)
-		{
-			int instanceIndex = TLBvh->m_packed_indices[node->startidx];
-			int meshIndex = meshInstances[instanceIndex].meshID;
-			int materialID = meshInstances[instanceIndex].materialID;
+        if (node->type == RadeonRays::Bvh::NodeType::kLeaf)
+        {
+            int instanceIndex = topLevelBvh->m_packed_indices[node->startidx];
+            int meshIndex = meshInstances[instanceIndex].meshID;
+            int materialID = meshInstances[instanceIndex].materialID;
 
-			nodes[curNode].LRLeaf.x = bvhRootStartIndices[meshIndex];
-			nodes[curNode].LRLeaf.y = materialID;
-			nodes[curNode].LRLeaf.z = -instanceIndex - 1;
-		}
-		else
-		{
-			curNode++;
-			nodes[index].LRLeaf.x = ProcessTLASNodes(node->lc);
-			curNode++;
-			nodes[index].LRLeaf.y = ProcessTLASNodes(node->rc);
-		}
-		return index;
-	}
-	
-	void BvhTranslator::ProcessBLAS()
-	{
-		int nodeCnt = 0;
+            nodes[curNode].LRLeaf.x = bvhRootStartIndices[meshIndex];
+            nodes[curNode].LRLeaf.y = materialID;
+            nodes[curNode].LRLeaf.z = -instanceIndex - 1;
+        }
+        else
+        {
+            curNode++;
+            nodes[index].LRLeaf.x = ProcessTLASNodes(node->lc);
+            curNode++;
+            nodes[index].LRLeaf.y = ProcessTLASNodes(node->rc);
+        }
+        return index;
+    }
 
-		for (int i = 0; i < meshes.size(); i++)
-			nodeCnt += meshes[i]->bvh->m_nodecnt;
-		topLevelIndex = nodeCnt;
+    void BvhTranslator::ProcessBLAS()
+    {
+        int nodeCnt = 0;
 
-		// reserve space for top level nodes
-		nodeCnt += 2 * meshInstances.size();
-		nodes.resize(nodeCnt);
+        for (int i = 0; i < meshes.size(); i++)
+            nodeCnt += meshes[i]->bvh->m_nodecnt;
+        topLevelIndex = nodeCnt;
 
-		int bvhRootIndex = 0;
-		curTriIndex = 0;
+        // reserve space for top level nodes
+        nodeCnt += 2 * meshInstances.size();
+        nodes.resize(nodeCnt);
 
-		for (int i = 0; i < meshes.size(); i++)
-		{
-			GLSLPT::Mesh *mesh = meshes[i];
-			curNode = bvhRootIndex;
+        int bvhRootIndex = 0;
+        curTriIndex = 0;
 
-			bvhRootStartIndices.push_back(bvhRootIndex);
-			bvhRootIndex += mesh->bvh->m_nodecnt;
-			
-			ProcessBLASNodes(mesh->bvh->m_root);
-			curTriIndex += mesh->bvh->GetNumIndices();
-		}
-	}
+        for (int i = 0; i < meshes.size(); i++)
+        {
+            GLSLPT::Mesh* mesh = meshes[i];
+            curNode = bvhRootIndex;
 
-	void BvhTranslator::ProcessTLAS()
-	{
-		curNode = topLevelIndex;
-		ProcessTLASNodes(TLBvh->m_root);
-	}
+            bvhRootStartIndices.push_back(bvhRootIndex);
+            bvhRootIndex += mesh->bvh->m_nodecnt;
 
-	void BvhTranslator::UpdateTLAS(const Bvh *topLevelBvh, const std::vector<GLSLPT::MeshInstance> &sceneInstances)
-	{
-		TLBvh = topLevelBvh;
-		meshInstances = sceneInstances;
-		curNode = topLevelIndex;
-		ProcessTLASNodes(TLBvh->m_root);
-	}
+            ProcessBLASNodes(mesh->bvh->m_root);
+            curTriIndex += mesh->bvh->GetNumIndices();
+        }
+    }
 
-	void BvhTranslator::Process(const Bvh *topLevelBvh, const std::vector<GLSLPT::Mesh*> &sceneMeshes,const std::vector<GLSLPT::MeshInstance> &sceneInstances)
-	{
-		TLBvh = topLevelBvh;
-		meshes = sceneMeshes;
-		meshInstances = sceneInstances;
-		ProcessBLAS();
-		ProcessTLAS();
-	}
+    void BvhTranslator::ProcessTLAS()
+    {
+        curNode = topLevelIndex;
+        ProcessTLASNodes(topLevelBvh->m_root);
+    }
+
+    void BvhTranslator::UpdateTLAS(const Bvh* topLevelBvh, const std::vector<GLSLPT::MeshInstance>& sceneInstances)
+    {
+        this->topLevelBvh = topLevelBvh;
+        meshInstances = sceneInstances;
+        curNode = topLevelIndex;
+        ProcessTLASNodes(topLevelBvh->m_root);
+    }
+
+    void BvhTranslator::Process(const Bvh* topLevelBvh, const std::vector<GLSLPT::Mesh*>& sceneMeshes, const std::vector<GLSLPT::MeshInstance>& sceneInstances)
+    {
+        this->topLevelBvh = topLevelBvh;
+        meshes = sceneMeshes;
+        meshInstances = sceneInstances;
+        ProcessBLAS();
+        ProcessTLAS();
+    }
 }

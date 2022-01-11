@@ -110,7 +110,7 @@ struct State
     Material mat;
 };
 
-struct BsdfSampleRec
+struct ScatterSampleRec
 {
     vec3 L;
     vec3 f;

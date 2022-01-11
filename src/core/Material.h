@@ -70,7 +70,7 @@ namespace GLSLPT
             normalmapTexID         = -1.0f;
             emissionmapTexID       = -1.0f;
 
-            opacity     = 0.0f;
+            opacity     = 1.0f;
             alphaMode   = 0.0f;
             alphaCutoff = 0.0f;
             // padding4

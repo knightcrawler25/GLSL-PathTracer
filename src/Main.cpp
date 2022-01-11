@@ -37,7 +37,7 @@
 #include "Scene.h"
 #include "Loader.h"
 #include "GLTFLoader.h"
-#include "TiledRenderer.h"
+#include "Renderer.h"
 #include "boyTestScene.h"
 #include "ajaxTestScene.h"
 #include "cornellTestScene.h"
@@ -157,8 +157,7 @@ void LoadScene(std::string sceneName)
 bool InitRenderer()
 {
     delete renderer;
-    renderer = new TiledRenderer(scene, shadersDir);
-    renderer->Init();
+    renderer = new Renderer(scene, shadersDir);
     return true;
 }
 
@@ -218,21 +217,6 @@ void EditTransform(const float* view, const float* projection, float* matrix)
     static ImGuizmo::OPERATION mCurrentGizmoOperation(ImGuizmo::TRANSLATE);
     static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
 
-    if (ImGui::IsKeyPressed(90))
-    {
-        mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
-    }
-
-    if (ImGui::IsKeyPressed(69))
-    {
-        mCurrentGizmoOperation = ImGuizmo::ROTATE;
-    }
-
-    if (ImGui::IsKeyPressed(82))
-    {
-        mCurrentGizmoOperation = ImGuizmo::SCALE;
-    }
-
     if (ImGui::RadioButton("Translate", mCurrentGizmoOperation == ImGuizmo::TRANSLATE))
     {
         mCurrentGizmoOperation = ImGuizmo::TRANSLATE;
@@ -290,7 +274,7 @@ void MainLoop(void* arg)
         }
         if (event.type == SDL_WINDOWEVENT)
         {
-            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
                 renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
                 
@@ -298,7 +282,7 @@ void MainLoop(void* arg)
                     renderOptions.renderResolution = renderOptions.windowResolution;
 
                 scene->renderOptions = renderOptions;
-                InitRenderer();
+                renderer->ResizeRenderer();
             }
 
             if (event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(loopdata.mWindow))
@@ -322,7 +306,7 @@ void MainLoop(void* arg)
         ImGui::BulletText("LMB + drag to rotate");
         ImGui::BulletText("MMB + drag to pan");
         ImGui::BulletText("RMB + drag to zoom in/out");
-        ImGui::BulletText("CRTL + click on a slider to edit its value");
+        ImGui::BulletText("CTRL + click on a slider to edit its value");
 
         if (ImGui::Button("Save Screenshot"))
         {
@@ -350,34 +334,42 @@ void MainLoop(void* arg)
         if (ImGui::Combo("EnvMaps", &envMapIdx, envMapsList.data(), envMapsList.size()))
         {
             scene->AddEnvMap(envMaps[envMapIdx]);
-            InitRenderer();
         }
 
         bool optionsChanged = false;
+        bool reloadShaders = false;
 
         optionsChanged |= ImGui::SliderFloat("Mouse Sensitivity", &mouseSensitivity, 0.001f, 1.0f);
 
         if (ImGui::CollapsingHeader("Render Settings"))
         {
-            bool requiresReload = false;
-            Vec3* uniformLightCol = &renderOptions.uniformLightCol;
-            Vec3* backgroundCol = &renderOptions.backgroundCol;
-
             optionsChanged |= ImGui::SliderInt("Max Spp", &renderOptions.maxSpp, -1, 256);
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
+            
+            reloadShaders |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
+            reloadShaders |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
+        }
+
+        if (ImGui::CollapsingHeader("Environment"))
+        {
+            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
+
+            // Gamma correction for color picker. Internally, the renderer uses linear RGB values for colors
+            Vec3 uniformLightCol = Vec3::Pow(renderOptions.uniformLightCol, 1.0 / 2.2);
+            optionsChanged |= ImGui::ColorEdit3("Uniform Light Color (Gamma Corrected)", (float*)(&uniformLightCol), 0);
+            renderOptions.uniformLightCol = Vec3::Pow(uniformLightCol, 2.2);
+
+            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Intensity", &renderOptions.envMapIntensity, 0.1f, 10.0f);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Rotation", &renderOptions.envMapRot, 0.0f, 360.0f);
-            requiresReload |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
-            requiresReload |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
-            requiresReload |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
-            optionsChanged |= ImGui::ColorEdit3("Uniform Light Color", (float*)uniformLightCol, 0);
-            requiresReload |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
-            requiresReload |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
-            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)backgroundCol, 0);
-            requiresReload |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
-            ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
-            ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
+            reloadShaders |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
+            reloadShaders |= ImGui::Checkbox("Enable Background", &renderOptions.enableBackground);
+            optionsChanged |= ImGui::ColorEdit3("Background Color", (float*)&renderOptions.backgroundCol, 0);
+            reloadShaders |= ImGui::Checkbox("Transparent Background", &renderOptions.transparentBackground);
+        }
+
+        if (ImGui::CollapsingHeader("Tonemapping"))
+        {
             ImGui::Checkbox("Enable Tonemap", &renderOptions.enableTonemap);
 
             if (renderOptions.enableTonemap)
@@ -386,18 +378,13 @@ void MainLoop(void* arg)
                 if (renderOptions.useAces)
                     ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
             }
+        }
 
-            if (requiresReload)
-            {
-                scene->renderOptions = renderOptions;
-                InitRenderer();
-            }
+        if (ImGui::CollapsingHeader("Denoiser"))
+        {
 
-            scene->renderOptions.enableDenoiser = renderOptions.enableDenoiser;
-            scene->renderOptions.denoiserFrameCnt = renderOptions.denoiserFrameCnt;
-            scene->renderOptions.enableTonemap = renderOptions.enableTonemap;
-            scene->renderOptions.useAces = renderOptions.useAces;
-            scene->renderOptions.simpleAcesFit = renderOptions.simpleAcesFit;
+            ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
+            ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
         }
 
         if (ImGui::CollapsingHeader("Camera"))
@@ -410,14 +397,6 @@ void MainLoop(void* arg)
             scene->camera->aperture = aperture / 1000.0f;
             optionsChanged |= ImGui::SliderFloat("Focal Distance", &scene->camera->focalDist, 0.01f, 50.0f);
             ImGui::Text("Pos: %.2f, %.2f, %.2f", scene->camera->position.x, scene->camera->position.y, scene->camera->position.z);
-        }
-
-        scene->dirty = false;
-
-        if (optionsChanged)
-        {
-            scene->renderOptions = renderOptions;
-            scene->dirty = true;
         }
 
         if (ImGui::CollapsingHeader("Objects"))
@@ -447,8 +426,12 @@ void MainLoop(void* arg)
 
             // Material Properties
             Material* mat = &scene->materials[scene->meshInstances[selectedInstance].materialID];
+            
+            // Gamma correction for color picker. Internally, the renderer uses linear RGB values for colors
+            Vec3 albedo = Vec3::Pow(mat->baseColor, 1.0 / 2.2);
+            objectPropChanged |= ImGui::ColorEdit3("Albedo (Gamma Corrected)", (float*)(&albedo), 0);
+            mat->baseColor = Vec3::Pow(albedo, 2.2);
 
-            objectPropChanged |= ImGui::ColorEdit3("Albedo", (float*)(&mat->baseColor), 0);
             objectPropChanged |= ImGui::SliderFloat("Metallic", &mat->metallic, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Roughness", &mat->roughness, 0.001f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("SpecularTint", &mat->specularTint, 0.0f, 1.0f);
@@ -461,7 +444,7 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("Transmission", &mat->specTrans, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Ior", &mat->ior, 1.001f, 2.0f);
 
-            // Transforms Properties
+            // Transforms
             ImGui::Separator();
             ImGui::Text("Transforms");
             {
@@ -482,10 +465,20 @@ void MainLoop(void* arg)
             }
 
             if (objectPropChanged)
-            {
                 scene->RebuildInstances();
-            }
         }
+
+        scene->renderOptions = renderOptions;
+
+        if (optionsChanged)
+            scene->dirty = true;
+
+        if (reloadShaders)
+        {
+            scene->dirty = true;
+            renderer->ReloadShaders();
+        }
+
         ImGui::End();
 
         //printf("MaxSpp: %d Current Spp: %d Progress: %.1f%%   \r", scene->renderOptions.maxSpp, renderer->GetSampleCount(), renderer->GetProgress());
@@ -524,12 +517,8 @@ int main(int argc, char** argv)
     if (!sceneFile.empty())
     {
         scene = new Scene();
-
-        if (!LoadSceneFromFile(sceneFile, scene, renderOptions))
-            exit(0);
-
-        scene->renderOptions = renderOptions;
-        std::cout << "Scene Loaded\n\n";
+        GetEnvMaps();
+        LoadScene(sceneFile);
     }
     else
     {

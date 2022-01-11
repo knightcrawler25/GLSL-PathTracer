@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSampleRec)
+bool ClosestHit(Ray r, inout State state, inout LightSampleRec lightSample)
 {
     float t = INF;
     float d;
@@ -60,8 +60,8 @@ if(state.depth > 0)
             {
                 t = d;
                 float cosTheta = dot(-r.direction, normal);
-                lightSampleRec.pdf = (t * t) / (area * cosTheta);
-                lightSampleRec.emission = emission;
+                lightSample.pdf = (t * t) / (area * cosTheta);
+                lightSample.emission = emission;
                 state.isEmitter = true;
             }
         }
@@ -77,8 +77,8 @@ if(state.depth > 0)
                 vec3 hitPt = r.origin + t * r.direction;
                 float cosTheta = dot(-r.direction, normalize(hitPt - position));
                 // TODO: Fix this. Currently assumes the light will be hit only from the outside
-                lightSampleRec.pdf = (t * t) / (area * cosTheta * 0.5);
-                lightSampleRec.emission = emission;
+                lightSample.pdf = (t * t) / (area * cosTheta * 0.5);
+                lightSample.emission = emission;
                 state.isEmitter = true;
             }
         }

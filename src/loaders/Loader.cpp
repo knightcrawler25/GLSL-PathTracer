@@ -20,8 +20,8 @@ freely, subject to the following restrictions:
 
 */
 
-/* 
-    This is a modified version of the original code 
+/*
+    This is a modified version of the original code
     Link to original code: https://github.com/mmacklin/tinsel
 */
 
@@ -33,7 +33,7 @@ namespace GLSLPT
 {
     static const int kMaxLineLength = 2048;
 
-    bool LoadSceneFromFile(const std::string &filename, Scene *scene, RenderOptions& renderOptions)
+    bool LoadSceneFromFile(const std::string& filename, Scene* scene, RenderOptions& renderOptions)
     {
         FILE* file;
         file = fopen(filename.c_str(), "r");
@@ -119,11 +119,11 @@ namespace GLSLPT
                 // Albedo Texture
                 if (strcmp(albedoTexName, "None") != 0)
                     material.baseColorTexId = scene->AddTexture(path + albedoTexName);
-             
+
                 // MetallicRoughness Texture
                 if (strcmp(metallicRoughnessTexName, "None") != 0)
                     material.metallicRoughnessTexID = scene->AddTexture(path + metallicRoughnessTexName);
-    
+
                 // Normal Map Texture
                 if (strcmp(normalTexName, "None") != 0)
                     material.normalmapTexID = scene->AddTexture(path + normalTexName);
@@ -281,7 +281,7 @@ namespace GLSLPT
                     sscanf(line, " transparentBackground %s", transparentBackground);
                     sscanf(line, " backgroundColor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
                     sscanf(line, " independentRenderSize %s", independentRenderSize);
-                    sscanf(line, " envMapRotation %f", &renderOptions.envMapRot);
+                    sscanf(line, " hdrRot %f", &renderOptions.envMapRot); // TODO: Rename option in all scene files
                 }
 
                 if (strcmp(envMap, "None") != 0)
@@ -291,7 +291,7 @@ namespace GLSLPT
                 }
                 else
                     renderOptions.useEnvMap = false;
-                    
+
                 if (strcmp(useAces, "False") == 0)
                     renderOptions.useAces = false;
                 else if (strcmp(useAces, "True") == 0)
@@ -361,21 +361,15 @@ namespace GLSLPT
                     sscanf(line, " name %[^\t\n]s", meshName);
 
                     if (sscanf(line, " file %s", file) == 1)
-                    {
                         filename = path + file;
-                    }
 
                     if (sscanf(line, " material %s", matName) == 1)
                     {
                         // look up material in dictionary
                         if (materialMap.find(matName) != materialMap.end())
-                        {
                             material_id = materialMap[matName].id;
-                        }
                         else
-                        {
                             printf("Could not find material %s\n", matName);
-                        }
                     }
 
                     if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
@@ -388,7 +382,7 @@ namespace GLSLPT
 
                     sscanf(line, " position %f %f %f", &translate.data[3][0], &translate.data[3][1], &translate.data[3][2]);
                     sscanf(line, " scale %f %f %f", &scale.data[0][0], &scale.data[1][1], &scale.data[2][2]);
-                    if(sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w) != 0)
+                    if (sscanf(line, " rotation %f %f %f %f", &rotQuat.x, &rotQuat.y, &rotQuat.z, &rotQuat.w) != 0)
                         rot = Mat4::QuatToMatrix(rotQuat.x, rotQuat.y, rotQuat.z, rotQuat.w);
                 }
 
@@ -400,15 +394,13 @@ namespace GLSLPT
                         std::string instanceName;
 
                         if (strcmp(meshName, "None") != 0)
-                        {
                             instanceName = std::string(meshName);
-                        }
                         else
                         {
                             std::size_t pos = filename.find_last_of("/\\");
                             instanceName = filename.substr(pos + 1);
                         }
-                        
+
                         Mat4 transformMat;
 
                         if (matrixProvided)
@@ -441,9 +433,7 @@ namespace GLSLPT
                     char file[2048];
 
                     if (sscanf(line, " file %s", file) == 1)
-                    {
                         filename = path + file;
-                    }
 
                     if (sscanf(line, " matrix %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
                         &xform[0][0], &xform[1][0], &xform[2][0], &xform[3][0],
@@ -480,7 +470,7 @@ namespace GLSLPT
 
                     if (!success)
                     {
-                        printf("Unable to load gltf %s\n", filename);
+                        printf("Unable to load gltf %s\n", filename.c_str());
                         exit(0);
                     }
                 }

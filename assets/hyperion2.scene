@@ -1,7 +1,7 @@
 Renderer
 {
 	resolution 1280 720
-	maxDepth 4
+	maxDepth 3
 	tileWidth 256
 	tileHeight 144
 }

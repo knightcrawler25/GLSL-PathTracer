@@ -183,12 +183,12 @@ void Onb(in vec3 N, inout vec3 T, inout vec3 B)
     B = cross(N, T);
 }
 
-void SampleSphereLight(in Light light, in vec3 surfacePos, inout LightSampleRec lightSampleRec)
+void SampleSphereLight(in Light light, in vec3 scatterPos, inout LightSampleRec lightSample)
 {
     float r1 = rand();
     float r2 = rand();
 
-    vec3 sphereCentertoSurface = surfacePos - light.position;
+    vec3 sphereCentertoSurface = scatterPos - light.position;
     float distToSphereCenter = length(sphereCentertoSurface);
     vec3 sampledDir;
 
@@ -201,60 +201,60 @@ void SampleSphereLight(in Light light, in vec3 surfacePos, inout LightSampleRec 
 
     vec3 lightSurfacePos = light.position + sampledDir * light.radius;
 
-    lightSampleRec.direction = lightSurfacePos - surfacePos;
-    lightSampleRec.dist = length(lightSampleRec.direction);
-    float distSq = lightSampleRec.dist * lightSampleRec.dist;
+    lightSample.direction = lightSurfacePos - scatterPos;
+    lightSample.dist = length(lightSample.direction);
+    float distSq = lightSample.dist * lightSample.dist;
 
-    lightSampleRec.direction /= lightSampleRec.dist;
-    lightSampleRec.normal = normalize(lightSurfacePos - light.position);
-    lightSampleRec.emission = light.emission * float(numOfLights);
-    lightSampleRec.pdf = distSq / (light.area * 0.5 * abs(dot(lightSampleRec.normal, lightSampleRec.direction)));
+    lightSample.direction /= lightSample.dist;
+    lightSample.normal = normalize(lightSurfacePos - light.position);
+    lightSample.emission = light.emission * float(numOfLights);
+    lightSample.pdf = distSq / (light.area * 0.5 * abs(dot(lightSample.normal, lightSample.direction)));
 }
 
-void SampleRectLight(in Light light, in vec3 surfacePos, inout LightSampleRec lightSampleRec)
+void SampleRectLight(in Light light, in vec3 scatterPos, inout LightSampleRec lightSample)
 {
     float r1 = rand();
     float r2 = rand();
 
     vec3 lightSurfacePos = light.position + light.u * r1 + light.v * r2;
-    lightSampleRec.direction = lightSurfacePos - surfacePos;
-    lightSampleRec.dist = length(lightSampleRec.direction);
-    float distSq = lightSampleRec.dist * lightSampleRec.dist;
-    lightSampleRec.direction /= lightSampleRec.dist;
-    lightSampleRec.normal = normalize(cross(light.u, light.v));
-    lightSampleRec.emission = light.emission * float(numOfLights);
-    lightSampleRec.pdf = distSq / (light.area * abs(dot(lightSampleRec.normal, lightSampleRec.direction)));
+    lightSample.direction = lightSurfacePos - scatterPos;
+    lightSample.dist = length(lightSample.direction);
+    float distSq = lightSample.dist * lightSample.dist;
+    lightSample.direction /= lightSample.dist;
+    lightSample.normal = normalize(cross(light.u, light.v));
+    lightSample.emission = light.emission * float(numOfLights);
+    lightSample.pdf = distSq / (light.area * abs(dot(lightSample.normal, lightSample.direction)));
 }
 
-void SampleDistantLight(in Light light, in vec3 surfacePos, inout LightSampleRec lightSampleRec)
+void SampleDistantLight(in Light light, in vec3 scatterPos, inout LightSampleRec lightSample)
 {
-    lightSampleRec.direction = normalize(light.position - vec3(0.0));
-    lightSampleRec.normal = normalize(surfacePos - light.position);
-    lightSampleRec.emission = light.emission * float(numOfLights);
-    lightSampleRec.dist = INF;
-    lightSampleRec.pdf = 1.0;
+    lightSample.direction = normalize(light.position - vec3(0.0));
+    lightSample.normal = normalize(scatterPos - light.position);
+    lightSample.emission = light.emission * float(numOfLights);
+    lightSample.dist = INF;
+    lightSample.pdf = 1.0;
 }
 
-void SampleOneLight(in Light light, in vec3 surfacePos, inout LightSampleRec lightSampleRec)
+void SampleOneLight(in Light light, in vec3 scatterPos, inout LightSampleRec lightSample)
 {
     int type = int(light.type);
 
     if (type == QUAD_LIGHT)
-        SampleRectLight(light, surfacePos, lightSampleRec);
+        SampleRectLight(light, scatterPos, lightSample);
     else if (type == SPHERE_LIGHT)
-        SampleSphereLight(light, surfacePos, lightSampleRec);
+        SampleSphereLight(light, scatterPos, lightSample);
     else
-        SampleDistantLight(light, surfacePos, lightSampleRec);
+        SampleDistantLight(light, scatterPos, lightSample);
 }
 
-vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSampleRec, in BsdfSampleRec bsdfSampleRec)
+vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSample, in ScatterSampleRec scatterSample)
 {
     vec3 Le;
 
     if (state.depth == 0)
-        Le = lightSampleRec.emission;
+        Le = lightSample.emission;
     else
-        Le = PowerHeuristic(bsdfSampleRec.pdf, lightSampleRec.pdf) * lightSampleRec.emission;
+        Le = PowerHeuristic(scatterSample.pdf, lightSample.pdf) * lightSample.emission;
 
     return Le;
 }

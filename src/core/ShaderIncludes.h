@@ -127,7 +127,7 @@ namespace GLSLPT
             return ShaderSource{ fullSourceCode, path };;
         }
 
-        
+
 
     private:
         static void getFilePath(const std::string& fullPath, std::string& pathWithoutFileName)

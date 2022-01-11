@@ -55,7 +55,7 @@ namespace GLSLPT
         glBindVertexArray(0);
     }
 
-    void Quad::Draw(Program *shader)
+    void Quad::Draw(Program* shader)
     {
         shader->Use();
         glBindVertexArray(vao);

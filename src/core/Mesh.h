@@ -28,24 +28,24 @@
 #include "split_bvh.h"
 
 namespace GLSLPT
-{    
+{
     class Mesh
     {
     public:
         Mesh()
-        { 
-            bvh = new RadeonRays::SplitBvh(2.0f, 64, 0, 0.001f, 0); 
+        {
+            bvh = new RadeonRays::SplitBvh(2.0f, 64, 0, 0.001f, 0);
             //bvh = new RadeonRays::Bvh(2.0f, 64, false);
         }
         ~Mesh() { delete bvh; }
 
         void BuildBVH();
         bool LoadFromFile(const std::string& filename);
-        
+
         std::vector<Vec4> verticesUVX; // Vertex + texture Coord (u/s)
         std::vector<Vec4> normalsUVY;  // Normal + texture Coord (v/t)
 
-        RadeonRays::Bvh *bvh;
+        RadeonRays::Bvh* bvh;
         std::string name;
     };
 
@@ -56,8 +56,8 @@ namespace GLSLPT
         MeshInstance(std::string name, int meshId, Mat4 xform, int matId)
             : name(name)
             , meshID(meshId)
-            , transform(xform) 
-            , materialID(matId) 
+            , transform(xform)
+            , materialID(matId)
         {
         }
         ~MeshInstance() {}

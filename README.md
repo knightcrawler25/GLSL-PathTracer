@@ -3,21 +3,23 @@ GLSL-PathTracer
 ==========
 A physically based path tracer that runs in a GLSL fragment shader.
 
-![Jinx](./screenshots/Jinx.png)
+![Jinx](./screenshots/Jinx.jpg)
 
-![WW2](./screenshots/ww2.png)
+![WW2](./screenshots/ww2.jpg)
 
 Features
 --------
 - Unidirectional path tracer
 - BVH builder from RadeonRays 2.0
 - Disney BSDF
-- Texture Mapping (Albedo, Metallic-Roughness, Normal, Emission)
-- Analytic Lights (Sphere, Rect, Directional)
+- Texture mapping (Albedo, Metallic-Roughness, Normal, Emission)
+- Analytic lights (Sphere, Rectangular, Directional)
+- Image based lighting
+- Multiple importance sampling (between BSDF and lights)
+- Tile rendering
 - OpenImageDenoise
-- Image based lighting with importance sampling
-- Tile Rendering
-- GLTF/GLB Support (In progress)
+- GLTF/GLB support (In progress)
+- Homogeneous volumes (In progress)
 
 Build Instructions
 --------
@@ -30,29 +32,31 @@ https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
 
 Gallery
 --------
-![Slum](./screenshots/Slum.png)
+![Slum](./screenshots/Slum.jpg)
 --------
-![RenderMan Swatch](./screenshots/Renderman_swatch.png)
+![RenderMan Swatch](./screenshots/Renderman_swatch.jpg)
 --------
 ![Stormtrooper](./screenshots/stormtrooper.jpg)
 --------
 ![Panther](./screenshots/panther.jpg)
 --------
-![Crown](./screenshots/crown.png)
+![Crown](./screenshots/crown.jpg)
 --------
-![Mustang_red](./screenshots/Mustang_Red.jpg)
+![Mustang](./screenshots/Mustang.jpg)
+--------
+![Mustang_Red](./screenshots/Mustang_Red.jpg)
 --------
 ![Hyperion](./screenshots/hyperion.jpg)
 --------
-![Ajax](./screenshots/ajax_materials.png)
+![Ajax](./screenshots/ajax_materials.jpg)
 --------
 ![Dining Room](./screenshots/DiningRoom.jpg)
 --------
-![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.png)
+![Rank3PoliceUnit](./screenshots/rank3police_color_corrected.jpg)
 --------
-![Staircase](./screenshots/staircase.png)
+![Staircase](./screenshots/staircase.jpg)
 --------
-![Substance Boy](./screenshots/MeetMat_Maps.png)
+![Substance Boy](./screenshots/MeetMat_Maps.jpg)
 --------
 ![Dragon](./screenshots/dragon.jpg)
 

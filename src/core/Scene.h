@@ -71,14 +71,14 @@ namespace GLSLPT
         }
         ~Scene();
 
-        int AddMesh(const std::string &filename);
-        int AddTexture(const std::string &filename);
-        int AddMaterial(const Material &material);
-        int AddMeshInstance(const MeshInstance &meshInstance);
-        int AddLight(const Light &light);
+        int AddMesh(const std::string& filename);
+        int AddTexture(const std::string& filename);
+        int AddMaterial(const Material& material);
+        int AddMeshInstance(const MeshInstance& meshInstance);
+        int AddLight(const Light& light);
 
         void AddCamera(Vec3 eye, Vec3 lookat, float fov);
-        void AddEnvMap(const std::string &filename);
+        void AddEnvMap(const std::string& filename);
 
         void ProcessScene();
         void RebuildInstances();
@@ -91,11 +91,11 @@ namespace GLSLPT
 
         // Scene Mesh Data 
         std::vector<Indices> vertIndices;
-        std::vector<Vec4> verticesUVX; // Vertex Data + x coord of uv 
-        std::vector<Vec4> normalsUVY;  // Normal Data + y coord of uv
+        std::vector<Vec4> verticesUVX; // Vertex + texture Coord (u/s)
+        std::vector<Vec4> normalsUVY; // Normal + texture Coord (v/t)
         std::vector<Mat4> transforms;
 
-        // Instances
+        // Materials
         std::vector<Material> materials;
 
         // Instances
@@ -105,26 +105,27 @@ namespace GLSLPT
         std::vector<Light> lights;
 
         // Environment Map
-        EnvironmentMap *envMap;
+        EnvironmentMap* envMap;
 
         // Camera
-        Camera *camera;
+        Camera* camera;
 
         // Bvh
         RadeonRays::BvhTranslator bvhTranslator; // Produces a flat bvh array for GPU consumption
         RadeonRays::bbox sceneBounds;
 
         // Texture Data
-        std::vector<Texture *> textures;
+        std::vector<Texture*> textures;
         std::vector<unsigned char> textureMapsArray;
 
         bool initialized;
         bool dirty;
         // To check if scene elements need to be resent to GPU
         bool instancesModified = false;
+        bool envMapModified = false;
 
     private:
-        RadeonRays::Bvh *sceneBvh;
+        RadeonRays::Bvh* sceneBvh;
         void createBLAS();
         void createTLAS();
     };

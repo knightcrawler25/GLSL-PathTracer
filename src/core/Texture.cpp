@@ -37,7 +37,7 @@ namespace GLSLPT
         std::copy(data, data + width * height * components, texData.begin());
     }
 
-    bool Texture::LoadTexture(const std::string &filename)
+    bool Texture::LoadTexture(const std::string& filename)
     {
         name = filename;
         components = 4;
