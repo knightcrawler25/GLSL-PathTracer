@@ -85,6 +85,7 @@ namespace GLSLPT
                 char normalTexName[100] = "None";
                 char emissionTexName[100] = "None";
                 char alphaMode[20] = "None";
+                char mediumType[20] = "None";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -108,12 +109,14 @@ namespace GLSLPT
                     sscanf(line, " clearcoatGloss %f", &material.clearcoatGloss);
                     sscanf(line, " transmission %f", &material.specTrans);
                     sscanf(line, " ior %f", &material.ior);
-                    sscanf(line, " extinction %f %f %f", &material.extinction.x, &material.extinction.y, &material.extinction.z);
-                    sscanf(line, " atDistance %f", &material.atDistance);
                     sscanf(line, " albedoTexture %s", albedoTexName);
                     sscanf(line, " metallicRoughnessTexture %s", metallicRoughnessTexName);
                     sscanf(line, " normalTexture %s", normalTexName);
                     sscanf(line, " emissionTexture %s", emissionTexName);
+                    sscanf(line, " mediumType %s", mediumType);
+                    sscanf(line, " mediumDensity %f", &material.mediumDensity);
+                    sscanf(line, " mediumColor %f %f %f", &material.mediumColor.x, &material.mediumColor.y, &material.mediumColor.z);
+                    sscanf(line, " mediumPhase %f", &material.mediumPhase);
                 }
 
                 // Albedo Texture
@@ -133,12 +136,20 @@ namespace GLSLPT
                     material.emissionmapTexID = scene->AddTexture(path + emissionTexName);
 
                 // AlphaMode
-                if (strcmp(alphaMode, "Opaque") == 0)
+                if (strcmp(alphaMode, "opaque") == 0)
                     material.alphaMode = AlphaMode::Opaque;
-                else if (strcmp(alphaMode, "Blend") == 0)
+                else if (strcmp(alphaMode, "blend") == 0)
                     material.alphaMode = AlphaMode::Blend;
-                else if (strcmp(alphaMode, "Mask") == 0)
+                else if (strcmp(alphaMode, "mask") == 0)
                     material.alphaMode = AlphaMode::Mask;
+
+                // MediumType
+                if (strcmp(mediumType, "absorb") == 0)
+                    material.mediumType = MediumType::Absorb;
+                else if (strcmp(mediumType, "scatter") == 0)
+                    material.mediumType = MediumType::Scatter;
+                else if (strcmp(mediumType, "emissive") == 0)
+                    material.mediumType = MediumType::Emissive;
 
                 // add material to map
                 if (materialMap.find(name) == materialMap.end()) // New material

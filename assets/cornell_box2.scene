@@ -94,7 +94,7 @@ mesh
 {
 	file cornell_box/cbox_largebox.obj
 	material large_box_white
-	position .3685 .165 .35125
+	position .3685 .166 .35125
 	scale 0.01 0.01 0.01
 }
 

@@ -446,6 +446,15 @@ namespace GLSLPT
         if (scene->renderOptions.enableRoughnessMollification)
             pathtraceDefines += "#define OPT_ROUGHNESS_MOLLIFICATION\n";
 
+        for (int i = 0; i < scene->materials.size(); i++)
+        {
+            if (scene->materials[i].mediumType != -1)
+            {
+                pathtraceDefines += "#define OPT_MEDIUM\n";
+                break;
+            }
+        }
+
         if (pathtraceDefines.size() > 0)
         {
             size_t idx = pathTraceShaderSrcObj.src.find("#version");

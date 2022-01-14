@@ -246,15 +246,3 @@ void SampleOneLight(in Light light, in vec3 scatterPos, inout LightSampleRec lig
     else
         SampleDistantLight(light, scatterPos, lightSample);
 }
-
-vec3 EmitterSample(in Ray r, in State state, in LightSampleRec lightSample, in ScatterSampleRec scatterSample)
-{
-    vec3 Le;
-
-    if (state.depth == 0)
-        Le = lightSample.emission;
-    else
-        Le = PowerHeuristic(scatterSample.pdf, lightSample.pdf) * lightSample.emission;
-
-    return Le;
-}

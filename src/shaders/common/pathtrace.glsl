@@ -26,6 +26,7 @@ void GetMaterials(inout State state, in Ray r)
 {
     int index = state.matID * 8;
     Material mat;
+    Medium medium;
 
     vec4 param1 = texelFetch(materialsTex, ivec2(index + 0, 0), 0);
     vec4 param2 = texelFetch(materialsTex, ivec2(index + 1, 0), 0);
@@ -38,14 +39,14 @@ void GetMaterials(inout State state, in Ray r)
 
     mat.baseColor          = param1.rgb;
     mat.anisotropic        = param1.w;
-                           
+
     mat.emission           = param2.rgb;
-                           
+
     mat.metallic           = param3.x;
     mat.roughness          = max(param3.y, 0.001);
     mat.subsurface         = param3.z;
     mat.specularTint       = param3.w;
-                           
+
     mat.sheen              = param4.x;
     mat.sheenTint          = param4.y;
     mat.clearcoat          = param4.z;
@@ -53,10 +54,12 @@ void GetMaterials(inout State state, in Ray r)
 
     mat.specTrans          = param5.x;
     mat.ior                = param5.y;
-    mat.atDistance         = param5.z;
-                           
-    mat.extinction         = param6.rgb;
-                           
+    medium.type            = int(param5.z);
+    medium.density      = param5.w;
+
+    medium.color           = param6.rgb;
+    medium.phase           = param6.w;
+
     ivec4 texIDs           = ivec4(param7);
 
     mat.opacity            = param8.x;
@@ -109,6 +112,7 @@ void GetMaterials(inout State state, in Ray r)
     // mat.ay = max(0.001, mat.roughness * aspect);
 
     state.mat = mat;
+    state.medium = medium;
     state.eta = dot(r.direction, state.normal) < 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
@@ -146,7 +150,7 @@ vec3 DirectLight(in Ray r, in State state)
 #endif
 #endif
 
-    // Analytic Lights 
+    // Analytic Lights
 #ifdef OPT_LIGHTS
     {
         LightSampleRec lightSample;
@@ -198,102 +202,151 @@ vec4 PathTrace(Ray r)
     State state;
     LightSampleRec lightSample;
     ScatterSampleRec scatterSample;
-    vec3 absorption = vec3(0.0);
-    // TODO: alpha from material opacity
+    bool inMedium = false;
+    // TODO: alpha from material opacity/medium density
     float alpha = 1.0;
-    
+
+    // Medium tracking
+    int mediumStackID = -1;
+    Medium mediumStack[8];
+
     for (state.depth = 0;; state.depth++)
     {
         bool hit = ClosestHit(r, state, lightSample);
 
         if (!hit)
         {
-#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND) 
+#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND)
             if (state.depth == 0)
                 alpha = 0.0;
 #endif
 
-#ifdef OPT_UNIFORM_LIGHT
 #ifdef OPT_HIDE_EMITTERS
             if(state.depth > 0)
 #endif
+            {
+#ifdef OPT_UNIFORM_LIGHT
                 radiance += uniformLightCol * throughput;
 #else
 #ifdef OPT_ENVMAP
-            {
+                vec4 envMapColPdf = EvalEnvMap(r);
+
                 float misWeight = 1.0;
-                float theta = acos(clamp(r.direction.y, -1.0, 1.0));
-                vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI) + vec2(envMapRot, 0.0);
-                vec3 envMapCol = texture(envMapTex, uv).xyz;
-                
+
                 if (state.depth > 0)
-                {
-                    float lightPdf = EnvMapPdf(envMapCol) / sin(theta);
-                    misWeight = PowerHeuristic(scatterSample.pdf, lightPdf);
-                }
-#ifdef OPT_HIDE_EMITTERS
-                if (state.depth > 0)
-#endif
-                    if(misWeight > 0)
-                        radiance += misWeight * envMapCol * throughput * envMapIntensity;
-            }
+                    misWeight = PowerHeuristic(scatterSample.pdf, envMapColPdf.w);
+
+                if(misWeight > 0)
+                    radiance += envMapColPdf.rgb * throughput * envMapIntensity;
 #endif
 #endif
-            return vec4(radiance, alpha);
+             }
+             break;
         }
 
         GetMaterials(state, r);
 
+        // Gather radiance from emissive objects. This are not importance sampled
         radiance += state.mat.emission * throughput;
 
 #ifdef OPT_LIGHTS
+        // Multiple importance sampling with scatterSample.pdf from previous bounce
         if (state.isEmitter)
         {
-            radiance += EmitterSample(r, state, lightSample, scatterSample) * throughput;
+            float misWeight = 1.0;
+
+            if (state.depth > 0)
+                misWeight = PowerHeuristic(scatterSample.pdf, lightSample.pdf);
+
+            radiance += misWeight * lightSample.emission * throughput;
             break;
         }
 #endif
-
+        // Exit if ray has reached maximum depth
         if(state.depth >= maxDepth)
             break;
 
-#ifdef OPT_ALPHA_TEST
-        // Ignore intersection based on alpha test
-        bool ignoreHit = false;
+#ifdef OPT_MEDIUM
+        bool mediumSampled = false;
 
-        if (state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff)
-            ignoreHit = true;
-        else if(state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity)
-            ignoreHit = true;
-
-        if (ignoreHit)
+        if(inMedium)
         {
-            state.depth--;
-            r.origin = state.fhp + r.direction * EPS;
-            continue;
+            if(state.medium.type == MEDIUM_ABSORB)
+            {
+                throughput *= exp(log(state.medium.color) * state.hitDist * state.medium.density);
+            }
+            else if(state.medium.type == MEDIUM_EMISSIVE)
+            {
+                radiance += state.medium.color * state.hitDist * state.medium.density;
+            }
+            else// if(state.medium.type == MEDIUM_SCATTER) // Condition needed?
+            {
+                float scatterDist = min(-log(rand()) / state.medium.density, state.hitDist);
+                mediumSampled = scatterDist < state.hitDist;
+                scatterSample.pdf = INV_4_PI;
+
+                // Pick a new direction based on the phase function
+                if (mediumSampled)
+                {
+                    throughput *= state.medium.color;
+                    r.origin += r.direction * scatterDist;
+                    r.direction = UniformSampleSphere(rand(), rand());
+                }
+            }
+        }
+
+        if (!mediumSampled)
+        {
+#endif
+#ifdef OPT_ALPHA_TEST
+            // Ignore intersection and continue ray based on alpha test
+            if ((state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff) ||
+                (state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity))
+            {
+                scatterSample.L = r.direction;
+                state.depth--;
+            }
+            else
+#endif
+            {
+                // Next event estimation
+                radiance += DirectLight(r, state) * throughput;
+
+                // Sample BSDF for color and outgoing direction
+                scatterSample.f = DisneySample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
+                if (scatterSample.pdf > 0.0)
+                    throughput *= scatterSample.f / scatterSample.pdf;
+                else
+                    break;
+            }
+
+             r.direction = scatterSample.L;
+             r.origin = state.fhp + r.direction * EPS;
+
+#ifdef OPT_MEDIUM
+            // Push medium onto stack if ray is going into the object
+            inMedium = false;
+
+            if (dot(scatterSample.L, state.normal) < 0)
+            {
+                if(state.medium.type != MEDIUM_NONE)
+                {
+                    inMedium = true;
+                    mediumStackID = mediumStackID + 1;
+                    mediumStack[mediumStackID] = state.medium;
+                }
+            }
+            else // Pop medium from stack if ray is going out of the object
+            {
+                if(mediumStackID > 0)
+                {
+                    inMedium = true;
+                    mediumStackID = mediumStackID - 1;
+                    state.medium = mediumStack[mediumStackID];
+                }
+            }
         }
 #endif
-
-        // Reset absorption when ray is going out of surface
-        if (dot(state.normal, state.ffnormal) > 0.0)
-            absorption = vec3(0.0);
-
-        // Add absoption
-        throughput *= exp(-absorption * state.hitDist);
-
-        // Next event estimation
-        radiance += DirectLight(r, state) * throughput;
-
-        scatterSample.f = DisneySample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
-
-        // Set absorption only if the ray is currently inside the object.
-        if (dot(state.ffnormal, scatterSample.L) < 0.0)
-            absorption = -log(state.mat.extinction) / state.mat.atDistance;
-
-        if (scatterSample.pdf > 0.0)
-            throughput *= scatterSample.f / scatterSample.pdf;
-        else
-            break;
 
 #ifdef OPT_RR
         // Russian roulette
@@ -306,8 +359,6 @@ vec4 PathTrace(Ray r)
         }
 #endif
 
-        r.direction = scatterSample.L;
-        r.origin = state.fhp + r.direction * EPS;
     }
 
     return vec4(radiance, alpha);

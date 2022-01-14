@@ -78,7 +78,7 @@ mesh
 {
 	file cornell_box/cbox_smallbox.obj
 	material small_box_white
-	position .1855 .0825 .169
+	position .1855 .0835 .169
 	scale 0.01 0.01 0.01
 }
 
@@ -86,7 +86,7 @@ mesh
 {
 	file cornell_box/cbox_largebox.obj
 	material large_box_white
-	position .3685 .165 .35125
+	position .3685 .166 .35125
 	scale 0.01 0.01 0.01
 }
 

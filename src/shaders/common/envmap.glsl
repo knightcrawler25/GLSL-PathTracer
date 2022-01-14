@@ -54,16 +54,22 @@ vec2 BinarySearch(float value)
     return vec2(x, y) / envMapRes;
 }
 
-float EnvMapPdf(vec3 color)
+vec4 EvalEnvMap(Ray r)
 {
-    return ((Luminance(color) / envMapTotalSum) * envMapRes.x * envMapRes.y) / (TWO_PI * PI);
+    float theta = acos(clamp(r.direction.y, -1.0, 1.0));
+    vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI) + vec2(envMapRot, 0.0);
+    
+    vec3 color = texture(envMapTex, uv).rgb;
+    float pdf = Luminance(color) / envMapTotalSum;
+                
+    return vec4(color, (pdf * envMapRes.x * envMapRes.y) / (TWO_PI * PI * sin(theta)));
 }
 
 vec4 SampleEnvMap(inout vec3 color)
 {
     vec2 uv = BinarySearch(rand() * envMapTotalSum);
 
-    color = texture(envMapTex, uv).xyz;
+    color = texture(envMapTex, uv).rgb;
     float pdf = Luminance(color) / envMapTotalSum;
 
     uv.x -= envMapRot;
