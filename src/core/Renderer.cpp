@@ -436,7 +436,7 @@ namespace GLSLPT
 
         for (int i = 0; i < scene->materials.size(); i++)
         {
-            if (scene->materials[i].alphaMode != AlphaMode::Opaque)
+            if ((int)scene->materials[i].alphaMode != AlphaMode::Opaque)
             {
                 pathtraceDefines += "#define OPT_ALPHA_TEST\n";
                 break;
@@ -448,7 +448,7 @@ namespace GLSLPT
 
         for (int i = 0; i < scene->materials.size(); i++)
         {
-            if (scene->materials[i].mediumType != -1)
+            if ((int)scene->materials[i].mediumType != MediumType::None)
             {
                 pathtraceDefines += "#define OPT_MEDIUM\n";
                 break;

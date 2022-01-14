@@ -132,7 +132,7 @@ bool AnyHit(Ray r, float maxDist)
                     float alphaCutoff = alphaParams.z;
                     opacity *= alpha;
 
-                    // End traversal if alpha test fails
+                    // Ignore intersection and continue ray based on alpha test
                     if (!((alphaMode == ALPHA_MODE_MASK && opacity < alphaCutoff) || 
                           (alphaMode == ALPHA_MODE_BLEND && rand() > opacity)))
                         return true;

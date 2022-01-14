@@ -202,11 +202,12 @@ vec4 PathTrace(Ray r)
     State state;
     LightSampleRec lightSample;
     ScatterSampleRec scatterSample;
-    bool inMedium = false;
-    // TODO: alpha from material opacity/medium density
+    
+    // FIXME: alpha from material opacity/medium density
     float alpha = 1.0;
 
-    // Medium tracking
+    // For medium tracking
+    bool inMedium = false;
     int mediumStackID = -1;
     Medium mediumStack[8];
 
@@ -233,11 +234,12 @@ vec4 PathTrace(Ray r)
 
                 float misWeight = 1.0;
 
+                // Gather radiance from envmap and use scatterSample.pdf from previous bounce for MIS
                 if (state.depth > 0)
                     misWeight = PowerHeuristic(scatterSample.pdf, envMapColPdf.w);
 
                 if(misWeight > 0)
-                    radiance += envMapColPdf.rgb * throughput * envMapIntensity;
+                    radiance += misWeight * envMapColPdf.rgb * throughput * envMapIntensity;
 #endif
 #endif
              }
@@ -246,11 +248,11 @@ vec4 PathTrace(Ray r)
 
         GetMaterials(state, r);
 
-        // Gather radiance from emissive objects. This are not importance sampled
+        // Gather radiance from emissive objects. Emission from emissive objects is not importance sampled
         radiance += state.mat.emission * throughput;
 
 #ifdef OPT_LIGHTS
-        // Multiple importance sampling with scatterSample.pdf from previous bounce
+        // Gather radiance from light and use scatterSample.pdf from previous bounce for MIS
         if (state.isEmitter)
         {
             float misWeight = 1.0;
@@ -259,16 +261,18 @@ vec4 PathTrace(Ray r)
                 misWeight = PowerHeuristic(scatterSample.pdf, lightSample.pdf);
 
             radiance += misWeight * lightSample.emission * throughput;
+
             break;
         }
 #endif
-        // Exit if ray has reached maximum depth
-        if(state.depth >= maxDepth)
+        // Quit if ray has reached maximum depth
+        if(state.depth == maxDepth)
             break;
 
 #ifdef OPT_MEDIUM
         bool mediumSampled = false;
 
+        // Handle absorption/emission/scattering from medium
         if(inMedium)
         {
             if(state.medium.type == MEDIUM_ABSORB)
@@ -295,6 +299,7 @@ vec4 PathTrace(Ray r)
             }
         }
 
+        // If medium was not sampled then proceed with surface BSDF evaluation
         if (!mediumSampled)
         {
 #endif
@@ -320,8 +325,9 @@ vec4 PathTrace(Ray r)
                     break;
             }
 
-             r.direction = scatterSample.L;
-             r.origin = state.fhp + r.direction * EPS;
+            // Move ray origin to hit point and set direction for next bounce
+            r.direction = scatterSample.L;
+            r.origin = state.fhp + r.direction * EPS;
 
 #ifdef OPT_MEDIUM
             // Push medium onto stack if ray is going into the object
