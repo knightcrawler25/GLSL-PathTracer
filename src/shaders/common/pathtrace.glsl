@@ -202,14 +202,12 @@ vec4 PathTrace(Ray r)
     State state;
     LightSampleRec lightSample;
     ScatterSampleRec scatterSample;
-    
+
     // FIXME: alpha from material opacity/medium density
     float alpha = 1.0;
 
     // For medium tracking
     bool inMedium = false;
-    int mediumStackID = -1;
-    Medium mediumStack[8];
 
     for (state.depth = 0;; state.depth++)
     {
@@ -277,13 +275,13 @@ vec4 PathTrace(Ray r)
         {
             if(state.medium.type == MEDIUM_ABSORB)
             {
-                throughput *= exp(log(state.medium.color) * state.hitDist * state.medium.density);
+                throughput *= exp(-(1.0 - state.medium.color) * state.hitDist * state.medium.density);
             }
             else if(state.medium.type == MEDIUM_EMISSIVE)
             {
                 radiance += state.medium.color * state.hitDist * state.medium.density;
             }
-            else// if(state.medium.type == MEDIUM_SCATTER) // Condition needed?
+            else
             {
                 float scatterDist = min(-log(rand()) / state.medium.density, state.hitDist);
                 mediumSampled = scatterDist < state.hitDist;
@@ -330,27 +328,10 @@ vec4 PathTrace(Ray r)
             r.origin = state.fhp + r.direction * EPS;
 
 #ifdef OPT_MEDIUM
-            // Push medium onto stack if ray is going into the object
-            inMedium = false;
-
-            if (dot(scatterSample.L, state.normal) < 0)
-            {
-                if(state.medium.type != MEDIUM_NONE)
-                {
-                    inMedium = true;
-                    mediumStackID = mediumStackID + 1;
-                    mediumStack[mediumStackID] = state.medium;
-                }
-            }
-            else // Pop medium from stack if ray is going out of the object
-            {
-                if(mediumStackID > 0)
-                {
-                    inMedium = true;
-                    mediumStackID = mediumStackID - 1;
-                    state.medium = mediumStack[mediumStackID];
-                }
-            }
+            if (dot(scatterSample.L, state.normal) < 0 && state.medium.type != MEDIUM_NONE)
+                inMedium = true;
+            else
+                inMedium = false;
         }
 #endif
 
