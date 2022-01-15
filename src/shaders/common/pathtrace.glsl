@@ -117,17 +117,18 @@ void GetMaterial(inout State state, in Ray r)
 }
 
 #if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
-vec3 EvalTransmittance(Ray r, State state)
+vec3 EvalTransmittance(Ray r)
 {
     LightSampleRec lightSample;
+    State state;
     vec3 transmittance = vec3(1.0);
 
     for (int depth = 0; depth < maxDepth; depth++)
     {
         bool hit = ClosestHit(r, state, lightSample);
 
-        // If ray hit emitter then return transmittance
-        if (state.isEmitter)
+        // If no hit (environment map) or if ray hit a light source then return transmittance
+        if (!hit || state.isEmitter)
             break;
 
         // TODO: Get only parameters that are needed to calculate transmittance
@@ -176,7 +177,7 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
 
 #if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
         // If there are volumes in the scene then evaluate transmittance rather than a binary anyhit test
-        Li *= EvalTransmittance(shadowRay, state);
+        Li *= EvalTransmittance(shadowRay);
 
         if (isSurface)
             scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, scatterSample.pdf);
@@ -241,7 +242,7 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
 
             // If there are volumes in the scene then evaluate transmittance rather than a binary anyhit test
 #if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
-            Li *= EvalTransmittance(shadowRay, state);
+            Li *= EvalTransmittance(shadowRay);
 
             if (isSurface)
                 scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightSample.direction, scatterSample.pdf);
@@ -338,7 +339,7 @@ vec4 PathTrace(Ray r)
 
         GetMaterial(state, r);
 
-        // Gather radiance from emissive objects. Emission from emissive objects is not importance sampled
+        // Gather radiance from emissive objects. Emission from meshes is not importance sampled
         radiance += state.mat.emission * throughput;
 
 #ifdef OPT_LIGHTS
@@ -360,7 +361,7 @@ vec4 PathTrace(Ray r)
             break;
         }
 #endif
-        // Quit if ray has reached maximum depth
+        // Stop tracing ray if maximum depth was reached
         if(state.depth == maxDepth)
             break;
 

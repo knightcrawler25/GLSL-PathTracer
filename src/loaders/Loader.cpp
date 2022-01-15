@@ -284,7 +284,7 @@ namespace GLSLPT
                     sscanf(line, " tileheight %i", &renderOptions.tileHeight);
                     sscanf(line, " enablerr %s", enableRR);
                     sscanf(line, " rrdepth %i", &renderOptions.RRDepth);
-                    sscanf(line, " enableTonemap %s", enableTonemap);
+                    sscanf(line, " enabletonemap %s", enableTonemap);
                     sscanf(line, " useaces %s", useAces);
                     sscanf(line, " texarraywidth %i", &renderOptions.texArrayWidth);
                     sscanf(line, " texarrayheight %i", &renderOptions.texArrayHeight);
@@ -294,7 +294,7 @@ namespace GLSLPT
                     sscanf(line, " transparentbackground %s", transparentBackground);
                     sscanf(line, " backgroundcolor %f %f %f", &renderOptions.backgroundCol.x, &renderOptions.backgroundCol.y, &renderOptions.backgroundCol.z);
                     sscanf(line, " independentrendersize %s", independentRenderSize);
-                    sscanf(line, " envmaprot %f", &renderOptions.envMapRot);
+                    sscanf(line, " envmaprotation %f", &renderOptions.envMapRot);
                     sscanf(line, " enableroughnessmollification %s", enableRoughnessMollification);
                     sscanf(line, " roughnessmollificationamt %f", &renderOptions.roughnessMollificationAmt);
                     sscanf(line, " enablevolumemis %s", enableVolumeMIS);
