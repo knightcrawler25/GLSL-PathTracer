@@ -293,6 +293,7 @@ vec4 PathTrace(Ray r)
     float alpha = 1.0;
 
     // For medium tracking
+    Medium currMedium;
     bool inMedium = false;
     bool mediumSampled = false;
     bool surfaceScatter = false;
@@ -341,7 +342,7 @@ vec4 PathTrace(Ray r)
 
         // Gather radiance from emissive objects. Emission from meshes is not importance sampled
         radiance += state.mat.emission * throughput;
-
+        
 #ifdef OPT_LIGHTS
         // Gather radiance from light and use scatterSample.pdf from previous bounce for MIS
         if (state.isEmitter)
@@ -371,26 +372,27 @@ vec4 PathTrace(Ray r)
         surfaceScatter = false;
 
         // Handle absorption/emission/scattering from medium
+        // TODO: Handle light sources placed inside medium
         if(inMedium)
         {
-            if(state.medium.type == MEDIUM_ABSORB)
+            if(currMedium.type == MEDIUM_ABSORB)
             {
-                throughput *= exp(-(1.0 - state.medium.color) * state.hitDist * state.medium.density);
+                throughput *= exp(-(1.0 - currMedium.color) * state.hitDist * currMedium.density);
             }
-            else if(state.medium.type == MEDIUM_EMISSIVE)
+            else if(currMedium.type == MEDIUM_EMISSIVE)
             {
-                radiance += state.medium.color * state.hitDist * state.medium.density;
+                radiance += currMedium.color * state.hitDist * currMedium.density;
             }
             else
             {
-                float scatterDist = min(-log(rand()) / state.medium.density, state.hitDist);
+                float scatterDist = min(-log(rand()) / currMedium.density, state.hitDist);
                 mediumSampled = scatterDist < state.hitDist;
 
                 // Pick a new direction based on the phase function
                 if (mediumSampled)
                 {
                     scatterSample.pdf = INV_4_PI;
-                    throughput *= state.medium.color;
+                    throughput *= currMedium.color;
 
                     r.origin += r.direction * scatterDist;
                     r.direction = UniformSampleSphere(rand(), rand());
@@ -435,11 +437,13 @@ vec4 PathTrace(Ray r)
             r.origin = state.fhp + r.direction * EPS;
 
 #ifdef OPT_MEDIUM
+            inMedium = false;
             // Ray is in medium only if it is entering a surface
             if (dot(scatterSample.L, state.normal) < 0 && state.medium.type != MEDIUM_NONE)
+            {
                 inMedium = true;
-            else
-                inMedium = false;
+                currMedium = state.medium;
+            }                
         }
 #endif
 
