@@ -71,7 +71,7 @@ bool AnyHit(Ray r, float maxDist)
     float leftHit = 0.0;
     float rightHit = 0.0;
 
-#ifdef OPT_ALPHA_TEST
+#if defined(OPT_ALPHA_TEST) && !defined(OPT_MEDIUM)
     int currMatID = 0;
 #endif
     bool BLAS = false;
@@ -115,7 +115,7 @@ bool AnyHit(Ray r, float maxDist)
 
                 if (all(greaterThanEqual(uvt, vec4(0.0))) && uvt.z < maxDist)
                 {
-#ifdef OPT_ALPHA_TEST
+#if defined(OPT_ALPHA_TEST) && !defined(OPT_MEDIUM)
                     vec2 t0 = vec2(v0.w, texelFetch(normalsTex, vertIndices.x).w);
                     vec2 t1 = vec2(v1.w, texelFetch(normalsTex, vertIndices.y).w);
                     vec2 t2 = vec2(v2.w, texelFetch(normalsTex, vertIndices.z).w);
@@ -160,7 +160,7 @@ bool AnyHit(Ray r, float maxDist)
 
             index = leftIndex;
             BLAS = true;
-#ifdef OPT_ALPHA_TEST
+#if defined(OPT_ALPHA_TEST) && !defined(OPT_MEDIUM)
             currMatID = rightIndex;
 #endif
             continue;

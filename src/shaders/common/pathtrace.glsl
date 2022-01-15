@@ -116,13 +116,13 @@ void GetMaterial(inout State state, in Ray r)
     state.eta = dot(r.direction, state.normal) < 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
-#ifdef OPT_MEDIUM
+#if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
 vec3 EvalTransmittance(Ray r, State state)
 {
     LightSampleRec lightSample;
     vec3 transmittance = vec3(1.0);
 
-    for (int depth = 0; depth < 2; depth++)
+    for (int depth = 0; depth < maxDepth; depth++)
     {
         bool hit = ClosestHit(r, state, lightSample);
 
@@ -134,16 +134,16 @@ vec3 EvalTransmittance(Ray r, State state)
         GetMaterial(state, r);
 
         bool alphatest = (state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff) || (state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity);
-        bool transmissive = (1.0 - state.mat.metallic) * state.mat.specTrans > 0.0;
+        bool refractive = (1.0 - state.mat.metallic) * state.mat.specTrans > 0.0;
 
-        // Glass is ignored (Not physically correct but helps with sampling lights from inside glass objects)
-        if(hit && !(alphatest || transmissive))
+        // Refraction is ignored (Not physically correct but helps with sampling lights from inside refractive objects)
+        if(hit && !(alphatest || refractive))
             return vec3(0.0);
 
         // Evaluate transmittance
         if (dot(r.direction, state.normal) > 0 && state.medium.type != MEDIUM_NONE)
         {
-            vec3 color = state.medium.type == MEDIUM_SCATTER ? vec3(1.0) : state.medium.color;
+            vec3 color = state.medium.type != MEDIUM_SCATTER ? vec3(1.0) - state.medium.color : vec3(1.0);
             transmittance *= exp(-color * state.medium.density * state.hitDist);
         }
 
@@ -174,7 +174,7 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
 
         Ray shadowRay = Ray(scatterPos, lightDir);
 
-#ifdef OPT_MEDIUM
+#if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
         // If there are volumes in the scene then evaluate transmittance rather than a binary anyhit test
         Li *= EvalTransmittance(shadowRay, state);
 
@@ -240,7 +240,7 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
             Ray shadowRay = Ray(scatterPos, lightSample.direction);
 
             // If there are volumes in the scene then evaluate transmittance rather than a binary anyhit test
-#ifdef OPT_MEDIUM
+#if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
             Li *= EvalTransmittance(shadowRay, state);
 
             if (isSurface)
@@ -293,6 +293,8 @@ vec4 PathTrace(Ray r)
 
     // For medium tracking
     bool inMedium = false;
+    bool mediumSampled = false;
+    bool surfaceScatter = false;
 
     for (state.depth = 0;; state.depth++)
     {
@@ -321,6 +323,11 @@ vec4 PathTrace(Ray r)
                 if (state.depth > 0)
                     misWeight = PowerHeuristic(scatterSample.pdf, envMapColPdf.w);
 
+#if defined(OPT_MEDIUM) && !defined(OPT_VOL_MIS)
+                if(!surfaceScatter)
+                    misWeight = 1.0f;
+#endif
+
                 if(misWeight > 0)
                     radiance += misWeight * envMapColPdf.rgb * throughput * envMapIntensity;
 #endif
@@ -343,6 +350,11 @@ vec4 PathTrace(Ray r)
             if (state.depth > 0)
                 misWeight = PowerHeuristic(scatterSample.pdf, lightSample.pdf);
 
+#if defined(OPT_MEDIUM) && !defined(OPT_VOL_MIS)
+            if(!surfaceScatter)
+                misWeight = 1.0f;
+#endif
+
             radiance += misWeight * lightSample.emission * throughput;
 
             break;
@@ -353,15 +365,16 @@ vec4 PathTrace(Ray r)
             break;
 
 #ifdef OPT_MEDIUM
-        bool mediumSampled = false;
+
+        mediumSampled = false;
+        surfaceScatter = false;
 
         // Handle absorption/emission/scattering from medium
         if(inMedium)
         {
             if(state.medium.type == MEDIUM_ABSORB)
             {
-                // For absorption, medium color is converted to 1.0 - mediumColor by host
-                throughput *= exp(-state.medium.color * state.hitDist * state.medium.density);
+                throughput *= exp(-(1.0 - state.medium.color) * state.hitDist * state.medium.density);
             }
             else if(state.medium.type == MEDIUM_EMISSIVE)
             {
@@ -371,11 +384,11 @@ vec4 PathTrace(Ray r)
             {
                 float scatterDist = min(-log(rand()) / state.medium.density, state.hitDist);
                 mediumSampled = scatterDist < state.hitDist;
-                scatterSample.pdf = INV_4_PI;
 
                 // Pick a new direction based on the phase function
                 if (mediumSampled)
                 {
+                    scatterSample.pdf = INV_4_PI;
                     throughput *= state.medium.color;
 
                     r.origin += r.direction * scatterDist;
@@ -403,6 +416,8 @@ vec4 PathTrace(Ray r)
             else
 #endif
             {
+                surfaceScatter = true;
+
                 // Next event estimation
                 radiance += DirectLight(r, state, true) * throughput;
 

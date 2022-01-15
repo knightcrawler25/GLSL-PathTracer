@@ -350,6 +350,7 @@ void MainLoop(void* arg)
             reloadShaders |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
             reloadShaders |= ImGui::Checkbox("Enable Roughness Mollification", &renderOptions.enableRoughnessMollification);
             optionsChanged |= ImGui::SliderFloat("Roughness Mollification Amount", &renderOptions.roughnessMollificationAmt, 0, 1);
+            reloadShaders |= ImGui::Checkbox("Enable Volume MIS", &renderOptions.enableVolumeMIS);
         }
 
         if (ImGui::CollapsingHeader("Environment"))
@@ -455,16 +456,9 @@ void MainLoop(void* arg)
 
             if (mediumType != MediumType::None)
             {
-                Vec3 mediumColor = mat->mediumColor;
-                if (mediumType == MediumType::Absorb)
-                    mediumColor = Vec3(1.0f, 1.0f, 1.0f) - mat->mediumColor;
-                mediumColor = Vec3::Pow(mediumColor, 1.0 / 2.2);
-
+                Vec3 mediumColor = Vec3::Pow(mat->mediumColor, 1.0 / 2.2);
                 objectPropChanged |= ImGui::ColorEdit3("Medium Color (Gamma Corrected)", (float*)(&mediumColor), 0);
- 
                 mat->mediumColor = Vec3::Pow(mediumColor, 2.2);
-                if (mediumType == MediumType::Absorb)
-                    mat->mediumColor = Vec3(1.0f, 1.0f, 1.0f) - mat->mediumColor;
 
                 objectPropChanged |= ImGui::SliderFloat("Medium Density", &mat->mediumDensity, 0.0f, 5.0f);
             }

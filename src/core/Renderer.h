@@ -62,6 +62,7 @@ namespace GLSLPT
             transparentBackground = false;
             independentRenderSize = false;
             enableRoughnessMollification = false;
+            enableVolumeMIS = false;
             envMapIntensity = 1.0f;
             envMapRot = 0.0f;
             roughnessMollificationAmt = 0.0f;
@@ -92,6 +93,7 @@ namespace GLSLPT
         bool transparentBackground;
         bool independentRenderSize;
         bool enableRoughnessMollification;
+        bool enableVolumeMIS;
         float envMapIntensity;
         float envMapRot;
         float roughnessMollificationAmt;

@@ -145,10 +145,7 @@ namespace GLSLPT
 
                 // MediumType
                 if (strcmp(mediumType, "absorb") == 0)
-                {
                     material.mediumType = MediumType::Absorb;
-                    material.mediumColor = Vec3(1.0f, 1.0f, 1.0f) - material.mediumColor;
-                }
                 else if (strcmp(mediumType, "scatter") == 0)
                     material.mediumType = MediumType::Scatter;
                 else if (strcmp(mediumType, "emissive") == 0)
@@ -269,6 +266,7 @@ namespace GLSLPT
                 char independentRenderSize[10] = "none";
                 char enableTonemap[10] = "none";
                 char enableRoughnessMollification[10] = "none";
+                char enableVolumeMIS[10] = "none";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -299,6 +297,7 @@ namespace GLSLPT
                     sscanf(line, " envmaprot %f", &renderOptions.envMapRot);
                     sscanf(line, " enableroughnessmollification %s", enableRoughnessMollification);
                     sscanf(line, " roughnessmollificationamt %f", &renderOptions.roughnessMollificationAmt);
+                    sscanf(line, " enablevolumemis %s", enableVolumeMIS);
                 }
 
                 if (strcmp(envMap, "none") != 0)
@@ -353,6 +352,11 @@ namespace GLSLPT
                     renderOptions.enableRoughnessMollification = false;
                 else if (strcmp(enableRoughnessMollification, "true") == 0)
                     renderOptions.enableRoughnessMollification = true;
+
+                if (strcmp(enableVolumeMIS, "false") == 0)
+                    renderOptions.enableVolumeMIS = false;
+                else if (strcmp(enableVolumeMIS, "true") == 0)
+                    renderOptions.enableVolumeMIS = true;
 
                 if (!renderOptions.independentRenderSize)
                     renderOptions.windowResolution = renderOptions.renderResolution;

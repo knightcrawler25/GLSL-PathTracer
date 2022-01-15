@@ -455,6 +455,9 @@ namespace GLSLPT
             }
         }
 
+        if (scene->renderOptions.enableVolumeMIS)
+            pathtraceDefines += "#define OPT_VOL_MIS\n";
+
         if (pathtraceDefines.size() > 0)
         {
             size_t idx = pathTraceShaderSrcObj.src.find("#version");
