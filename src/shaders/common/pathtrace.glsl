@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-void GetMaterials(inout State state, in Ray r)
+void GetMaterial(inout State state, in Ray r)
 {
     int index = state.matID * 8;
     Material mat;
@@ -55,7 +55,7 @@ void GetMaterials(inout State state, in Ray r)
     mat.specTrans          = param5.x;
     mat.ior                = param5.y;
     medium.type            = int(param5.z);
-    medium.density      = param5.w;
+    medium.density         = param5.w;
 
     medium.color           = param6.rgb;
     medium.phase           = param6.w;
@@ -116,8 +116,48 @@ void GetMaterials(inout State state, in Ray r)
     state.eta = dot(r.direction, state.normal) < 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
-vec3 DirectLight(in Ray r, in State state)
+#ifdef OPT_MEDIUM
+vec3 EvalTransmittance(Ray r, State state)
 {
+    LightSampleRec lightSample;
+    vec3 transmittance = vec3(1.0);
+
+    for (int depth = 0; depth < 2; depth++)
+    {
+        bool hit = ClosestHit(r, state, lightSample);
+
+        // If ray hit emitter then return transmittance
+        if (state.isEmitter)
+            break;
+
+        // TODO: Get only parameters that are needed to calculate transmittance
+        GetMaterial(state, r);
+
+        bool alphatest = (state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff) || (state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity);
+        bool transmissive = (1.0 - state.mat.metallic) * state.mat.specTrans > 0.0;
+
+        // Glass is ignored (Not physically correct but helps with sampling lights from inside glass objects)
+        if(hit && !(alphatest || transmissive))
+            return vec3(0.0);
+
+        // Evaluate transmittance
+        if (dot(r.direction, state.normal) > 0 && state.medium.type != MEDIUM_NONE)
+        {
+            vec3 color = state.medium.type == MEDIUM_SCATTER ? vec3(1.0) : state.medium.color;
+            transmittance *= exp(-color * state.medium.density * state.hitDist);
+        }
+
+        // Move ray origin to hit point
+        r.origin = state.fhp + r.direction * EPS;
+    }
+
+    return transmittance;
+}
+#endif
+
+vec3 DirectLight(in Ray r, in State state, bool isSurface)
+{
+    vec3 Ld = vec3(0.0);
     vec3 Li = vec3(0.0);
     vec3 scatterPos = state.fhp + state.ffnormal * EPS;
 
@@ -128,11 +168,32 @@ vec3 DirectLight(in Ray r, in State state)
 #ifndef OPT_UNIFORM_LIGHT
     {
         vec3 color;
-        vec4 dirPdf = SampleEnvMap(color);
+        vec4 dirPdf = SampleEnvMap(Li);
         vec3 lightDir = dirPdf.xyz;
         float lightPdf = dirPdf.w;
 
         Ray shadowRay = Ray(scatterPos, lightDir);
+
+#ifdef OPT_MEDIUM
+        // If there are volumes in the scene then evaluate transmittance rather than a binary anyhit test
+        Li *= EvalTransmittance(shadowRay, state);
+
+        if (isSurface)
+            scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, scatterSample.pdf);
+        else
+        {
+            scatterSample.f = vec3(INV_4_PI);
+            scatterSample.pdf = INV_4_PI;
+        }
+
+        if (scatterSample.pdf > 0.0)
+        {
+            float misWeight = PowerHeuristic(lightPdf, scatterSample.pdf);
+            if (misWeight > 0.0)
+                Ld += misWeight * Li * scatterSample.f * envMapIntensity / lightPdf;
+        }
+#else
+        // If there are no volumes in the scene then use a simple binary hit test
         bool inShadow = AnyHit(shadowRay, INF - EPS);
 
         if (!inShadow)
@@ -143,9 +204,10 @@ vec3 DirectLight(in Ray r, in State state)
             {
                 float misWeight = PowerHeuristic(lightPdf, scatterSample.pdf);
                 if (misWeight > 0.0)
-                    Li += misWeight * scatterSample.f * color * envMapIntensity / lightPdf;
+                    Ld += misWeight * Li * scatterSample.f * envMapIntensity / lightPdf;
             }
         }
+#endif
     }
 #endif
 #endif
@@ -171,10 +233,32 @@ vec3 DirectLight(in Ray r, in State state)
 
         light = Light(position, emission, u, v, radius, area, type);
         SampleOneLight(light, scatterPos, lightSample);
+        Li = lightSample.emission;
 
         if (dot(lightSample.direction, lightSample.normal) < 0.0) // Required for quad lights with single sided emission
         {
             Ray shadowRay = Ray(scatterPos, lightSample.direction);
+
+            // If there are volumes in the scene then evaluate transmittance rather than a binary anyhit test
+#ifdef OPT_MEDIUM
+            Li *= EvalTransmittance(shadowRay, state);
+
+            if (isSurface)
+                scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightSample.direction, scatterSample.pdf);
+            else
+            {
+                scatterSample.f = vec3(INV_4_PI);
+                scatterSample.pdf = INV_4_PI;
+            }
+
+            float misWeight = 1.0;
+            if(light.area > 0.0) // No MIS for distant light
+                misWeight = PowerHeuristic(lightSample.pdf, scatterSample.pdf);
+
+            if (scatterSample.pdf > 0.0)
+                Ld += misWeight * scatterSample.f * Li / lightSample.pdf;
+#else
+            // If there are no volumes in the scene then use a simple binary hit test
             bool inShadow = AnyHit(shadowRay, lightSample.dist - EPS);
 
             if (!inShadow)
@@ -186,13 +270,14 @@ vec3 DirectLight(in Ray r, in State state)
                     misWeight = PowerHeuristic(lightSample.pdf, scatterSample.pdf);
 
                 if (scatterSample.pdf > 0.0)
-                    Li += misWeight * scatterSample.f * lightSample.emission / lightSample.pdf;
+                    Ld += misWeight * Li * scatterSample.f / lightSample.pdf;
             }
+#endif
         }
     }
 #endif
 
-    return Li;
+    return Ld;
 }
 
 vec4 PathTrace(Ray r)
@@ -244,7 +329,7 @@ vec4 PathTrace(Ray r)
              break;
         }
 
-        GetMaterials(state, r);
+        GetMaterial(state, r);
 
         // Gather radiance from emissive objects. Emission from emissive objects is not importance sampled
         radiance += state.mat.emission * throughput;
@@ -275,7 +360,8 @@ vec4 PathTrace(Ray r)
         {
             if(state.medium.type == MEDIUM_ABSORB)
             {
-                throughput *= exp(-(1.0 - state.medium.color) * state.hitDist * state.medium.density);
+                // For absorption, medium color is converted to 1.0 - mediumColor by host
+                throughput *= exp(-state.medium.color * state.hitDist * state.medium.density);
             }
             else if(state.medium.type == MEDIUM_EMISSIVE)
             {
@@ -291,8 +377,13 @@ vec4 PathTrace(Ray r)
                 if (mediumSampled)
                 {
                     throughput *= state.medium.color;
+
                     r.origin += r.direction * scatterDist;
                     r.direction = UniformSampleSphere(rand(), rand());
+                    state.fhp = r.origin;
+
+                    // Transmittance Evaluation
+                    radiance += DirectLight(r, state, false) * throughput;
                 }
             }
         }
@@ -313,7 +404,7 @@ vec4 PathTrace(Ray r)
 #endif
             {
                 // Next event estimation
-                radiance += DirectLight(r, state) * throughput;
+                radiance += DirectLight(r, state, true) * throughput;
 
                 // Sample BSDF for color and outgoing direction
                 scatterSample.f = DisneySample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
@@ -328,6 +419,7 @@ vec4 PathTrace(Ray r)
             r.origin = state.fhp + r.direction * EPS;
 
 #ifdef OPT_MEDIUM
+            // Ray is in medium only if it is entering a surface
             if (dot(scatterSample.L, state.normal) < 0 && state.medium.type != MEDIUM_NONE)
                 inMedium = true;
             else

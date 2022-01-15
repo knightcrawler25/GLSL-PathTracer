@@ -145,7 +145,10 @@ namespace GLSLPT
 
                 // MediumType
                 if (strcmp(mediumType, "absorb") == 0)
+                {
                     material.mediumType = MediumType::Absorb;
+                    material.mediumColor = Vec3(1.0f, 1.0f, 1.0f) - material.mediumColor;
+                }
                 else if (strcmp(mediumType, "scatter") == 0)
                     material.mediumType = MediumType::Scatter;
                 else if (strcmp(mediumType, "emissive") == 0)
