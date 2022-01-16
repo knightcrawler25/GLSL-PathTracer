@@ -5,7 +5,7 @@ A physically based path tracer that runs in a GLSL fragment shader.
 
 ![Jinx](./screenshots/Jinx.jpg)
 
-![WW2](./screenshots/ww2.jpg)
+![Tropical Island](./screenshots/Tropical_Island.jpg)
 
 Features
 --------
@@ -18,8 +18,9 @@ Features
 - Multiple importance sampling (between BSDF and lights)
 - Tile rendering
 - OpenImageDenoise
+- Stochastic alpha testing
+- MagicaVoxel style homogeneous volumes
 - GLTF/GLB support (In progress)
-- Homogeneous volumes (In progress)
 
 Build Instructions
 --------
@@ -32,7 +33,9 @@ https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
 
 Gallery
 --------
-![Slum](./screenshots/Slum.jpg)
+![Monster](./screenshots/Monster.jpg)
+--------
+![WW2](./screenshots/ww2.jpg)
 --------
 ![RenderMan Swatch](./screenshots/Renderman_swatch.jpg)
 --------

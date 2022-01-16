@@ -131,7 +131,7 @@ void LoadScene(std::string sceneName)
         success = LoadSceneFromFile(sceneName, scene, renderOptions);
     else if (ext == "gltf")
         success = LoadGLTF(sceneName, scene, renderOptions, xform, false);
-    else if(ext == "glb")
+    else if (ext == "glb")
         success = LoadGLTF(sceneName, scene, renderOptions, xform, true);
 
     if (!success)
@@ -147,7 +147,7 @@ void LoadScene(std::string sceneName)
     if (!scene->envMap && !envMaps.empty())
     {
         scene->AddEnvMap(envMaps[envMapIdx]);
-        renderOptions.useEnvMap = scene->lights.empty() ? true : false;
+        renderOptions.enableEnvMap = scene->lights.empty() ? true : false;
         renderOptions.envMapIntensity = 1.5f;
     }
 
@@ -277,7 +277,7 @@ void MainLoop(void* arg)
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
                 renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
-                
+
                 if (!renderOptions.independentRenderSize)
                     renderOptions.renderResolution = renderOptions.windowResolution;
 
@@ -330,7 +330,7 @@ void MainLoop(void* arg)
         std::vector<const char*> envMapsList;
         for (int i = 0; i < envMaps.size(); ++i)
             envMapsList.push_back(envMaps[i].c_str());
-        
+
         if (ImGui::Combo("EnvMaps", &envMapIdx, envMapsList.data(), envMapsList.size()))
         {
             scene->AddEnvMap(envMaps[envMapIdx]);
@@ -345,23 +345,23 @@ void MainLoop(void* arg)
         {
             optionsChanged |= ImGui::SliderInt("Max Spp", &renderOptions.maxSpp, -1, 256);
             optionsChanged |= ImGui::SliderInt("Max Depth", &renderOptions.maxDepth, 1, 10);
-            
+
             reloadShaders |= ImGui::Checkbox("Enable Russian Roulette", &renderOptions.enableRR);
             reloadShaders |= ImGui::SliderInt("Russian Roulette Depth", &renderOptions.RRDepth, 1, 10);
             reloadShaders |= ImGui::Checkbox("Enable Roughness Mollification", &renderOptions.enableRoughnessMollification);
             optionsChanged |= ImGui::SliderFloat("Roughness Mollification Amount", &renderOptions.roughnessMollificationAmt, 0, 1);
+            reloadShaders |= ImGui::Checkbox("Enable Volume MIS", &renderOptions.enableVolumeMIS);
         }
 
         if (ImGui::CollapsingHeader("Environment"))
         {
-            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
+            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.enableUniformLight);
 
-            // Gamma correction for color picker. Internally, the renderer uses linear RGB values for colors
             Vec3 uniformLightCol = Vec3::Pow(renderOptions.uniformLightCol, 1.0 / 2.2);
             optionsChanged |= ImGui::ColorEdit3("Uniform Light Color (Gamma Corrected)", (float*)(&uniformLightCol), 0);
             renderOptions.uniformLightCol = Vec3::Pow(uniformLightCol, 2.2);
 
-            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
+            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.enableEnvMap);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Intensity", &renderOptions.envMapIntensity, 0.1f, 10.0f);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Rotation", &renderOptions.envMapRot, 0.0f, 360.0f);
             reloadShaders |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
@@ -376,8 +376,8 @@ void MainLoop(void* arg)
 
             if (renderOptions.enableTonemap)
             {
-                ImGui::Checkbox("Use ACES", &renderOptions.useAces);
-                if (renderOptions.useAces)
+                ImGui::Checkbox("Enable ACES", &renderOptions.enableAces);
+                if (renderOptions.enableAces)
                     ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
             }
         }
@@ -428,7 +428,7 @@ void MainLoop(void* arg)
 
             // Material Properties
             Material* mat = &scene->materials[scene->meshInstances[selectedInstance].materialID];
-            
+
             // Gamma correction for color picker. Internally, the renderer uses linear RGB values for colors
             Vec3 albedo = Vec3::Pow(mat->baseColor, 1.0 / 2.2);
             objectPropChanged |= ImGui::ColorEdit3("Albedo (Gamma Corrected)", (float*)(&albedo), 0);
@@ -443,8 +443,36 @@ void MainLoop(void* arg)
             objectPropChanged |= ImGui::SliderFloat("SheenTint", &mat->sheenTint, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Clearcoat", &mat->clearcoat, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("ClearcoatGloss", &mat->clearcoatGloss, 0.0f, 1.0f);
-            objectPropChanged |= ImGui::SliderFloat("Transmission", &mat->specTrans, 0.0f, 1.0f);
+            objectPropChanged |= ImGui::SliderFloat("SpecTrans", &mat->specTrans, 0.0f, 1.0f);
             objectPropChanged |= ImGui::SliderFloat("Ior", &mat->ior, 1.001f, 2.0f);
+
+            int mediumType = (int)mat->mediumType;
+            if (ImGui::Combo("Medium Type", &mediumType, "None\0Absorb\0Scatter\0Emissive\0"))
+            {
+                reloadShaders = true;
+                objectPropChanged = true;
+                mat->mediumType = mediumType;
+            }
+
+            if (mediumType != MediumType::None)
+            {
+                Vec3 mediumColor = Vec3::Pow(mat->mediumColor, 1.0 / 2.2);
+                objectPropChanged |= ImGui::ColorEdit3("Medium Color (Gamma Corrected)", (float*)(&mediumColor), 0);
+                mat->mediumColor = Vec3::Pow(mediumColor, 2.2);
+
+                objectPropChanged |= ImGui::SliderFloat("Medium Density", &mat->mediumDensity, 0.0f, 5.0f);
+            }
+
+            int alphaMode = (int)mat->alphaMode;
+            if (ImGui::Combo("Alpha Mode", &alphaMode, "Opaque\0Blend"))
+            {
+                reloadShaders = true;
+                objectPropChanged = true;
+                mat->alphaMode = alphaMode;
+            }
+
+            if (alphaMode != AlphaMode::Opaque)
+                objectPropChanged |= ImGui::SliderFloat("Opacity", &mat->opacity, 0.0f, 1.0f);
 
             // Transforms
             ImGui::Separator();
@@ -619,5 +647,5 @@ int main(int argc, char** argv)
     SDL_DestroyWindow(loopdata.mWindow);
     SDL_Quit();
     return 0;
-}
+    }
 

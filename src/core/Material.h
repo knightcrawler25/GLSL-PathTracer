@@ -36,6 +36,14 @@ namespace GLSLPT
         Mask
     };
 
+    enum MediumType
+    {
+        None,
+        Absorb,
+        Scatter,
+        Emissive
+    };
+
     class Material
     {
     public:
@@ -57,13 +65,13 @@ namespace GLSLPT
             clearcoat      = 0.0f;
             clearcoatGloss = 0.0f;
 
-            specTrans  = 0.0f;
-            ior        = 1.5f;
-            atDistance = 1.0f;
-            // padding2
+            specTrans        = 0.0f;
+            ior              = 1.5f;
+            mediumType       = 0.0f;
+            mediumDensity    = 0.0f;
 
-            extinction = Vec3(1.0f, 1.0f, 1.0f);
-            // padding3
+            mediumColor = Vec3(1.0f, 1.0f, 1.0f);
+            mediumPhase = 0.0f;
 
             baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
@@ -73,7 +81,7 @@ namespace GLSLPT
             opacity     = 1.0f;
             alphaMode   = 0.0f;
             alphaCutoff = 0.0f;
-            // padding4
+            // padding2
         };
 
         Vec3 baseColor;
@@ -94,11 +102,11 @@ namespace GLSLPT
 
         float specTrans;
         float ior;
-        float atDistance;
-        float padding2;
+        float mediumType;
+        float mediumDensity;
         
-        Vec3 extinction;
-        float padding3;
+        Vec3 mediumColor;
+        float mediumPhase;
 
         float baseColorTexId;
         float metallicRoughnessTexID;
@@ -108,6 +116,6 @@ namespace GLSLPT
         float opacity;
         float alphaMode;
         float alphaCutoff;
-        float padding4;
+        float padding2;
     };
 }

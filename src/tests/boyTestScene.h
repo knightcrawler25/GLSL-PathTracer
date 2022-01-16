@@ -35,7 +35,7 @@ namespace GLSLPT
         renderOptions.tileWidth = 144;
         renderOptions.envMapIntensity = 1.0f;
         renderOptions.renderResolution = iVec2(1280, 720);
-        renderOptions.useEnvMap = false;
+        renderOptions.enableEnvMap = false;
         scene->AddCamera(Vec3(0.3f, 0.11f, 0.0f), Vec3(0.2f, 0.095f, 0.0f), 60.0f);
         scene->camera->aperture = 1e-6f; 
         scene->camera->focalDist = 0.262f;

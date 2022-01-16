@@ -27,7 +27,7 @@
 #define TWO_PI     6.28318530717958648
 #define INV_TWO_PI 0.15915494309189533
 #define INV_4_PI   0.07957747154594766
-#define EPS 0.001
+#define EPS 0.0001
 #define INF 1000000.0
 
 #define QUAD_LIGHT 0
@@ -37,6 +37,11 @@
 #define ALPHA_MODE_OPAQUE 0
 #define ALPHA_MODE_BLEND 1
 #define ALPHA_MODE_MASK 2
+
+#define MEDIUM_NONE 0
+#define MEDIUM_ABSORB 1
+#define MEDIUM_SCATTER 2
+#define MEDIUM_EMISSIVE 3
 
 struct Ray
 {
@@ -62,11 +67,14 @@ struct Material
     float clearcoatRoughness;
     float specTrans;
     float ior;
-    float atDistance;
-    vec3 extinction;
-    // Roughness calculated from anisotropic param
-    float ax;
-    float ay;
+};
+
+struct Medium
+{
+    int type;
+    float density;
+    vec3 color;
+    float phase;
 };
 
 struct Camera
@@ -108,6 +116,7 @@ struct State
     vec2 texCoord;
     int matID;
     Material mat;
+    Medium medium;
 };
 
 struct ScatterSampleRec
