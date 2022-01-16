@@ -30,7 +30,7 @@ in vec2 TexCoords;
 uniform sampler2D pathTraceTexture;
 uniform float invSampleCounter;
 uniform bool enableTonemap;
-uniform bool useAces;
+uniform bool enableAces;
 uniform bool simpleAcesFit;
 uniform vec3 backgroundCol;
 
@@ -102,7 +102,7 @@ void main()
 
     if (enableTonemap)
     {
-        if (useAces)
+        if (enableAces)
         {
             if (simpleAcesFit)
                 color = ACES(color);

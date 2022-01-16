@@ -258,7 +258,7 @@ namespace GLSLPT
             {
                 char envMap[200] = "none";
                 char enableRR[10] = "none";
-                char useAces[10] = "none";
+                char enableAces[10] = "none";
                 char openglNormalMap[10] = "none";
                 char hideEmitters[10] = "none";
                 char transparentBackground[10] = "none";
@@ -267,6 +267,7 @@ namespace GLSLPT
                 char enableTonemap[10] = "none";
                 char enableRoughnessMollification[10] = "none";
                 char enableVolumeMIS[10] = "none";
+                char enableUniformLight[10] = "none";
 
                 while (fgets(line, kMaxLineLength, file))
                 {
@@ -285,7 +286,7 @@ namespace GLSLPT
                     sscanf(line, " enablerr %s", enableRR);
                     sscanf(line, " rrdepth %i", &renderOptions.RRDepth);
                     sscanf(line, " enabletonemap %s", enableTonemap);
-                    sscanf(line, " useaces %s", useAces);
+                    sscanf(line, " enableaces %s", enableAces);
                     sscanf(line, " texarraywidth %i", &renderOptions.texArrayWidth);
                     sscanf(line, " texarrayheight %i", &renderOptions.texArrayHeight);
                     sscanf(line, " openglnormalmap %s", openglNormalMap);
@@ -298,20 +299,22 @@ namespace GLSLPT
                     sscanf(line, " enableroughnessmollification %s", enableRoughnessMollification);
                     sscanf(line, " roughnessmollificationamt %f", &renderOptions.roughnessMollificationAmt);
                     sscanf(line, " enablevolumemis %s", enableVolumeMIS);
+                    sscanf(line, " enableuniformlight %s", enableUniformLight);
+                    sscanf(line, " uniformlightcolor %f %f %f", &renderOptions.uniformLightCol.x, &renderOptions.uniformLightCol.y, &renderOptions.uniformLightCol.z);
                 }
 
                 if (strcmp(envMap, "none") != 0)
                 {
                     scene->AddEnvMap(path + envMap);
-                    renderOptions.useEnvMap = true;
+                    renderOptions.enableEnvMap = true;
                 }
                 else
-                    renderOptions.useEnvMap = false;
+                    renderOptions.enableEnvMap = false;
 
-                if (strcmp(useAces, "false") == 0)
-                    renderOptions.useAces = false;
-                else if (strcmp(useAces, "true") == 0)
-                    renderOptions.useAces = true;
+                if (strcmp(enableAces, "false") == 0)
+                    renderOptions.enableAces = false;
+                else if (strcmp(enableAces, "true") == 0)
+                    renderOptions.enableAces = true;
 
                 if (strcmp(enableRR, "false") == 0)
                     renderOptions.enableRR = false;
@@ -357,6 +360,11 @@ namespace GLSLPT
                     renderOptions.enableVolumeMIS = false;
                 else if (strcmp(enableVolumeMIS, "true") == 0)
                     renderOptions.enableVolumeMIS = true;
+
+                if (strcmp(enableUniformLight, "false") == 0)
+                    renderOptions.enableUniformLight = false;
+                else if (strcmp(enableUniformLight, "true") == 0)
+                    renderOptions.enableUniformLight = true;
 
                 if (!renderOptions.independentRenderSize)
                     renderOptions.windowResolution = renderOptions.renderResolution;

@@ -401,7 +401,7 @@ namespace GLSLPT
         std::string pathtraceDefines = "";
         std::string tonemapDefines = "";
 
-        if (scene->renderOptions.useEnvMap && scene->envMap != nullptr)
+        if (scene->renderOptions.enableEnvMap && scene->envMap != nullptr)
             pathtraceDefines += "#define OPT_ENVMAP\n";
 
         if (!scene->lights.empty())
@@ -413,7 +413,7 @@ namespace GLSLPT
             pathtraceDefines += "#define OPT_RR_DEPTH " + std::to_string(scene->renderOptions.RRDepth) + "\n";
         }
 
-        if (scene->renderOptions.useUniformLight)
+        if (scene->renderOptions.enableUniformLight)
             pathtraceDefines += "#define OPT_UNIFORM_LIGHT\n";
 
         if (scene->renderOptions.openglNormalMap)
@@ -773,7 +773,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "camera.fov"), scene->camera->fov);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
-        glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->envMap == nullptr ? false : scene->renderOptions.useEnvMap);
+        glUniform1i(glGetUniformLocation(shaderObject, "enableEnvMap"), scene->envMap == nullptr ? false : scene->renderOptions.enableEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "envMapIntensity"), scene->renderOptions.envMapIntensity);
         glUniform1f(glGetUniformLocation(shaderObject, "envMapRot"), scene->renderOptions.envMapRot / 360.0f);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->renderOptions.maxDepth);
@@ -792,7 +792,7 @@ namespace GLSLPT
         glUniform1f(glGetUniformLocation(shaderObject, "camera.fov"), scene->camera->fov);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.focalDist"), scene->camera->focalDist);
         glUniform1f(glGetUniformLocation(shaderObject, "camera.aperture"), scene->camera->aperture);
-        glUniform1i(glGetUniformLocation(shaderObject, "useEnvMap"), scene->envMap == nullptr ? false : scene->renderOptions.useEnvMap);
+        glUniform1i(glGetUniformLocation(shaderObject, "enableEnvMap"), scene->envMap == nullptr ? false : scene->renderOptions.enableEnvMap);
         glUniform1f(glGetUniformLocation(shaderObject, "envMapIntensity"), scene->renderOptions.envMapIntensity);
         glUniform1f(glGetUniformLocation(shaderObject, "envMapRot"), scene->renderOptions.envMapRot / 360.0f);
         glUniform1i(glGetUniformLocation(shaderObject, "maxDepth"), scene->dirty ? 2 : scene->renderOptions.maxDepth);
@@ -805,7 +805,7 @@ namespace GLSLPT
         shaderObject = tonemapShader->getObject();
         glUniform1f(glGetUniformLocation(shaderObject, "invSampleCounter"), 1.0f / (sampleCounter));
         glUniform1i(glGetUniformLocation(shaderObject, "enableTonemap"), scene->renderOptions.enableTonemap);
-        glUniform1i(glGetUniformLocation(shaderObject, "useAces"), scene->renderOptions.useAces);
+        glUniform1i(glGetUniformLocation(shaderObject, "enableAces"), scene->renderOptions.enableAces);
         glUniform1i(glGetUniformLocation(shaderObject, "simpleAcesFit"), scene->renderOptions.simpleAcesFit);
         glUniform3f(glGetUniformLocation(shaderObject, "backgroundCol"), scene->renderOptions.backgroundCol.x, scene->renderOptions.backgroundCol.y, scene->renderOptions.backgroundCol.z);
         tonemapShader->StopUsing();

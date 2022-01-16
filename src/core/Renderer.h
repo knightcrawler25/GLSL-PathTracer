@@ -53,10 +53,10 @@ namespace GLSLPT
             enableRR = true;
             enableDenoiser = false;
             enableTonemap = true;
-            useAces = false;
+            enableAces = false;
             openglNormalMap = true;
-            useEnvMap = false;
-            useUniformLight = false;
+            enableEnvMap = false;
+            enableUniformLight = false;
             hideEmitters = false;
             enableBackground = false;
             transparentBackground = false;
@@ -83,11 +83,11 @@ namespace GLSLPT
         bool enableRR;
         bool enableDenoiser;
         bool enableTonemap;
-        bool useAces;
+        bool enableAces;
         bool simpleAcesFit;
         bool openglNormalMap;
-        bool useEnvMap;
-        bool useUniformLight;
+        bool enableEnvMap;
+        bool enableUniformLight;
         bool hideEmitters;
         bool enableBackground;
         bool transparentBackground;

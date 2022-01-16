@@ -147,7 +147,7 @@ void LoadScene(std::string sceneName)
     if (!scene->envMap && !envMaps.empty())
     {
         scene->AddEnvMap(envMaps[envMapIdx]);
-        renderOptions.useEnvMap = scene->lights.empty() ? true : false;
+        renderOptions.enableEnvMap = scene->lights.empty() ? true : false;
         renderOptions.envMapIntensity = 1.5f;
     }
 
@@ -355,13 +355,13 @@ void MainLoop(void* arg)
 
         if (ImGui::CollapsingHeader("Environment"))
         {
-            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.useUniformLight);
+            reloadShaders |= ImGui::Checkbox("Enable Uniform Light", &renderOptions.enableUniformLight);
 
             Vec3 uniformLightCol = Vec3::Pow(renderOptions.uniformLightCol, 1.0 / 2.2);
             optionsChanged |= ImGui::ColorEdit3("Uniform Light Color (Gamma Corrected)", (float*)(&uniformLightCol), 0);
             renderOptions.uniformLightCol = Vec3::Pow(uniformLightCol, 2.2);
 
-            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.useEnvMap);
+            reloadShaders |= ImGui::Checkbox("Enable Environment Map", &renderOptions.enableEnvMap);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Intensity", &renderOptions.envMapIntensity, 0.1f, 10.0f);
             optionsChanged |= ImGui::SliderFloat("Enviornment Map Rotation", &renderOptions.envMapRot, 0.0f, 360.0f);
             reloadShaders |= ImGui::Checkbox("Hide Emitters", &renderOptions.hideEmitters);
@@ -376,8 +376,8 @@ void MainLoop(void* arg)
 
             if (renderOptions.enableTonemap)
             {
-                ImGui::Checkbox("Use ACES", &renderOptions.useAces);
-                if (renderOptions.useAces)
+                ImGui::Checkbox("Enable ACES", &renderOptions.enableAces);
+                if (renderOptions.enableAces)
                     ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
             }
         }

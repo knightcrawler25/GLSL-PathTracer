@@ -34,7 +34,7 @@ namespace GLSLPT
         renderOptions.tileHeight = 128;
         renderOptions.tileWidth = 128;
         renderOptions.envMapIntensity = 5.0f;
-        renderOptions.useEnvMap = true;
+        renderOptions.enableEnvMap = true;
         scene->AddCamera(Vec3(0.0f, 0.125f, -0.45f), Vec3(0.0f, 0.125f, 0.0f), 60.0f);
 
         int mesh_id = scene->AddMesh("./assets/ajax/ajax.obj");
