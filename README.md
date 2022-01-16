@@ -15,7 +15,7 @@ Features
 - Texture mapping (Albedo, Metallic-Roughness, Normal, Emission)
 - Analytic lights (Sphere, Rectangular, Directional)
 - Image based lighting
-- Multiple importance sampling (between BSDF and lights)
+- Multiple importance sampling
 - Tile rendering
 - OpenImageDenoise
 - Stochastic alpha testing

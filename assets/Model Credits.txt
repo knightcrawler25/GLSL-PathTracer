@@ -1,59 +1,65 @@
 Credits:
 
-bedroom
+bedroom (by SlykDrako) License: CC0 1.0
 https://benedikt-bitterli.me/resources/
 
-coffee_maker
+coffee_maker (by cekuhnen) License: CC BY 3.0
 https://benedikt-bitterli.me/resources/
 
-cornell_box
+cornell_box (by Benedikt Bitterli) License: CC0 1.0
 https://benedikt-bitterli.me/resources/
 
-dragon
+dragon (by Delatronic) License: CC BY 3.0
 https://benedikt-bitterli.me/resources/
 
-spaceship
+spaceship (by thecali) License: CC0 1.0
 https://benedikt-bitterli.me/resources/
 
-staircase
+staircase (by Wig42) License: CC BY 3.0
 https://benedikt-bitterli.me/resources/
 
-teapot
+teapot (by Benedikt Bitterli) License: CC0 1.0
 https://benedikt-bitterli.me/resources/
 
-ajax
+ajax (http://forum.jotero.com/)
 https://github.com/mmacklin/tinsel
 
-diningroom
+diningroom (by MaTTeSr) License: CC BY 3.0
 https://www.blendswap.com/blend/18762
 
-Figurine
+Figurine (by Julian Perez)
 https://julperdraws.com/2017/06/26/principled-shader-o-disney-shader-en-blender-cycles/
 
-panther
+panther License: CC0 1.0
 http://threedscans.com/depot-des-sculptures-de-la-ville-de-paris/panther/
 
-stormtrooper
+stormtrooper (by ScottGraham) License: CC BY 3.0
 https://www.blendswap.com/blend/13953
 
-Mustang
-https://wirewheelsclub.com/free-3d-models/
+Mustang License: https://wirewheelsclub.com/license/
+https://wirewheelsclub.com/models/1965-ford-mustang-fastback/
 
-RenderMan teapot
+RenderMan teapot License: CC BY-NC-SA 4.0
 https://renderman.pixar.com/official-swatch
 Textures: https://www.cgbookcase.com/
 
-GLTF files
-https://polyhaven.com/
-
-Jinx:
+Jinx (by eric3dee) License: CC BY 4.0
 https://sketchfab.com/3d-models/jinx-794dfd320a694a36a5e5a79fb594a5ef
 
-Silent-Ash
+Silent-Ash (by maxpanysh) License: CC BY 4.0
 https://sketchfab.com/3d-models/silent-ash-bc44272e8c1047148b33c913e659fcfa
 
-WW2 Cityscene
+WW2 Cityscene (by SilkevdSmissen) License: CC BY-NC-ND 4.0
 https://sketchfab.com/3d-models/ww2-cityscene-carentan-inspired-639dc3d330a940a2b9d7f40542eabdf3
 
-Slumhouse
+Slumhouse (by DESIGN BUREAU) License: CC BY 4.0
 https://sketchfab.com/3d-models/slum-house-e902e0af80804d01924387da6af8eecf
+
+Monster under the bed (by Metin Seven) License: CC BY 4.0
+https://blender.org/download/demo-files/
+
+Tropical scene (by ksyu3d) License: CC BY 4.0
+https://blendswap.com/blend/29301
+
+GLTF files from the link in readme are from:
+https://polyhaven.com/
