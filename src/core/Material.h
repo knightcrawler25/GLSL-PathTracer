@@ -70,8 +70,8 @@ namespace GLSLPT
             mediumType       = 0.0f;
             mediumDensity    = 0.0f;
 
-            mediumColor = Vec3(1.0f, 1.0f, 1.0f);
-            mediumPhase = 0.0f;
+            mediumColor      = Vec3(1.0f, 1.0f, 1.0f);
+            mediumAnisotropy = 0.0f;
 
             baseColorTexId         = -1.0f;
             metallicRoughnessTexID = -1.0f;
@@ -106,7 +106,7 @@ namespace GLSLPT
         float mediumDensity;
         
         Vec3 mediumColor;
-        float mediumPhase;
+        float mediumAnisotropy;
 
         float baseColorTexId;
         float metallicRoughnessTexID;

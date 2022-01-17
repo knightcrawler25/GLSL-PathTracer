@@ -461,6 +461,9 @@ void MainLoop(void* arg)
                 mat->mediumColor = Vec3::Pow(mediumColor, 2.2);
 
                 objectPropChanged |= ImGui::SliderFloat("Medium Density", &mat->mediumDensity, 0.0f, 5.0f);
+
+                if(mediumType == MediumType::Scatter)
+                    objectPropChanged |= ImGui::SliderFloat("Medium Anisotropy", &mat->mediumAnisotropy, -0.9f, 0.9f);
             }
 
             int alphaMode = (int)mat->alphaMode;

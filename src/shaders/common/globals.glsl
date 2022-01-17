@@ -49,6 +49,14 @@ struct Ray
     vec3 direction;
 };
 
+struct Medium
+{
+    int type;
+    float density;
+    vec3 color;
+    float anisotropy;
+};
+
 struct Material
 {
     vec3 baseColor;
@@ -67,14 +75,7 @@ struct Material
     float clearcoatRoughness;
     float specTrans;
     float ior;
-};
-
-struct Medium
-{
-    int type;
-    float density;
-    vec3 color;
-    float phase;
+    Medium medium;
 };
 
 struct Camera

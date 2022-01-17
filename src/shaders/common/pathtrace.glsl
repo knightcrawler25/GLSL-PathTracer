@@ -54,11 +54,11 @@ void GetMaterial(inout State state, in Ray r)
 
     mat.specTrans          = param5.x;
     mat.ior                = param5.y;
-    medium.type            = int(param5.z);
-    medium.density         = param5.w;
+    mat.medium.type        = int(param5.z);
+    mat.medium.density     = param5.w;
 
-    medium.color           = param6.rgb;
-    medium.phase           = param6.w;
+    mat.medium.color       = param6.rgb;
+    mat.medium.anisotropy  = clamp(param6.w, -0.9, 0.9);
 
     ivec4 texIDs           = ivec4(param7);
 
@@ -112,10 +112,10 @@ void GetMaterial(inout State state, in Ray r)
     // mat.ay = max(0.001, mat.roughness * aspect);
 
     state.mat = mat;
-    state.medium = medium;
     state.eta = dot(r.direction, state.normal) < 0.0 ? (1.0 / mat.ior) : mat.ior;
 }
 
+// TODO: Recheck all of this
 #if defined(OPT_MEDIUM) && defined(OPT_VOL_MIS)
 vec3 EvalTransmittance(Ray r)
 {
@@ -142,10 +142,10 @@ vec3 EvalTransmittance(Ray r)
             return vec3(0.0);
 
         // Evaluate transmittance
-        if (dot(r.direction, state.normal) > 0 && state.medium.type != MEDIUM_NONE)
+        if (dot(r.direction, state.normal) > 0 && state.mat.medium.type != MEDIUM_NONE)
         {
-            vec3 color = state.medium.type != MEDIUM_SCATTER ? vec3(1.0) - state.medium.color : vec3(1.0);
-            transmittance *= exp(-color * state.medium.density * state.hitDist);
+            vec3 color = state.mat.medium.type == MEDIUM_ABSORB ? vec3(1.0) - state.mat.medium.color : vec3(1.0);
+            transmittance *= exp(-color * state.mat.medium.density * state.hitDist);
         }
 
         // Move ray origin to hit point
@@ -183,8 +183,9 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
             scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightDir, scatterSample.pdf);
         else
         {
-            scatterSample.f = vec3(INV_4_PI);
-            scatterSample.pdf = INV_4_PI;
+            float p = PhaseHG(dot(-r.direction, lightDir), state.medium.anisotropy);
+            scatterSample.f = vec3(p);
+            scatterSample.pdf = p;
         }
 
         if (scatterSample.pdf > 0.0)
@@ -248,8 +249,9 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
                 scatterSample.f = DisneyEval(state, -r.direction, state.ffnormal, lightSample.direction, scatterSample.pdf);
             else
             {
-                scatterSample.f = vec3(INV_4_PI);
-                scatterSample.pdf = INV_4_PI;
+                float p = PhaseHG(dot(-r.direction, lightSample.direction), state.medium.anisotropy);
+                scatterSample.f = vec3(p);
+                scatterSample.pdf = p;
             }
 
             float misWeight = 1.0;
@@ -293,7 +295,6 @@ vec4 PathTrace(Ray r)
     float alpha = 1.0;
 
     // For medium tracking
-    Medium currMedium;
     bool inMedium = false;
     bool mediumSampled = false;
     bool surfaceScatter = false;
@@ -375,31 +376,35 @@ vec4 PathTrace(Ray r)
         // TODO: Handle light sources placed inside medium
         if(inMedium)
         {
-            if(currMedium.type == MEDIUM_ABSORB)
+            if(state.medium.type == MEDIUM_ABSORB)
             {
-                throughput *= exp(-(1.0 - currMedium.color) * state.hitDist * currMedium.density);
+                throughput *= exp(-(1.0 - state.medium.color) * state.hitDist * state.medium.density);
             }
-            else if(currMedium.type == MEDIUM_EMISSIVE)
+            else if(state.medium.type == MEDIUM_EMISSIVE)
             {
-                radiance += currMedium.color * state.hitDist * currMedium.density;
+                radiance += state.medium.color * state.hitDist * state.medium.density;
             }
             else
             {
-                float scatterDist = min(-log(rand()) / currMedium.density, state.hitDist);
+                // Sample a distance in the medium
+                float scatterDist = min(-log(rand()) / state.medium.density, state.hitDist);
                 mediumSampled = scatterDist < state.hitDist;
 
-                // Pick a new direction based on the phase function
                 if (mediumSampled)
                 {
-                    scatterSample.pdf = INV_4_PI;
-                    throughput *= currMedium.color;
+                    throughput *= state.medium.color;
 
+                    // Move ray origin to scattering position
                     r.origin += r.direction * scatterDist;
-                    r.direction = UniformSampleSphere(rand(), rand());
                     state.fhp = r.origin;
 
                     // Transmittance Evaluation
                     radiance += DirectLight(r, state, false) * throughput;
+
+                    // Pick a new direction based on the phase function
+                    vec3 scatterDir = SampleHG(-r.direction, state.medium.anisotropy, rand(), rand());
+                    scatterSample.pdf = PhaseHG(dot(-r.direction, scatterDir), state.medium.anisotropy);
+                    r.direction = scatterDir;
                 }
             }
         }
@@ -438,12 +443,13 @@ vec4 PathTrace(Ray r)
 
 #ifdef OPT_MEDIUM
             inMedium = false;
-            // Ray is in medium only if it is entering a surface
-            if (dot(scatterSample.L, state.normal) < 0 && state.medium.type != MEDIUM_NONE)
+            // Ray is in medium only if it is entering a surface containing a medium
+            if (dot(r.direction, state.normal) < 0 && state.mat.medium.type != MEDIUM_NONE)
             {
                 inMedium = true;
-                currMedium = state.medium;
-            }                
+                // Get medium params from the intersected object
+                state.medium = state.mat.medium;
+            }
         }
 #endif
 

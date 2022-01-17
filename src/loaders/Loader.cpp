@@ -116,7 +116,7 @@ namespace GLSLPT
                     sscanf(line, " mediumtype %s", mediumType);
                     sscanf(line, " mediumdensity %f", &material.mediumDensity);
                     sscanf(line, " mediumcolor %f %f %f", &material.mediumColor.x, &material.mediumColor.y, &material.mediumColor.z);
-                    sscanf(line, " mediumphase %f", &material.mediumPhase);
+                    sscanf(line, " mediumanisotropy %f", &material.mediumAnisotropy);
                 }
 
                 // Albedo Texture
