@@ -345,6 +345,7 @@ vec4 PathTrace(Ray r)
         radiance += state.mat.emission * throughput;
         
 #ifdef OPT_LIGHTS
+
         // Gather radiance from light and use scatterSample.pdf from previous bounce for MIS
         if (state.isEmitter)
         {
@@ -414,6 +415,7 @@ vec4 PathTrace(Ray r)
         {
 #endif
 #ifdef OPT_ALPHA_TEST
+
             // Ignore intersection and continue ray based on alpha test
             if ((state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff) ||
                 (state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity))
@@ -442,7 +444,8 @@ vec4 PathTrace(Ray r)
             r.origin = state.fhp + r.direction * EPS;
 
 #ifdef OPT_MEDIUM
-            inMedium = false;
+
+            // Note: Nesting of volumes isn't supported due to lack of a volume stack for performance reasons
             // Ray is in medium only if it is entering a surface containing a medium
             if (dot(r.direction, state.normal) < 0 && state.mat.medium.type != MEDIUM_NONE)
             {
@@ -450,6 +453,10 @@ vec4 PathTrace(Ray r)
                 // Get medium params from the intersected object
                 state.medium = state.mat.medium;
             }
+            // FIXME: Objects clipping or inside a medium were shaded incorrectly as inMedium would be set to false.
+            // This hack works for now but needs some rethinking
+            else if(state.mat.medium.type != MEDIUM_NONE)
+                inMedium = false;
         }
 #endif
 

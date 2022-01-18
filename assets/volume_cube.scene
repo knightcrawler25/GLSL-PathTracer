@@ -1,0 +1,78 @@
+renderer
+{
+	resolution 1280 720
+	maxdepth 5
+	tilewidth 320
+	tileheight 180
+	enablevolumemis true
+}
+
+camera
+{
+	position 5 5 5
+	lookat 0 1 0
+	fov 45
+}
+
+material volume
+{
+	color 1.0 1.0 1.0
+	spectrans 1.0
+	roughness 0.0
+	mediumtype scatter
+	mediumdensity 2.0
+	mediumcolor 0.9 0.4 0.1
+	alphamode blend
+	opacity 0.0
+}
+
+material volume2
+{
+	color 1.0 1.0 1.0
+	spectrans 1.0
+	roughness 0.0
+	mediumtype scatter
+	mediumdensity 2.0
+	mediumcolor 0.1 0.1 0.9
+	alphamode blend
+	opacity 0.0
+}
+
+material black
+{
+	color 0.1 0.1 0.1
+	roughness 0.5
+}
+
+mesh
+{
+	name cube
+	file volume/cube.obj
+	material volume
+}
+
+mesh
+{
+	name plane
+	file volume/floor.obj
+	material black
+	scale 10 10 10
+	position 0 -0.001 0
+}
+
+#light
+{
+	type sphere
+	position 0 4 0
+	radius 0.5
+	emission 200 200 200
+}
+
+light
+{
+	type quad
+	position -1.000000 3.000000 1.000000
+	v2 1.000000 3.000000 1.000000
+	v1 -1.000000 3.000000 -1.000000
+	emission 25 25 25
+}

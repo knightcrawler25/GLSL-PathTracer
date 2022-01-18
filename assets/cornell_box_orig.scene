@@ -1,0 +1,116 @@
+renderer
+{
+	resolution 800 800
+	maxdepth 2
+	tilewidth 200
+	tileheight 200
+	#envmap HDR/sunset.hdr
+	envmapintensity 2.0
+}
+
+camera
+{
+	position .276 .275 -.75
+	lookat .276 .275 .10
+	fov 40
+}
+
+material ceiling_white
+{
+	color 0.725 0.71 0.68
+}
+
+material back_wall_white
+{
+	color 0.725 0.71 0.68
+}
+
+material floor_white
+{
+	color 0.725 0.71 0.68
+}
+
+material small_box_white
+{
+	color 0.725 0.71 0.68
+}
+
+material large_box_white
+{
+	color 0.725 0.71 0.68
+}
+
+material red
+{
+	color 0.63 0.065 0.05
+}
+
+material green
+{
+	color 0.14 0.45 0.091
+}
+
+mesh
+{
+	file cornell_box/cbox_ceiling.obj
+	material ceiling_white
+	position .278 .5488 .27955
+	scale 0.01 0.01 0.01
+}
+
+mesh
+{
+	file cornell_box/cbox_floor.obj
+	material floor_white
+	position .2756 0 .2796
+	scale 0.01 0.01 0.01
+}
+
+mesh
+{
+	file cornell_box/cbox_back.obj
+	material back_wall_white
+	position .2764 .2744 .5592
+	scale 0.01 0.01 0.01
+}
+
+mesh
+{
+	file cornell_box/cbox_smallbox.obj
+	material small_box_white
+	position .1855 .0835 .169
+	scale 0.01 0.01 0.01
+}
+
+mesh
+{
+	file cornell_box/cbox_largebox.obj
+	material large_box_white
+	position .3685 .166 .35125
+	scale 0.01 0.01 0.01
+}
+
+mesh
+{
+	file cornell_box/cbox_greenwall.obj
+	material green
+	position 0 .2744 .2796
+	scale 0.01 0.01 0.01
+}
+
+mesh
+{
+	file cornell_box/cbox_redwall.obj
+	material red
+	position .5536 .2744 .2796
+	scale 0.01 0.01 0.01
+}
+
+light
+{
+	type quad
+	position  .34299999 .54779997 .22700010
+	v1 .34299999 .54779997 .33200008
+	v2 .21300001 .54779997 .22700010
+	emission 17 12 4
+}
