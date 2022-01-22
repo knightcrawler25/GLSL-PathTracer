@@ -105,14 +105,6 @@ namespace GLSLPT
     {
         //glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-        // Create buffer and texture for BVH
-        glGenBuffers(1, &BVHBuffer);
-        glBindBuffer(GL_TEXTURE_BUFFER, BVHBuffer);
-        glBufferData(GL_TEXTURE_BUFFER, sizeof(RadeonRays::BvhTranslator::Node) * scene->bvhTranslator.nodes.size(), &scene->bvhTranslator.nodes[0], GL_STATIC_DRAW);
-        glGenTextures(1, &BVHTex);
-        glBindTexture(GL_TEXTURE_BUFFER, BVHTex);
-        glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, BVHBuffer);
-
         // Create buffer and texture for vertex indices
         glGenBuffers(1, &vertexIndicesBuffer);
         glBindBuffer(GL_TEXTURE_BUFFER, vertexIndicesBuffer);
@@ -136,14 +128,6 @@ namespace GLSLPT
         glGenTextures(1, &normalsTex);
         glBindTexture(GL_TEXTURE_BUFFER, normalsTex);
         glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, normalsBuffer);
-
-        // Create texture for transforms
-        glGenTextures(1, &transformsTex);
-        glBindTexture(GL_TEXTURE_2D, transformsTex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, (sizeof(Mat4) / sizeof(Vec4)) * scene->transforms.size(), 1, 0, GL_RGBA, GL_FLOAT, &scene->transforms[0]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, 0);
 
         sampleCounter = 1;
 
@@ -189,27 +173,21 @@ namespace GLSLPT
         GLuint shaderObject;
         pathTraceShader->Use();
         shaderObject = pathTraceShader->getObject();
-        glUniform1i(glGetUniformLocation(shaderObject, "topBVHIndex"), scene->bvhTranslator.topLevelIndex);
+        glUniform1i(glGetUniformLocation(shaderObject, "numIndices"), scene->vertIndices.size());
         glUniform2f(glGetUniformLocation(shaderObject, "resolution"), renderSize.x, renderSize.y);
         glUniform1i(glGetUniformLocation(shaderObject, "accumTex"), 0);
-        glUniform1i(glGetUniformLocation(shaderObject, "BVH"), 1);
-        glUniform1i(glGetUniformLocation(shaderObject, "vertexIndicesTex"), 2);
-        glUniform1i(glGetUniformLocation(shaderObject, "verticesTex"), 3);
-        glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 4);
-        glUniform1i(glGetUniformLocation(shaderObject, "transformsTex"), 5);
+        glUniform1i(glGetUniformLocation(shaderObject, "vertexIndicesTex"), 1);
+        glUniform1i(glGetUniformLocation(shaderObject, "verticesTex"), 2);
+        glUniform1i(glGetUniformLocation(shaderObject, "normalsTex"), 3);
         pathTraceShader->StopUsing();
 
         // Bind textures to texture slots as they will not change slots during the lifespan of the renderer
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_BUFFER, BVHTex);
-        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_BUFFER, vertexIndicesTex);
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_BUFFER, verticesTex);
-        glActiveTexture(GL_TEXTURE4);
+        glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_BUFFER, normalsTex);
-        glActiveTexture(GL_TEXTURE5);
-        glBindTexture(GL_TEXTURE_2D, transformsTex);
     }
 
     void Renderer::Render()
