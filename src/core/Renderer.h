@@ -110,14 +110,11 @@ namespace GLSLPT
         GLuint verticesTex;
         GLuint normalsBuffer;
         GLuint normalsTex;
-        GLuint materialsTex;
         GLuint transformsTex;
-        GLuint lightsTex;
 
         // FBOs
         GLuint pathTraceFBO;
         GLuint accumFBO;
-        GLuint outputFBO;
 
         // Shaders
         std::string shadersDirectory;
@@ -133,9 +130,7 @@ namespace GLSLPT
         iVec2 renderSize;
         iVec2 windowSize;
         
-        // Variables to track rendering status
         int sampleCounter;
-        float pixelRatio;
 
     public:
         Renderer(Scene* scene, const std::string& shadersDirectory);

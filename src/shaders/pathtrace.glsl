@@ -32,96 +32,24 @@ uniform samplerBuffer BVH;
 uniform isamplerBuffer vertexIndicesTex;
 uniform samplerBuffer verticesTex;
 uniform samplerBuffer normalsTex;
-uniform sampler2D materialsTex;
 uniform sampler2D transformsTex;
-uniform sampler2D lightsTex;
-
-uniform int numOfLights;
 uniform vec2 resolution;
 uniform int topBVHIndex;
-uniform int frameNum;
 
-#define PI         3.14159265358979323
-#define INV_PI     0.31830988618379067
-#define TWO_PI     6.28318530717958648
-#define EPS 0.001
-#define INF 1000000.0
+uniform vec3 up;
+uniform vec3 right;
+uniform vec3 forward;
+uniform vec3 position;
+uniform float fov;
 
-#define QUAD_LIGHT 0
-#define SPHERE_LIGHT 1
-#define DISTANT_LIGHT 2
+#define INF 10000.0
 
-struct Ray
+float AABBIntersect(vec3 minCorner, vec3 maxCorner, vec3 origin, vec3 direction)
 {
-    vec3 origin;
-    vec3 direction;
-};
+    vec3 invDir = 1.0 / direction;
 
-struct Material
-{
-    vec3 baseColor;
-};
-
-struct Camera
-{
-    vec3 up;
-    vec3 right;
-    vec3 forward;
-    vec3 position;
-    float fov;
-};
-
-struct State
-{
-    int depth;
-    float hitDist;
-
-    vec3 fhp;
-    vec3 normal;
-    vec3 ffnormal;
-
-    int matID;
-    Material mat;
-};
-
-struct BsdfSampleRec
-{
-    vec3 L;
-    vec3 f;
-    float pdf;
-};
-
-
-uniform Camera camera;
-
-uvec4 seed;
-ivec2 pixel;
-
-void InitRNG(vec2 p, int frame)
-{
-    pixel = ivec2(p);
-    seed = uvec4(p, uint(frame), uint(p.x) + uint(p.y));
-}
-
-void pcg4d(inout uvec4 v)
-{
-    v = v * 1664525u + 1013904223u;
-    v.x += v.y * v.w; v.y += v.z * v.x; v.z += v.x * v.y; v.w += v.y * v.z;
-    v = v ^ (v >> 16u);
-    v.x += v.y * v.w; v.y += v.z * v.x; v.z += v.x * v.y; v.w += v.y * v.z;
-}
-
-float rand()
-{
-    pcg4d(seed); return float(seed.x) / float(0xffffffffu);
-}
-
-float AABBIntersect(vec3 minCorner, vec3 maxCorner, Ray r)
-{
-    vec3 invDir = 1.0 / r.direction;
-
-    vec3 f = (maxCorner - r.origin) * invDir;
-    vec3 n = (minCorner - r.origin) * invDir;
+    vec3 f = (maxCorner - origin) * invDir;
+    vec3 n = (minCorner - origin) * invDir;
 
     vec3 tmax = max(f, n);
     vec3 tmin = min(f, n);
@@ -132,10 +60,9 @@ float AABBIntersect(vec3 minCorner, vec3 maxCorner, Ray r)
     return (t1 >= t0) ? (t0 > 0.f ? t0 : t1) : -1.0;
 }
 
-bool ClosestHit(Ray r, inout State state)
+bool ClosestHit(vec3 origin, vec3 direction, out vec3 normal)
 {
     float t = INF;
-    float d;
 
     // Intersect BVH and tris
     int stack[64];
@@ -146,7 +73,6 @@ bool ClosestHit(Ray r, inout State state)
     float leftHit = 0.0;
     float rightHit = 0.0;
 
-    int currMatID = 0;
     bool BLAS = false;
 
     ivec3 triID = ivec3(-1);
@@ -155,9 +81,8 @@ bool ClosestHit(Ray r, inout State state)
     vec3 bary;
     vec4 vert0, vert1, vert2;
 
-    Ray rTrans;
-    rTrans.origin = r.origin;
-    rTrans.direction = r.direction;
+    vec3 TRorigin = origin;
+    vec3 TRdirection = direction;
 
     while (index != -1)
     {
@@ -179,15 +104,15 @@ bool ClosestHit(Ray r, inout State state)
 
                 vec3 e0 = v1.xyz - v0.xyz;
                 vec3 e1 = v2.xyz - v0.xyz;
-                vec3 pv = cross(rTrans.direction, e1);
+                vec3 pv = cross(TRdirection, e1);
                 float det = dot(e0, pv);
 
-                vec3 tv = rTrans.origin - v0.xyz;
+                vec3 tv = TRorigin - v0.xyz;
                 vec3 qv = cross(tv, e0);
 
                 vec4 uvt;
                 uvt.x = dot(tv, pv);
-                uvt.y = dot(rTrans.direction, qv);
+                uvt.y = dot(TRdirection, qv);
                 uvt.z = dot(e1, qv);
                 uvt.xyz = uvt.xyz / det;
                 uvt.w = 1.0 - uvt.x - uvt.y;
@@ -196,7 +121,6 @@ bool ClosestHit(Ray r, inout State state)
                 {
                     t = uvt.z;
                     triID = vertIndices;
-                    state.matID = currMatID;
                     bary = uvt.wxy;
                     vert0 = v0, vert1 = v1, vert2 = v2;
                     transform = transMat;
@@ -212,20 +136,19 @@ bool ClosestHit(Ray r, inout State state)
 
             transMat = mat4(r1, r2, r3, r4);
 
-            rTrans.origin = vec3(inverse(transMat) * vec4(r.origin, 1.0));
-            rTrans.direction = vec3(inverse(transMat) * vec4(r.direction, 0.0));
+            TRorigin = vec3(inverse(transMat) * vec4(origin, 1.0));
+            TRdirection = vec3(inverse(transMat) * vec4(direction, 0.0));
 
             // Add a marker. We'll return to this spot after we've traversed the entire BLAS
             stack[ptr++] = -1;
             index = leftIndex;
             BLAS = true;
-            currMatID = rightIndex;
             continue;
         }
         else
         {
-            leftHit = AABBIntersect(texelFetch(BVH, leftIndex * 3 + 0).xyz, texelFetch(BVH, leftIndex * 3 + 1).xyz, rTrans);
-            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, rTrans);
+            leftHit = AABBIntersect(texelFetch(BVH, leftIndex * 3 + 0).xyz, texelFetch(BVH, leftIndex * 3 + 1).xyz, TRorigin, TRdirection);
+            rightHit = AABBIntersect(texelFetch(BVH, rightIndex * 3 + 0).xyz, texelFetch(BVH, rightIndex * 3 + 1).xyz, TRorigin, TRdirection);
 
             if (leftHit > 0.0 && rightHit > 0.0)
             {
@@ -264,17 +187,14 @@ bool ClosestHit(Ray r, inout State state)
 
             index = stack[--ptr];
 
-            rTrans.origin = r.origin;
-            rTrans.direction = r.direction;
+            TRorigin = origin;
+            TRdirection = direction;
         }
     }
 
     // No intersections
     if (t == INF)
         return false;
-
-    state.hitDist = t;
-    state.fhp = r.origin + r.direction * t;
 
     if (triID.x != -1)
     {
@@ -286,92 +206,34 @@ bool ClosestHit(Ray r, inout State state)
         vec2 t1 = vec2(vert1.w, n1.w);
         vec2 t2 = vec2(vert2.w, n2.w);
 
-        vec3 normal = normalize(n0.xyz * bary.x + n1.xyz * bary.y + n2.xyz * bary.z);
-
-        state.normal = normalize(transpose(inverse(mat3(transform))) * normal);
-        state.ffnormal = dot(state.normal, r.direction) <= 0.0 ? state.normal : -state.normal;
+        normal = normalize(n0.xyz * bary.x + n1.xyz * bary.y + n2.xyz * bary.z);
+        normal = normalize(transpose(inverse(mat3(transform))) * normal);
     }
 
     return true;
 }
 
-vec3 CosineSampleHemisphere(float r1, float r2)
+vec4 PathTrace(vec3 origin, vec3 direction)
 {
-    vec3 dir;
-    float r = sqrt(r1);
-    float phi = TWO_PI * r2;
-    dir.x = r * cos(phi);
-    dir.y = r * sin(phi);
-    dir.z = sqrt(max(0.0, 1.0 - dir.x * dir.x - dir.y * dir.y));
-    return dir;
-}
-
-void Onb(in vec3 N, inout vec3 T, inout vec3 B)
-{
-    vec3 up = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
-    T = normalize(cross(up, N));
-    B = cross(N, T);
-}
-
-vec3 LambertSample(State state, vec3 V, vec3 N, inout vec3 L, inout float pdf)
-{
-    float r1 = rand();
-    float r2 = rand();
-
-    vec3 T, B;
-    Onb(N, T, B);
-
-    L = CosineSampleHemisphere(r1, r2);
-    L = T * L.x + B * L.y + N * L.z;
-
-    pdf = dot(N, L) * (1.0 / PI);
-    return (1.0 / PI) * state.mat.baseColor * dot(N, L);
-}
-
-vec3 LambertEval(State state, vec3 V, vec3 N, vec3 L, inout float pdf)
-{
-    pdf = dot(N, L) * (1.0 / PI);
-    return (1.0 / PI) * state.mat.baseColor * dot(N, L);
-}
-
-vec4 PathTrace(Ray r)
-{
-    vec3 radiance = vec3(0.0);
-    vec3 throughput = vec3(1.0);
-    State state;
-
-    bool hit = ClosestHit(r, state);
+    vec3 normal;
+    bool hit = ClosestHit(origin, direction, normal);
 
     if (!hit)
         return vec4(0.5);
     else
-        return vec4(state.normal, 1.0);
+        return vec4(normal, 1.0);
 }
 
 void main(void)
 {
-    InitRNG(gl_FragCoord.xy, frameNum);
+    vec2 d = (2.0 * TexCoords - 1.0);
 
-    float r1 = 2.0 * rand();
-    float r2 = 2.0 * rand();
-
-    vec2 jitter;
-    jitter.x = r1 < 1.0 ? sqrt(r1) - 1.0 : 1.0 - sqrt(2.0 - r1);
-    jitter.y = r2 < 1.0 ? sqrt(r2) - 1.0 : 1.0 - sqrt(2.0 - r2);
-
-    jitter /= (resolution * 0.5);
-    vec2 d = (2.0 * TexCoords - 1.0) + jitter;
-
-    float scale = tan(camera.fov * 0.5);
+    float scale = tan(fov * 0.5);
     d.y *= resolution.y / resolution.x * scale;
     d.x *= scale;
-    vec3 rayDir = normalize(d.x * camera.right + d.y * camera.up + camera.forward);
-
-    Ray ray = Ray(camera.position, rayDir);
+    vec3 dir = normalize(d.x * right + d.y * up + forward);
 
     vec4 accumColor = texture(accumTex, TexCoords);
 
-    vec4 pixelColor = PathTrace(ray);
-
-    color = pixelColor + accumColor;
+    color = PathTrace(position, dir) + accumColor;
 }

@@ -27,10 +27,10 @@
 out vec4 color;
 in vec2 TexCoords;
 
-uniform sampler2D pathTraceTexture;
+uniform sampler2D imgTex;
 uniform float invSampleCounter;
 
 void main()
 {
-    color = pow(texture(pathTraceTexture, TexCoords) * invSampleCounter, vec4(1.0 / 2.2));
+    color = pow(texture(imgTex, TexCoords) * invSampleCounter, vec4(1.0 / 2.2));
 }
