@@ -383,7 +383,7 @@ vec4 PathTrace(Ray r)
             }
             else if(state.medium.type == MEDIUM_EMISSIVE)
             {
-                radiance += state.medium.color * state.hitDist * state.medium.density;
+                radiance += state.medium.color * state.hitDist * state.medium.density * throughput;
             }
             else
             {

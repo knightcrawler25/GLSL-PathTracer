@@ -10,10 +10,10 @@ A physically based path tracer that runs in a GLSL fragment shader.
 Features
 --------
 - Unidirectional path tracer
-- BVH builder from RadeonRays 2.0
+- Two-level BVH for instancing
 - Disney BSDF
 - Texture mapping (Albedo, Metallic-Roughness, Normal, Emission)
-- Analytic lights (Sphere, Rectangular, Directional)
+- Analytic lights (Spherical, Rectangular, Directional)
 - Image based lighting
 - Multiple importance sampling
 - Tile rendering
