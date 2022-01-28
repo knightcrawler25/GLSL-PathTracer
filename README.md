@@ -39,6 +39,8 @@ Gallery
 --------
 ![RenderMan Swatch](./screenshots/Renderman_swatch.jpg)
 --------
+![Dragon](./screenshots/dragon.jpg)
+--------
 ![Stormtrooper](./screenshots/stormtrooper.jpg)
 --------
 ![Panther](./screenshots/panther.jpg)
@@ -60,8 +62,6 @@ Gallery
 ![Staircase](./screenshots/staircase.jpg)
 --------
 ![Substance Boy](./screenshots/MeetMat_Maps.jpg)
---------
-![Dragon](./screenshots/dragon.jpg)
 
 References/Credits
 --------
