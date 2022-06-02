@@ -83,9 +83,9 @@ vec3 EvalSpecReflection(Material mat, float eta, vec3 specCol, vec3 V, vec3 L, v
 
     float FM = DisneyFresnel(mat, eta, dot(L, H), dot(V, H));
     vec3 F = mix(specCol, vec3(1.0), FM);
-    float D = GTR2(H.z, mat.roughness);
-    float G1 = SmithG(abs(V.z), mat.roughness);
-    float G2 = G1 * SmithG(abs(L.z), mat.roughness);
+    float D = GTR2Aniso(H.z, H.x, H.y, mat.ax, mat.ay);
+    float G1 = SmithGAniso(abs(V.z), V.x, V.y, mat.ax, mat.ay);
+    float G2 = G1 * SmithGAniso(abs(L.z), L.x, L.y, mat.ax, mat.ay);
 
     pdf = G1 * D / (4.0 * V.z);
     return F * D * G2 / (4.0 * L.z * V.z);
@@ -98,11 +98,11 @@ vec3 EvalSpecRefraction(Material mat, float eta, vec3 V, vec3 L, vec3 H, out flo
         return vec3(0.0);
 
     float F = DielectricFresnel(abs(dot(V, H)), eta);
-    float D = GTR2(H.z, mat.roughness);
+    float D = GTR2Aniso(H.z, H.x, H.y, mat.ax, mat.ay);
+    float G1 = SmithGAniso(abs(V.z), V.x, V.y, mat.ax, mat.ay);
+    float G2 = G1 * SmithGAniso(abs(L.z), L.x, L.y, mat.ax, mat.ay);
     float denom = dot(L, H) + dot(V, H) * eta;
     denom *= denom;
-    float G1 = SmithG(abs(V.z), mat.roughness);
-    float G2 = G1 * SmithG(abs(L.z), mat.roughness);
     float eta2 = eta * eta;
     float jacobian = abs(dot(L, H)) / denom;
 
@@ -208,7 +208,7 @@ vec3 DisneySample(State state, vec3 V, vec3 N, out vec3 L, out float pdf)
     else  // Specular Reflection/Refraction Lobes
     {
         r1 = (r1 - cdf[1]) / (1.0 - cdf[1]);
-        vec3 H = SampleGGXVNDF(V, state.mat.roughness, r1, r2);
+        vec3 H = SampleGGXVNDF(V, state.mat.ax, state.mat.ay, r1, r2);
 
         if (H.z < 0.0)
             H = -H;

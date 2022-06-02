@@ -106,10 +106,9 @@ void GetMaterial(inout State state, in Ray r)
     if (texIDs.w >= 0)
         mat.emission = pow(texture(textureMapsArrayTex, vec3(state.texCoord, texIDs.w)).rgb, vec3(2.2));
 
-    // Commented out the following as anisotropic param is temporarily unused.
-    // float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
-    // mat.ax = max(0.001, mat.roughness / aspect);
-    // mat.ay = max(0.001, mat.roughness * aspect);
+    float aspect = sqrt(1.0 - mat.anisotropic * 0.9);
+    mat.ax = max(0.001, mat.roughness / aspect);
+    mat.ay = max(0.001, mat.roughness * aspect);
 
     state.mat = mat;
     state.eta = dot(r.direction, state.normal) < 0.0 ? (1.0 / mat.ior) : mat.ior;

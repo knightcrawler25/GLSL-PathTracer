@@ -67,9 +67,9 @@ vec3 SampleGTR2(float rgh, float r1, float r2)
     return vec3(sinTheta * cosPhi, sinTheta * sinPhi, cosTheta);
 }
 
-vec3 SampleGGXVNDF(vec3 V, float rgh, float r1, float r2)
+vec3 SampleGGXVNDF(vec3 V, float ax, float ay, float r1, float r2)
 {
-    vec3 Vh = normalize(vec3(rgh * V.x, rgh * V.y, V.z));
+    vec3 Vh = normalize(vec3(ax * V.x, ay * V.y, V.z));
 
     float lensq = Vh.x * Vh.x + Vh.y * Vh.y;
     vec3 T1 = lensq > 0 ? vec3(-Vh.y, Vh.x, 0) * inversesqrt(lensq) : vec3(1, 0, 0);
@@ -84,7 +84,7 @@ vec3 SampleGGXVNDF(vec3 V, float rgh, float r1, float r2)
 
     vec3 Nh = t1 * T1 + t2 * T2 + sqrt(max(0.0, 1.0 - t1 * t1 - t2 * t2)) * Vh;
 
-    return normalize(vec3(rgh * Nh.x, rgh * Nh.y, max(0.0, Nh.z)));
+    return normalize(vec3(ax * Nh.x, ay * Nh.y, max(0.0, Nh.z)));
 }
 
 float GTR2Aniso(float NDotH, float HDotX, float HDotY, float ax, float ay)
@@ -118,7 +118,7 @@ float SmithGAniso(float NDotV, float VDotX, float VDotY, float ax, float ay)
     float a = VDotX * ax;
     float b = VDotY * ay;
     float c = NDotV;
-    return 1.0 / (NDotV + sqrt(a * a + b * b + c * c));
+    return (2.0 * NDotV) / (NDotV + sqrt(a * a + b * b + c * c));
 }
 
 float SchlickFresnel(float u)

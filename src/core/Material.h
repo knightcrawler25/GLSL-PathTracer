@@ -50,7 +50,7 @@ namespace GLSLPT
         Material()
         {
             baseColor = Vec3(1.0f, 1.0f, 1.0f);
-            anisotropic = 0.0f; // Unused for now
+            anisotropic = 0.0f;
 
             emission = Vec3(0.0f, 0.0f, 0.0f);
             // padding1

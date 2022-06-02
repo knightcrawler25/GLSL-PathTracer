@@ -75,6 +75,8 @@ struct Material
     float clearcoatRoughness;
     float specTrans;
     float ior;
+    float ax;
+    float ay;
     Medium medium;
 };
 
