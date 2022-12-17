@@ -594,6 +594,12 @@ int main(int argc, char** argv)
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     loopdata.mWindow = SDL_CreateWindow("GLSL PathTracer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, renderOptions.windowResolution.x, renderOptions.windowResolution.y, window_flags);
 
+    // Query actual drawable window size
+    int w, h;
+    SDL_GL_GetDrawableSize(loopdata.mWindow, &w, &h);
+    renderOptions.windowResolution.x = w;
+    renderOptions.windowResolution.y = h;
+
     SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
     loopdata.mGLContext = SDL_GL_CreateContext(loopdata.mWindow);
