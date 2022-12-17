@@ -38,7 +38,7 @@ vec3 SampleGTR1(float rgh, float r1, float r2)
 
     float phi = r1 * TWO_PI;
 
-    float cosTheta = sqrt((1.0 - pow(a2, 1.0 - r1)) / (1.0 - a2));
+    float cosTheta = sqrt((1.0 - pow(a2, 1.0 - r2)) / (1.0 - a2));
     float sinTheta = clamp(sqrt(1.0 - (cosTheta * cosTheta)), 0.0, 1.0);
     float sinPhi = sin(phi);
     float cosPhi = cos(phi);
@@ -121,7 +121,7 @@ float SmithGAniso(float NDotV, float VDotX, float VDotY, float ax, float ay)
     return (2.0 * NDotV) / (NDotV + sqrt(a * a + b * b + c * c));
 }
 
-float SchlickFresnel(float u)
+float SchlickWeight(float u)
 {
     float m = clamp(1.0 - u, 0.0, 1.0);
     float m2 = m * m;
