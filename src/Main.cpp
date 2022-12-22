@@ -277,6 +277,10 @@ void MainLoop(void* arg)
             if (event.window.event == SDL_WINDOWEVENT_RESIZED)
             {
                 renderOptions.windowResolution = iVec2(event.window.data1, event.window.data2);
+                int w, h;
+                SDL_GL_GetDrawableSize(loopdata.mWindow, &w, &h);
+                renderOptions.windowResolution.x = w;
+                renderOptions.windowResolution.y = h;
 
                 if (!renderOptions.independentRenderSize)
                     renderOptions.renderResolution = renderOptions.windowResolution;
@@ -323,6 +327,10 @@ void MainLoop(void* arg)
             LoadScene(sceneFiles[sampleSceneIdx]);
             SDL_RestoreWindow(loopdata.mWindow);
             SDL_SetWindowSize(loopdata.mWindow, renderOptions.windowResolution.x, renderOptions.windowResolution.y);
+            int w, h;
+            SDL_GL_GetDrawableSize(loopdata.mWindow, &w, &h);
+            renderOptions.windowResolution.x = w;
+            renderOptions.windowResolution.y = h;
             InitRenderer();
         }
 

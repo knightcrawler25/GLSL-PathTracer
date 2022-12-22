@@ -2,3 +2,6 @@
 
 .vs/
 build/*
+
+.DS_Store
+.idea
