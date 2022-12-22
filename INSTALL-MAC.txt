@@ -1,0 +1,18 @@
+Instructions for building:
+
+  * brew install sdl2 open-image-denoise
+
+  * git clone https://github.com/knightcrawler25/GLSL-PathTracer.git
+
+  * mkdir build
+
+  * cd build
+
+  # You can also use -j to specify maximum number of concurrent processes to use when building.
+  * cmake build -DCMAKE_BUILD_TYPE=RELEASE ..
+
+  * make
+
+  * To run the program: ./PathTracer
+
+  * Additional samples can be downloaded from: https://drive.google.com/file/d/1UFMMoVb5uB7WIvCeHOfQ2dCQSxNMXluB/view
