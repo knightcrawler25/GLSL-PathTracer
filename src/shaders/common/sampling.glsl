@@ -178,7 +178,7 @@ float PowerHeuristic(float a, float b)
 
 void Onb(in vec3 N, inout vec3 T, inout vec3 B)
 {
-    vec3 up = abs(N.z) < 0.999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
+    vec3 up = abs(N.z) < 0.9999999 ? vec3(0, 0, 1) : vec3(1, 0, 0);
     T = normalize(cross(up, N));
     B = cross(N, T);
 }
