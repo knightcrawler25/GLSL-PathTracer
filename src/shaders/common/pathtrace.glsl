@@ -159,7 +159,7 @@ vec3 DirectLight(in Ray r, in State state, bool isSurface)
 {
     vec3 Ld = vec3(0.0);
     vec3 Li = vec3(0.0);
-    vec3 scatterPos = state.fhp + state.ffnormal * EPS;
+    vec3 scatterPos = state.fhp + state.normal * EPS;
 
     ScatterSampleRec scatterSample;
 
