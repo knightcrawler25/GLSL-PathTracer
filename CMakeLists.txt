@@ -42,7 +42,7 @@ endif()
 
 set(SRCS ${SRC_FILES} ${EXT_FILES} ${SHADERS})
 
-if(APPLE)
+if(APPLE OR MINGW)
 find_package(SDL2 REQUIRED)
 else()
 set(SDL2_LIBRARIES "SDL2" "SDL2main")
@@ -159,7 +159,11 @@ endif()
 
 if(WIN32)
 add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+if(MinGW)
+    COMMAND ${CMAKE_COMMAND} -E copy ${SDL2_LIBDIR}/libSDL2.dll ${CMAKE_CURRENT_BINARY_DIR}
+else()
     COMMAND ${CMAKE_COMMAND} -E copy ${SDL2_LIBDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}
+endif()
     COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/OpenImageDenoise.dll ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/tbb.dll ${CMAKE_CURRENT_BINARY_DIR}
 )
