@@ -389,13 +389,14 @@ void MainLoop(void* arg)
                     ImGui::Checkbox("Simple ACES Fit", &renderOptions.simpleAcesFit);
             }
         }
-
+#ifdef ENABLE_OIDN
         if (ImGui::CollapsingHeader("Denoiser"))
         {
 
             ImGui::Checkbox("Enable Denoiser", &renderOptions.enableDenoiser);
             ImGui::SliderInt("Number of Frames to skip", &renderOptions.denoiserFrameCnt, 5, 50);
         }
+#endif
 
         if (ImGui::CollapsingHeader("Camera"))
         {

@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.8)
 project (PathTracer)
 
+option(ENABLE_OIDN "Enable OpenImageDenoise?" OFF)
+
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo" CACHE STRING "Configuration types" FORCE)
@@ -35,22 +37,26 @@ file(GLOB_RECURSE EXT_FILES
 )
 
 if(APPLE)
-list(APPEND EXT_FILES ${CMAKE_SOURCE_DIR}/thirdparty/gl3wApple/GL/gl3w.c)
+	list(APPEND EXT_FILES ${CMAKE_SOURCE_DIR}/thirdparty/gl3wApple/GL/gl3w.c)
 else()
-list(APPEND EXT_FILES ${CMAKE_SOURCE_DIR}/thirdparty/gl3w/GL/gl3w.c)
+	list(APPEND EXT_FILES ${CMAKE_SOURCE_DIR}/thirdparty/gl3w/GL/gl3w.c)
 endif()
 
 set(SRCS ${SRC_FILES} ${EXT_FILES} ${SHADERS})
 
 if(APPLE)
-find_package(SDL2 REQUIRED)
+	find_package(SDL2 REQUIRED)
 else()
-set(SDL2_LIBRARIES "SDL2" "SDL2main")
-set(SDL2_INCLUDE_DIRS  ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/include)
-set(SDL2_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/lib/x64)
+	set(SDL2_LIBRARIES "SDL2" "SDL2main")
+	set(SDL2_INCLUDE_DIRS  ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/include)
+	set(SDL2_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/SDL2/lib/x64)
 endif()
-set(OIDN_LIBRARIES "OpenImageDenoise")
-set(OIDN_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/oidn/lib)
+
+if(ENABLE_OIDN)
+	add_definitions(-DENABLE_OIDN=1)
+	set(OIDN_LIBRARIES "OpenImageDenoise")
+	set(OIDN_LIBDIR ${CMAKE_SOURCE_DIR}/thirdparty/oidn/lib)
+endif()
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/src/core
@@ -70,9 +76,9 @@ include_directories(
 )
 
 if(APPLE)
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/gl3wApple)
+	include_directories(${CMAKE_SOURCE_DIR}/thirdparty/gl3wApple)
 else()
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/gl3w)
+	include_directories(${CMAKE_SOURCE_DIR}/thirdparty/gl3w)
 endif()
 
 link_directories(
@@ -102,7 +108,7 @@ elseif(MACOSX)
 endif()
 
 if(MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
 
@@ -112,9 +118,9 @@ SET(EXE_NAME "PathTracer")
 ADD_EXECUTABLE(${EXE_NAME} ${SRCS})
 
 if(WIN32)
-TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${OIDN_LIBRARIES})
+	TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${OIDN_LIBRARIES})
 else()
-TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${OIDN_LIBRARIES} dl)
+	TARGET_LINK_LIBRARIES(${EXE_NAME} ${OPENGL_LIBRARIES} ${SDL2_LIBRARIES} ${OIDN_LIBRARIES} dl)
 endif()
 
 #--------------------------------------------------------------------
@@ -127,9 +133,9 @@ add_definitions(-D__STDC_LIMIT_MACROS)
 add_definitions(-D__STDC_CONSTANT_MACROS)
 add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
 if(MSVC)
-add_definitions(-DWIN32)
-add_definitions(-D_WIN32)
-#add_definitions(-DNOMINMAX)
+	add_definitions(-DWIN32)
+	add_definitions(-D_WIN32)
+	#add_definitions(-DNOMINMAX)
 endif()
 add_definitions(-DUSE_DL_PREFIX)
 add_definitions(-DGLEW_STATIC)
@@ -146,8 +152,8 @@ set_target_properties(${EXE_NAME} PROPERTIES RELWITHDEBINFO_POSTFIX "RelWithDebI
 set_target_properties(${EXE_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(WIN32)
-set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
+	set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+	set_target_properties(${EXE_NAME} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:CONSOLE")
 endif()
 
 #add_custom_command(TARGET ${EXE_NAME} POST_BUILD
@@ -158,9 +164,16 @@ endif()
 #)
 
 if(WIN32)
-add_custom_command(TARGET ${EXE_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${SDL2_LIBDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/OpenImageDenoise.dll ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/tbb.dll ${CMAKE_CURRENT_BINARY_DIR}
-)
+	add_custom_command(
+		TARGET ${EXE_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${SDL2_LIBDIR}/SDL2.dll ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	
+if(ENABLE_OIDN)
+	add_custom_command(
+		TARGET ${EXE_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/OpenImageDenoise.dll ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${OIDN_LIBDIR}/tbb.dll ${CMAKE_CURRENT_BINARY_DIR}
+	)
+endif()
 endif()

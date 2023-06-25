@@ -26,7 +26,10 @@
 #include "Renderer.h"
 #include "ShaderIncludes.h"
 #include "Scene.h"
+
+#ifdef ENABLE_OIDN
 #include "OpenImageDenoise/oidn.hpp"
+#endif
 
 namespace GLSLPT
 {
@@ -106,7 +109,10 @@ namespace GLSLPT
         glDeleteTextures(1, &accumTexture);
         glDeleteTextures(1, &tileOutputTexture[0]);
         glDeleteTextures(1, &tileOutputTexture[1]);
+
+#ifdef ENABLE_OIDN
         glDeleteTextures(1, &denoisedTexture);
+#endif
 
         // Delete buffers
         glDeleteBuffers(1, &BVHBuffer);
@@ -126,9 +132,11 @@ namespace GLSLPT
         delete outputShader;
         delete tonemapShader;
 
+#ifdef ENABLE_OIDN
         // Delete denoiser data
         delete[] denoiserInputFramePtr;
         delete[] frameOutputPtr;
+#endif
 
     }
 
@@ -256,7 +264,9 @@ namespace GLSLPT
         glDeleteTextures(1, &accumTexture);
         glDeleteTextures(1, &tileOutputTexture[0]);
         glDeleteTextures(1, &tileOutputTexture[1]);
+#ifdef ENABLE_OIDN
         glDeleteTextures(1, &denoisedTexture);
+#endif
 
         // Delete FBOs
         glDeleteFramebuffers(1, &pathTraceFBO);
@@ -264,10 +274,12 @@ namespace GLSLPT
         glDeleteFramebuffers(1, &accumFBO);
         glDeleteFramebuffers(1, &outputFBO);
 
+       
+#ifdef ENABLE_OIDN
         // Delete denoiser data
         delete[] denoiserInputFramePtr;
         delete[] frameOutputPtr;
-
+#endif
         // Delete shaders
         delete pathTraceShader;
         delete pathTraceShaderLowRes;
@@ -361,7 +373,8 @@ namespace GLSLPT
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tileOutputTexture[currentBuffer], 0);
 
-        // For Denoiser
+#ifdef ENABLE_OIDN
+        // Create Texture for Denoiser
         denoiserInputFramePtr = new Vec3[renderSize.x * renderSize.y];
         frameOutputPtr = new Vec3[renderSize.x * renderSize.y];
 
@@ -371,7 +384,7 @@ namespace GLSLPT
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
-
+#endif
         printf("Window Resolution : %d %d\n", windowSize.x, windowSize.y);
         printf("Render Resolution : %d %d\n", renderSize.x, renderSize.y);
         printf("Preview Resolution : %d %d\n", (int)((float)windowSize.x * pixelRatio), (int)((float)windowSize.y * pixelRatio));
@@ -601,9 +614,11 @@ namespace GLSLPT
         }
         else
         {
+#ifdef ENABLE_OIDN
             if (scene->renderOptions.enableDenoiser && denoised)
                 glBindTexture(GL_TEXTURE_2D, denoisedTexture);
             else
+#endif
                 glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
 
             quad->Draw(outputShader);
@@ -625,9 +640,11 @@ namespace GLSLPT
 
         glActiveTexture(GL_TEXTURE0);
 
+#ifdef ENABLE_OIDN
         if (scene->renderOptions.enableDenoiser && denoised)
             glBindTexture(GL_TEXTURE_2D, denoisedTexture);
         else
+#endif
             glBindTexture(GL_TEXTURE_2D, tileOutputTexture[1 - currentBuffer]);
 
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, *data);
@@ -691,6 +708,8 @@ namespace GLSLPT
             }
         }
 
+        
+#ifdef ENABLE_OIDN
         // Denoise image if requested
         if (scene->renderOptions.enableDenoiser && sampleCounter > 1)
         {
@@ -728,6 +747,7 @@ namespace GLSLPT
         }
         else
             denoised = false;
+#endif
 
         // If scene was modified then clear out image for re-rendering
         if (scene->dirty)
