@@ -186,7 +186,7 @@ void Update(float secondsElapsed)
 {
     keyPressed = false;
 
-    if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver())
+    if (!ImGui::GetIO().WantCaptureMouse && ImGui::IsAnyMouseDown() && !ImGuizmo::IsOver())
     {
         if (ImGui::IsMouseDown(0))
         {
